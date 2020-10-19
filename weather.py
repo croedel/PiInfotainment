@@ -3,7 +3,7 @@
 import requests
 import datetime
 import locale
-import PictureFrame2020config as config
+import picframeconfig as config
 
 def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info from OpenWeatherMap API
   url = 'https://api.openweathermap.org/data/2.5/onecall'

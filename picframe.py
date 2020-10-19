@@ -14,7 +14,7 @@ import pi3d
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
-import PictureFrame2020config as config
+import picframeconfig as config
 import Weather
 import GPSlookup
 
