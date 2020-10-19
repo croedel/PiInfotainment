@@ -5,7 +5,7 @@ import requests
 def reverse_lookup(lat, lon):
   url = 'https://nominatim.openstreetmap.org/reverse'
   payload = { 'format': 'jsonv2', 'lat': lat, 'lon': lon, 'zoom': 10, 'addressdetails': 1 }
-  headers = { 'User-Agent': 'pi3d PictureFrame' }
+  headers = { 'User-Agent': 'pi3d RaspiPicFrame' }
   ret='ERROR'
   try:
     response = requests.get( url, payload, headers=headers )

@@ -9,13 +9,13 @@ import time
 import datetime
 import random
 import math
-import demo
+#import demo
 import pi3d
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
 import picframeconfig as config
-import Weather
+import weather
 import GPSlookup
 
 #####################################################
