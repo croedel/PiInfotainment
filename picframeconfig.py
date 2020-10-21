@@ -32,7 +32,7 @@ BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend
 # Shuffle
 SHUFFLE = True       # shuffle on reloading image files - can be changed by MQTT
 RESHUFFLE_NUM = 1    # no of loops before reshuffling"
-RECENT_N = 0         # when shuffling the keep n most recent ones to play before the rest
+RECENT_N = 10         # when shuffling the keep n most recent ones to play before the rest
 #TIME_DELAY = 30.0    # time between consecutive slide starts - can be changed by MQTT
 TIME_DELAY = 12.0    # time between consecutive slide starts - can be changed by MQTT
 #FADE_TIME = 4.0      # change time during which slides overlap - can be changed by MQTT

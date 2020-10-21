@@ -19,6 +19,25 @@ import weather
 import GPSlookup
 
 #####################################################
+# global variables 
+time_delay = config.TIME_DELAY
+fade_time = config.FADE_TIME
+shuffle = config.SHUFFLE
+subdirectory = config.SUBDIRECTORY
+recent_days = config.RECENT_DAYS
+date_from = None
+date_to = None
+quit = False
+paused = False # NB must be set to True *only* after the first iteration of the show!
+nexttm = 0.0
+last_file_change = 0.0 # holds last change time in directory structure
+next_pic_num = 0
+delta_alpha = 1.0 / (config.FPS * fade_time) # delta alpha
+iFiles = []
+nFi = 0
+EXIF_DICT = {}
+
+#####################################################
 # some functions to tidy subsequent code
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -286,64 +305,286 @@ def convert_heif(fname):
     except:
         print("have you installed pyheif?")
 
-#####################################################
-# Initialization
+def create_EXIF_dict():
+  exif_dict = {
+    'Orientation': None,
+    'DateTimeOriginal': None,
+    'ImageDescription': None,
+    'Rating': None,
+    'Make': None,
+    'Model': None,
+    'Artist': None,
+    'Copyright': None,
+    'ExposureTime': None,
+    'FNumber': None,
+    'ISOSpeedRatings': None,
+    'FocalLength': None,
+    'ExifImageWidth': None,
+    'ExifImageHeight': None,
+    'FocalLengthIn35mmFilm': None,
+    'GPSInfo': None
+  }
 
-# these variables can be altered using MQTT messaging
-time_delay = config.TIME_DELAY
-fade_time = config.FADE_TIME
-shuffle = config.SHUFFLE
-subdirectory = config.SUBDIRECTORY
-recent_days = config.RECENT_DAYS
-date_from = None
-date_to = None
-quit = False
-paused = False # NB must be set to True *only* after the first iteration of the show!
+  # create reverse lookup dictionary
+  for k, v in ExifTags.TAGS.items():
+    if v in exif_dict:
+      exif_dict[v] = k
+  if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
+    print( "Couldn't look-up essential EXIF Id's - exiting")
+    exit(1)
+  return exif_dict
 
-if recent_days > 0:
-  dfrom = datetime.datetime.now() - datetime.timedelta(recent_days)  
-  date_from = (dfrom.year, dfrom.month, dfrom.day)
 
-EXIF_DICT = {
-  'Orientation': None,
-  'DateTimeOriginal': None,
-  'ImageDescription': None,
-  'Rating': None,
-  'Make': None,
-  'Model': None,
-  'Artist': None,
-  'Copyright': None,
-  'ExposureTime': None,
-  'FNumber': None,
-  'ISOSpeedRatings': None,
-  'FocalLength': None,
-  'ExifImageWidth': None,
-  'ExifImageHeight': None,
-  'FocalLengthIn35mmFilm': None,
-  'GPSInfo': None
-}
+# this is the main function which start the picture frame
+def start_picframe():
+  global time_delay, fade_time, shuffle, subdirectory, recent_days, date_from, date_to, quit
+  global paused, nexttm, last_file_change, next_pic_num, delta_alpha, iFiles, nFi, EXIF_DICT
+  global client
 
-# create reverse lookup dictionary
-for k, v in ExifTags.TAGS.items():
-  if v in EXIF_DICT:
-    EXIF_DICT[v] = k
-if (EXIF_DICT['Orientation'] == None) or (EXIF_DICT['DateTimeOriginal'] == None):
-  print( "Couldn't look-up essential EXIF Id's - exiting")
-  exit(1)
+  if recent_days > 0:
+    dfrom = datetime.datetime.now() - datetime.timedelta(recent_days)  
+    date_from = (dfrom.year, dfrom.month, dfrom.day)
+  if config.KENBURNS:
+    kb_up = True
+    config.FIT = False
+    config.BLUR_EDGES = False
+  if config.BLUR_ZOOM < 1.0:
+    config.BLUR_ZOOM = 1.0
 
-if config.KENBURNS:
-  kb_up = True
-  config.FIT = False
-  config.BLUR_EDGES = False
-if config.BLUR_ZOOM < 1.0:
-  config.BLUR_ZOOM = 1.0
-delta_alpha = 1.0 / (config.FPS * fade_time) # delta alpha
-last_file_change = 0.0 # holds last change time in directory structure
-next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
+  sfg = None # slide for background
+  sbg = None # slide for foreground
+  next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
 
-iFiles = []
-nFi = 0
-next_pic_num = 0
+  iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+
+  # Initialize pi3d system
+  DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
+                display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
+  CAMERA = pi3d.Camera(is_3d=False)
+
+  shader = pi3d.Shader(config.SHADER)
+  slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
+  slide.set_shader(shader)
+  slide.unif[47] = config.EDGE_ALPHA
+  slide.unif[54] = config.BLEND_TYPE
+
+  if config.KEYBOARD:
+    kbd = pi3d.Keyboard()
+
+  # PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
+  grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
+  font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
+                  shadow=(0,0,0,128))
+  text = pi3d.PointText(font, CAMERA, max_chars=400, point_size=50)
+  text_line1 = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  text_line2 = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  text_line3 = pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  text_line4 = pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45 - 40,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  text.add_text_block(text_line1)
+  text.add_text_block(text_line2)
+  text.add_text_block(text_line3)
+  text.add_text_block(text_line4)
+
+  # prepare to display weather info
+  w_point_size = 45
+  w_padding = 40
+  weatherinfo = pi3d.PointText(font, CAMERA, max_chars=3000, point_size=w_point_size)
+  icon_shader = pi3d.Shader("uv_flat")
+  weathertexts = []
+  weathericons = []
+  w_item_cnt = int(DISPLAY.height * 0.9 / (2*w_point_size + w_padding))
+  for i in range(w_item_cnt):
+    weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 200, y=DISPLAY.height * 0.4 - i*(2*w_point_size + w_padding),
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
+    weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 250, y=DISPLAY.height * 0.4 - i*(2*w_point_size + w_padding) - w_point_size,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)))
+    weathericons.append( pi3d.ImageSprite('weather_icons/01d.png', icon_shader, w=200, h=200, 
+                            x=-DISPLAY.width * 0.5 + 100, y=DISPLAY.height * 0.4 - i*(2*w_point_size + w_padding) - 20, z=1.0) )
+
+  for item in weathertexts:
+    weatherinfo.add_text_block( item )
+  
+  weather_interstitial_active = False
+  nextweathertm = 0.0
+  num_run_through = 0
+
+  # here comes the main loop
+  while DISPLAY.loop_running():
+    tm = time.time()
+
+    if tm > nextweathertm and not paused: # refresh weather info
+      weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_APPID )
+      for i in range( min(len(weather_info), w_item_cnt) ):
+        weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
+        weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
+        w_tex = pi3d.Texture('weather_icons/' + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
+        weathericons[i].set_textures( [w_tex] )
+      nextweathertm = tm + config.W_REFRESH_DELAY
+
+    if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
+      if nFi > 0:
+        nexttm = tm + time_delay
+        sbg = sfg
+        sfg = None
+
+        if (config.W_SKIP_CNT > 0) and (next_pic_num % config.W_SKIP_CNT == 1) and not weather_interstitial_active: 
+          # show weather interstitial
+          weather_interstitial_active = True
+          sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
+        else: 
+          # continue with next picture
+          weather_interstitial_active = False
+          start_pic_num = next_pic_num
+          while sfg is None: # keep going through until a usable picture is found
+            pic_num = next_pic_num
+            sfg = tex_load(pic_num, iFiles, (DISPLAY.width, DISPLAY.height))
+            next_pic_num += 1
+            if next_pic_num >= nFi:
+              num_run_through += 1
+              if shuffle and num_run_through >= config.RESHUFFLE_NUM:
+                num_run_through = 0
+                random.shuffle(iFiles)
+              next_pic_num = 0
+            if next_pic_num == start_pic_num:
+              nFi = 0
+              break
+          # set description
+          if config.SHOW_NAMES_TM > 0.0:
+            (txt1, txt2, txt3, txt4) = format_text(iFiles, pic_num)
+            text_line1.set_text(text_format=txt1)
+            text_line2.set_text(text_format=txt2)
+            text_line3.set_text(text_format=txt3)
+            text_line4.set_text(text_format=txt4)
+          else: # could have a NO IMAGES selected and being drawn
+            text_line1.colouring.set_colour(alpha=0.0)
+            text_line2.colouring.set_colour(alpha=0.0)
+            text_line3.colouring.set_colour(alpha=0.0)
+            text_line4.colouring.set_colour(alpha=0.0)
+          text.regen()
+
+      if sfg is None:
+        sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
+        sbg = sfg
+
+      a = 0.0 # alpha - proportion front image to back
+      name_tm = tm + config.SHOW_NAMES_TM
+      if sbg is None: # first time through
+        sbg = sfg
+      slide.set_textures([sfg, sbg])
+      slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
+      slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
+      wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
+      if (wh_rat > 1.0 and config.FIT) or (wh_rat <= 1.0 and not config.FIT):
+        sz1, sz2, os1, os2 = 42, 43, 48, 49
+      else:
+        sz1, sz2, os1, os2 = 43, 42, 49, 48
+        wh_rat = 1.0 / wh_rat
+      slide.unif[sz1] = wh_rat
+      slide.unif[sz2] = 1.0
+      slide.unif[os1] = (wh_rat - 1.0) * 0.5
+      slide.unif[os2] = 0.0
+      if config.KENBURNS:
+          xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
+          slide.unif[48] = 0.0
+          slide.unif[49] = 0.0
+          kb_up = not kb_up
+
+    if config.KENBURNS:
+      t_factor = nexttm - tm
+      if kb_up:
+        t_factor = time_delay - t_factor
+      slide.unif[48] = xstep * t_factor
+      slide.unif[49] = ystep * t_factor
+
+    if a < 1.0: # transition is happening
+      a += delta_alpha
+      if a > 1.0:
+        a = 1.0
+      slide.unif[44] = a * a * (3.0 - 2.0 * a)
+    else: # no transition effect safe to reshuffle etc
+      if tm > next_check_tm:
+        if check_changes():
+          if recent_days > 0: # reset data_from to reflect time is proceeding
+            date_from = datetime.datetime.now() - datetime.timedelta(recent_days)
+            date_from = (date_from.year, date_from.month, date_from.day)
+          iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+          num_run_through = 0
+          next_pic_num = 0
+        next_check_tm = tm + config.CHECK_DIR_TM # create new file list at this time
+
+    slide.draw()
+
+    if nFi <= 0:
+      text_line1.set_text("NO IMAGES SELECTED")
+      text_line1.colouring.set_colour(alpha=1.0)
+      text_line2.colouring.set_colour(alpha=0.0)
+      text_line3.colouring.set_colour(alpha=0.0)
+      text_line4.colouring.set_colour(alpha=0.0)
+      next_tm = tm + 1.0
+    elif tm < name_tm:
+      if weather_interstitial_active:
+        text_line1.colouring.set_colour(alpha=0.0)
+        text_line2.colouring.set_colour(alpha=0.0)
+        text_line3.colouring.set_colour(alpha=0.0)
+        text_line4.colouring.set_colour(alpha=0.0)
+        for item in weathertexts:
+          item.colouring.set_colour(alpha=1.0)
+        for item in weathericons:
+          item.set_alpha(1.0)
+      else:  
+        # this sets alpha for the TextBlock from 0 to 1 then back to 0
+        dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
+        alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
+        text_line1.colouring.set_colour(alpha=alpha)
+        text_line2.colouring.set_colour(alpha=alpha)
+        text_line3.colouring.set_colour(alpha=alpha)
+        text_line4.colouring.set_colour(alpha=alpha)
+        for item in weathertexts:
+          item.colouring.set_colour(alpha=0.0)
+        for item in weathericons:
+          item.set_alpha(0.0)
+
+    text.regen()
+    text.draw()
+    weatherinfo.regen()
+    weatherinfo.draw()
+    for item in weathericons:
+      item.draw()
+
+    if config.KEYBOARD:
+      k = kbd.read()
+      if k != -1:
+        nexttm = time.time() - 86400.0
+      if k==27: #ESC
+        break
+      if k==ord(' '):
+        paused = not paused
+      if k==ord('s'): # go back a picture
+        next_pic_num -= 2
+        if next_pic_num < -1:
+          next_pic_num = -1
+    if quit: # set by MQTT
+      break
+
+  try:
+    client.loop_stop()
+  except Exception as e:
+    if config.VERBOSE:
+      print("Stopping MQTT client failed: {}".format(e))
+  if config.KEYBOARD:
+    kbd.close()
+  DISPLAY.destroy()
+
 
 ##############################################
 # MQTT functionality - see https://www.thedigitalpictureframe.com/
@@ -413,6 +654,9 @@ if config.USE_MQTT:
       elif message.topic == "frame/subdirectory":
         subdirectory = msg
         reselect = True
+      elif config.VERBOSE:
+        print('Unknown MQTT topic: {}'.format(message.topic))
+
       if reselect:
         iFiles, nFi = get_files(date_from, date_to, rand)
         next_pic_num = 0
@@ -422,252 +666,15 @@ if config.USE_MQTT:
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
     client.loop_start()
-    client.subscribe("frame/date_from", qos=0)
-    client.subscribe("frame/date_to", qos=0)
-    client.subscribe("frame/recent_days", qos=0)
-    client.subscribe("frame/time_delay", qos=0)
-    client.subscribe("frame/fade_time", qos=0)
-    client.subscribe("frame/shuffle", qos=0)
-    client.subscribe("frame/quit", qos=0)
-    client.subscribe("frame/paused", qos=0)
-    client.subscribe("frame/back", qos=0)
-    client.subscribe("frame/subdirectory", qos=0)
+    client.subscribe("frame/+", qos=0)
     client.on_connect = on_connect
     client.on_message = on_message
   except Exception as e:
     if config.VERBOSE:
       print("MQTT not set up because of: {}".format(e))
-##############################################
 
-nexttm = 0.0
-next_pic_num = 0
-sfg = None # slide for background
-sbg = None # slide for foreground
-iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+#############################################################################
+EXIF_DICT = create_EXIF_dict()  # create EXIF lookup dict
 
-# Initialize pi3d system
-DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
-              display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
-CAMERA = pi3d.Camera(is_3d=False)
-
-shader = pi3d.Shader(config.SHADER)
-slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
-slide.set_shader(shader)
-slide.unif[47] = config.EDGE_ALPHA
-slide.unif[54] = config.BLEND_TYPE
-
-if config.KEYBOARD:
-  kbd = pi3d.Keyboard()
-
-# PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
-grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
-                shadow=(0,0,0,128))
-text = pi3d.PointText(font, CAMERA, max_chars=400, point_size=50)
-text_line1 = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
-                          text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-text_line2 = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
-                          text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-text_line3 = pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45,
-                          text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.6, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-text_line4 = pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45 - 40,
-                          text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.6, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-text.add_text_block(text_line1)
-text.add_text_block(text_line2)
-text.add_text_block(text_line3)
-text.add_text_block(text_line4)
-
-# prepare to display weather info
-w_point_size = 45
-w_padding = 40
-weatherinfo = pi3d.PointText(font, CAMERA, max_chars=3000, point_size=w_point_size)
-icon_shader = pi3d.Shader("uv_flat")
-weathertexts = []
-weathericons = []
-w_item_cnt = int(DISPLAY.height * 0.9 / (2*w_point_size + w_padding))
-for i in range(w_item_cnt):
-  weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 200, y=DISPLAY.height * 0.4 - i*(2*w_point_size + w_padding),
-                          text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
-  weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 250, y=DISPLAY.height * 0.4 - i*(2*w_point_size + w_padding) - w_point_size,
-                          text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
-                          spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)))
-  weathericons.append( pi3d.ImageSprite('weather_icons/01d.png', icon_shader, w=200, h=200, 
-                          x=-DISPLAY.width * 0.5 + 100, y=DISPLAY.height * 0.4 - i*(2*w_point_size + w_padding) - 20, z=1.0) )
-
-for item in weathertexts:
-  weatherinfo.add_text_block( item )
- 
-weather_interstitial_active = False
-nextweathertm = 0.0
-num_run_through = 0
-
-while DISPLAY.loop_running():
-  tm = time.time()
-
-  if tm > nextweathertm and not paused: # refresh weather info
-    weather_info = Weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_APPID )
-    for i in range( min(len(weather_info), w_item_cnt) ):
-      weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
-      weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
-      w_tex = pi3d.Texture('weather_icons/' + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
-      weathericons[i].set_textures( [w_tex] )
-    nextweathertm = tm + config.W_REFRESH_DELAY
-
-  if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
-    if nFi > 0:
-      nexttm = tm + time_delay
-      sbg = sfg
-      sfg = None
-
-      if (config.W_SKIP_CNT > 0) and (next_pic_num % config.W_SKIP_CNT == 1) and not weather_interstitial_active: 
-        # show weather interstitial
-        weather_interstitial_active = True
-        sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
-      else: 
-        # continue with next picture
-        weather_interstitial_active = False
-        start_pic_num = next_pic_num
-        while sfg is None: # keep going through until a usable picture is found
-          pic_num = next_pic_num
-          sfg = tex_load(pic_num, iFiles, (DISPLAY.width, DISPLAY.height))
-          next_pic_num += 1
-          if next_pic_num >= nFi:
-            num_run_through += 1
-            if shuffle and num_run_through >= config.RESHUFFLE_NUM:
-              num_run_through = 0
-              random.shuffle(iFiles)
-            next_pic_num = 0
-          if next_pic_num == start_pic_num:
-            nFi = 0
-            break
-        # set description
-        if config.SHOW_NAMES_TM > 0.0:
-          (txt1, txt2, txt3, txt4) = format_text(iFiles, pic_num)
-          text_line1.set_text(text_format=txt1)
-          text_line2.set_text(text_format=txt2)
-          text_line3.set_text(text_format=txt3)
-          text_line4.set_text(text_format=txt4)
-        else: # could have a NO IMAGES selected and being drawn
-          text_line1.colouring.set_colour(alpha=0.0)
-          text_line2.colouring.set_colour(alpha=0.0)
-          text_line3.colouring.set_colour(alpha=0.0)
-          text_line4.colouring.set_colour(alpha=0.0)
-        text.regen()
-
-    if sfg is None:
-      sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
-      sbg = sfg
-
-    a = 0.0 # alpha - proportion front image to back
-    name_tm = tm + config.SHOW_NAMES_TM
-    if sbg is None: # first time through
-      sbg = sfg
-    slide.set_textures([sfg, sbg])
-    slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
-    slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
-    wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
-    if (wh_rat > 1.0 and config.FIT) or (wh_rat <= 1.0 and not config.FIT):
-      sz1, sz2, os1, os2 = 42, 43, 48, 49
-    else:
-      sz1, sz2, os1, os2 = 43, 42, 49, 48
-      wh_rat = 1.0 / wh_rat
-    slide.unif[sz1] = wh_rat
-    slide.unif[sz2] = 1.0
-    slide.unif[os1] = (wh_rat - 1.0) * 0.5
-    slide.unif[os2] = 0.0
-    if config.KENBURNS:
-        xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
-        slide.unif[48] = 0.0
-        slide.unif[49] = 0.0
-        kb_up = not kb_up
-
-  if config.KENBURNS:
-    t_factor = nexttm - tm
-    if kb_up:
-      t_factor = time_delay - t_factor
-    slide.unif[48] = xstep * t_factor
-    slide.unif[49] = ystep * t_factor
-
-  if a < 1.0: # transition is happening
-    a += delta_alpha
-    if a > 1.0:
-      a = 1.0
-    slide.unif[44] = a * a * (3.0 - 2.0 * a)
-  else: # no transition effect safe to reshuffle etc
-    if tm > next_check_tm:
-      if check_changes():
-        if recent_days > 0: # reset data_from to reflect time is proceeding
-          date_from = datetime.datetime.now() - datetime.timedelta(recent_days)
-          date_from = (date_from.year, date_from.month, date_from.day)
-        iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
-        num_run_through = 0
-        next_pic_num = 0
-      next_check_tm = tm + config.CHECK_DIR_TM # once per hour
-
-  slide.draw()
-
-  if nFi <= 0:
-    text_line1.set_text("NO IMAGES SELECTED")
-    text_line1.colouring.set_colour(alpha=1.0)
-    text_line2.colouring.set_colour(alpha=0.0)
-    text_line3.colouring.set_colour(alpha=0.0)
-    text_line4.colouring.set_colour(alpha=0.0)
-    next_tm = tm + 1.0
-  elif tm < name_tm:
-    if weather_interstitial_active:
-      text_line1.colouring.set_colour(alpha=0.0)
-      text_line2.colouring.set_colour(alpha=0.0)
-      text_line3.colouring.set_colour(alpha=0.0)
-      text_line4.colouring.set_colour(alpha=0.0)
-      for item in weathertexts:
-        item.colouring.set_colour(alpha=1.0)
-      for item in weathericons:
-        item.set_alpha(1.0)
-    else:  
-      # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
-      alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
-      text_line1.colouring.set_colour(alpha=alpha)
-      text_line2.colouring.set_colour(alpha=alpha)
-      text_line3.colouring.set_colour(alpha=alpha)
-      text_line4.colouring.set_colour(alpha=alpha)
-      for item in weathertexts:
-        item.colouring.set_colour(alpha=0.0)
-      for item in weathericons:
-        item.set_alpha(0.0)
-
-  text.regen()
-  text.draw()
-  weatherinfo.regen()
-  weatherinfo.draw()
-  for item in weathericons:
-    item.draw()
-
-  if config.KEYBOARD:
-    k = kbd.read()
-    if k != -1:
-      nexttm = time.time() - 86400.0
-    if k==27: #ESC
-      break
-    if k==ord(' '):
-      paused = not paused
-    if k==ord('s'): # go back a picture
-      next_pic_num -= 2
-      if next_pic_num < -1:
-        next_pic_num = -1
-  if quit: # set by MQTT
-    break
-
-try:
-  client.loop_stop()
-except Exception as e:
-  if config.VERBOSE:
-    print("this was going to fail if previous try failed!")
-if config.KEYBOARD:
-  kbd.close()
-DISPLAY.destroy()
+if __name__ == "__main__":
+  start_picframe()
