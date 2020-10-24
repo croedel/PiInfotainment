@@ -179,16 +179,17 @@ def format_text(iFiles, pic_num):
     txt2 = config.TEXT2_FORMAT
     txt3 = config.TEXT3_FORMAT
     txt4 = config.TEXT4_FORMAT
+
     for i, j in rep.items():
       txt1 = txt1.replace(i, j)
       txt2 = txt2.replace(i, j)
       txt3 = txt3.replace(i, j)
       txt4 = txt4.replace(i, j)
+
     clean_string(txt1)
     clean_string(txt2)
     clean_string(txt3)
     clean_string(txt4)
-
   except Exception as e: # something went wrong when formatting
     txt1 = txt2 = txt3 = txt4 = ' '
     if config.VERBOSE:
@@ -220,7 +221,7 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     rand_dir = 1
     rand_file = 1
   else:
-    rand_dir = max(1, int(rand / 10))
+    rand_dir = max(1, int(rand/10))
     rand_file = int(rand)
 
   global shuffle, EXIF_DICT, last_file_change
@@ -286,7 +287,7 @@ def get_exif_info(file_path_name, im=None):
         exif_info[tag] = data
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     if config.VERBOSE:
-      print('Exception while trying to read exif: ', e)
+      print('Warning: Exception while trying to read EXIF: ', e)
     if dt == None:
       dt = os.path.getmtime(file_path_name) # so use file last modified date
     if orientation == None:
@@ -356,7 +357,7 @@ def start_picframe():
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
 
   iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
-
+ 
   # Initialize pi3d system
   DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
                 display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
@@ -375,26 +376,25 @@ def start_picframe():
   grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
   font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
                   shadow=(0,0,0,128))
-  text = pi3d.PointText(font, CAMERA, max_chars=400, point_size=50)
-  text_line1 = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
+  text = pi3d.PointText(font, CAMERA, max_chars=400, point_size=config.TEXT_POINT_SIZE)
+  textlines = []
+  textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
                             text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
-                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-  text_line2 = pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
+  textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
                             text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
-                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-  text_line3 = pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45,
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
+  textlines.append( pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45,
                             text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.6, 
-                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-  text_line4 = pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45 - 40,
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
+  textlines.append( pi3d.TextBlock(x=DISPLAY.width * 0.1, y=DISPLAY.height * 0.45 - 40,
                             text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.6, 
-                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
-  text.add_text_block(text_line1)
-  text.add_text_block(text_line2)
-  text.add_text_block(text_line3)
-  text.add_text_block(text_line4)
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
+  for item in textlines:
+    text.add_text_block(item)
 
   # prepare to display weather info
-  w_point_size = 45
+  w_point_size = config.W_POINT_SIZE
   w_padding = 40
   weatherinfo = pi3d.PointText(font, CAMERA, max_chars=3000, point_size=w_point_size)
   icon_shader = pi3d.Shader("uv_flat")
@@ -460,16 +460,14 @@ def start_picframe():
               break
           # set description
           if config.SHOW_NAMES_TM > 0.0:
-            (txt1, txt2, txt3, txt4) = format_text(iFiles, pic_num)
-            text_line1.set_text(text_format=txt1)
-            text_line2.set_text(text_format=txt2)
-            text_line3.set_text(text_format=txt3)
-            text_line4.set_text(text_format=txt4)
+            texts = format_text(iFiles, pic_num)
+            i=0
+            for item in textlines:
+              item.set_text(text_format=texts[i])
+              i += 1    
           else: # could have a NO IMAGES selected and being drawn
-            text_line1.colouring.set_colour(alpha=0.0)
-            text_line2.colouring.set_colour(alpha=0.0)
-            text_line3.colouring.set_colour(alpha=0.0)
-            text_line4.colouring.set_colour(alpha=0.0)
+            for item in textlines:
+              item.colouring.set_colour(alpha=0.0)
           text.regen()
 
       if sfg is None:
@@ -525,18 +523,13 @@ def start_picframe():
     slide.draw()
 
     if nFi <= 0:
-      text_line1.set_text("NO IMAGES SELECTED")
-      text_line1.colouring.set_colour(alpha=1.0)
-      text_line2.colouring.set_colour(alpha=0.0)
-      text_line3.colouring.set_colour(alpha=0.0)
-      text_line4.colouring.set_colour(alpha=0.0)
-      next_tm = tm + 1.0
+      textlines[0].set_text("NO IMAGES SELECTED")
+      textlines[0].colouring.set_colour(alpha=1.0)
+      next_check_tm = tm + 5.0
     elif tm < name_tm:
       if weather_interstitial_active:
-        text_line1.colouring.set_colour(alpha=0.0)
-        text_line2.colouring.set_colour(alpha=0.0)
-        text_line3.colouring.set_colour(alpha=0.0)
-        text_line4.colouring.set_colour(alpha=0.0)
+        for item in textlines:
+          item.colouring.set_colour(alpha=0.0)
         for item in weathertexts:
           item.colouring.set_colour(alpha=1.0)
         for item in weathericons:
@@ -545,10 +538,8 @@ def start_picframe():
         # this sets alpha for the TextBlock from 0 to 1 then back to 0
         dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
         alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
-        text_line1.colouring.set_colour(alpha=alpha)
-        text_line2.colouring.set_colour(alpha=alpha)
-        text_line3.colouring.set_colour(alpha=alpha)
-        text_line4.colouring.set_colour(alpha=alpha)
+        for item in textlines:
+          item.colouring.set_colour(alpha=alpha)
         for item in weathertexts:
           item.colouring.set_colour(alpha=0.0)
         for item in weathericons:
