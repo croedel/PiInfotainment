@@ -3,7 +3,8 @@
 import requests
 import datetime
 import locale
-import picframeconfig as config
+import config
+import logging
 
 def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info from OpenWeatherMap API
   url = 'https://api.openweathermap.org/data/2.5/onecall'
@@ -12,12 +13,12 @@ def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info 
   try:
     response = requests.get( url, payload )
   except requests.exceptions.RequestException as err:
-    print( "Couldn't request openweathermap API: Exception {:s}".format(err) )
+    logging.error( "Couldn't request openweathermap API: Exception {:s}".format(err) )
   else:
     if response.status_code == 200:
       ret = response.json()
     else:
-      print( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
+      logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
   return ret  
   
 # normalize weather info
@@ -142,7 +143,7 @@ def normalize_weather(weather_info, lang):
 
         w_dict['alerts'].append( data ) 
   except Exception as e:
-    print( "Error while normalizing weather data: Exception {:s}".format(e) )
+    logging.error( "Error while normalizing weather data: Exception {:s}".format(e) )
   return w_dict
 
 def uvi2str( uvi, lang ):
@@ -263,7 +264,8 @@ def get_weather_info( lat, lon, units, lang, appid ):
 
 #############################################################################
 if __name__ == "__main__":
-  weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', '6ebd6acb5966433fad4c667062d4c18e' )
+  logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
+  weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', '6ebd6acb5966433fad4c667062d4c18eX' )
 
   for item in weather_info:
     print( item['title'] )

@@ -1,6 +1,7 @@
 """ GPS info transformation + reverse Geo lookup 
 """
 import requests
+import logging
 
 def reverse_lookup(lat, lon):
   url = 'https://nominatim.openstreetmap.org/reverse'
@@ -10,12 +11,12 @@ def reverse_lookup(lat, lon):
   try:
     response = requests.get( url, payload, headers=headers )
   except requests.exceptions.RequestException as err:
-    print( "Couldn't request openstreetmap API: Exception {:s}".format(err) )
+    logging.error( "Couldn't request openstreetmap API: Exception {:s}".format(err) )
   else:
     if response.status_code == 200:
       ret = response.json()
     else:
-      print( "Error while requesting openstreetmap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
+      logging.error( "Error while requesting openstreetmap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
 
   return ret
 
@@ -45,6 +46,8 @@ def lookup( gps_info ):
 
 #############################################################################
 if __name__ == "__main__":
+  logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
+
   gps_info = {
     1: 'E', 
     2: (48,18,2),

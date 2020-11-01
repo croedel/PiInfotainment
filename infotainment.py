@@ -5,6 +5,7 @@ It's largely inherited from PictureFrame2020.py which is part of pi3d_demos.
 See http://pi3d.github.io/ and https://www.thedigitalpictureframe.com/
 '''
 import os
+import logging
 import time
 import datetime
 import random
@@ -13,9 +14,11 @@ import pi3d
 
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
-import picframeconfig as config
+import config
 import weather
 import GPSlookup
+
+logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
 
 #####################################################
 # global variables 
@@ -116,8 +119,7 @@ def tex_load(pic_num, iFiles, size=None):
     #tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
     #                    mipmap=config.AUTO_RESIZE, free_after_load=True) # poss try this if still some artifacts with full resolution
   except Exception as e:
-    if config.VERBOSE:
-        print('''Couldn't load file {} giving error: {}'''.format(fname, e))
+    logging.error('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None
   return tex
 
@@ -191,8 +193,7 @@ def format_text(iFiles, pic_num):
     txt4 = clean_string(txt4)
   except Exception as e: # something went wrong when formatting
     txt1 = txt2 = txt3 = txt4 = ' '
-    if config.VERBOSE:
-      print('Exception in format_text: ', e)
+    logging.warning('Exception in format_text: ', e)
   return (txt1, txt2, txt3, txt4)
 
 def check_changes():
@@ -232,11 +233,9 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     mod_tm = os.stat(root).st_mtime # directory modification time
     create_tm = os.stat(root).st_ctime # directory creation time
     if (mod_tm < dt_from or create_tm > dt_to) and random.randint(1,rand_dir) != 1:
-      if config.VERBOSE:
-        print('Ignoring dir {}'.format(root))  
+      logging.info('Ignoring dir {}'.format(root))  
       continue
-    if config.VERBOSE:
-      print('Checking dir {}'.format(root) )  
+    logging.info('Checking dir {}'.format(root) )  
     if mod_tm > last_file_change:
       last_file_change = mod_tm
     for filename in filenames:
@@ -285,8 +284,7 @@ def get_exif_info(file_path_name, im=None):
       if data:
         exif_info[tag] = data
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
-    if config.VERBOSE:
-      print('Warning: Exception while trying to read EXIF: ', e)
+    logging.warning('Warning: Exception while trying to read EXIF: ', e)
     if dt == None:
       dt = os.path.getmtime(file_path_name) # so use file last modified date
     if orientation == None:
@@ -303,7 +301,7 @@ def convert_heif(fname):
                                 "raw", heif_file.mode, heif_file.stride)
         return image
     except:
-        print("have you installed pyheif?")
+      logging.error("have you installed pyheif?")
 
 def create_EXIF_dict():
   exif_dict = {
@@ -330,7 +328,7 @@ def create_EXIF_dict():
     if v in exif_dict:
       exif_dict[v] = k
   if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
-    print( "Couldn't look-up essential EXIF Id's - exiting")
+    logging.critical( "Couldn't look-up essential EXIF Id's - exiting")
     exit(1)
   return exif_dict
 
@@ -355,7 +353,6 @@ def start_picframe():
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
 
-  iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
  
   # Initialize pi3d system
   DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
@@ -572,8 +569,7 @@ def start_picframe():
   try:
     client.loop_stop()
   except Exception as e:
-    if config.VERBOSE:
-      print("Stopping MQTT client failed: {}".format(e))
+    logging.warning("Stopping MQTT client failed: {}".format(e))
   if config.KEYBOARD:
     kbd.close()
   DISPLAY.destroy()
@@ -586,8 +582,7 @@ if config.USE_MQTT:
   try:
     import paho.mqtt.client as mqtt
     def on_connect(client, userdata, flags, rc):
-      if config.VERBOSE:
-        print("Connected to MQTT broker")
+      logging.info("Connected to MQTT broker")
 
     def on_message(client, userdata, message):
       # TODO not ideal to have global but probably only reasonable way to do it
@@ -596,8 +591,7 @@ if config.USE_MQTT:
       msg = message.payload.decode("utf-8")
       reselect = False
       rand = None
-      if config.VERBOSE:
-        print( 'MQTT: {} -> {}'.format(message.topic, msg))
+      logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
 
       if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
         try:
@@ -647,8 +641,8 @@ if config.USE_MQTT:
       elif message.topic == "frame/subdirectory":
         subdirectory = msg
         reselect = True
-      elif config.VERBOSE:
-        print('Unknown MQTT topic: {}'.format(message.topic))
+      else:
+        logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
       if reselect:
         iFiles, nFi = get_files(date_from, date_to, rand)
@@ -663,11 +657,11 @@ if config.USE_MQTT:
     client.on_connect = on_connect
     client.on_message = on_message
   except Exception as e:
-    if config.VERBOSE:
-      print("MQTT not set up because of: {}".format(e))
+    logging.warning("MQTT not set up because of: {}".format(e))
 
 #############################################################################
 EXIF_DICT = create_EXIF_dict()  # create EXIF lookup dict
 
 if __name__ == "__main__":
+  iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
   start_picframe()
