@@ -79,3 +79,6 @@ W_ALERT_TXT     = "<start> - <end>: <event>"
 W_FORECAST_TITE = "<date> <daytime>"
 W_FORECAST_TXT  = "<temp> (<ftemp>), Wind <wind> (<winddeg>), Niederschlag <pop>, Luftf. <humidity>, Wolken <clouds>" 
 W_POINT_SIZE = 42
+
+# CAMERA
+CAMERA_THRESHOLD = 20   # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event

@@ -1,23 +1,65 @@
 #!/usr/bin/env python3
 """
-Very simple HTTP server in python for logging requests
-Usage::
-    ./server.py [<port>]
+Infotainment HTTP Server
 """
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import argparse
+import urllib
+import os
+import config
+
+logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
+try:
+  import paho.mqtt.publish as publish
+except Exception as e:
+  logging.warning("MQTT not set up because of: {}".format(e))
+
+def mqtt_publish( topic, payload ):  
+  auth = {'username': config.MQTT_LOGIN, 'password': config.MQTT_PASSWORD} 
+  logging.info("Publish MQTT command {}: {}".format(topic, payload))
+  try:
+    publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
+  except Exception as e:
+    logging.warning("Could't send MQTT command: {}".format(e))
 
 class Handler(BaseHTTPRequestHandler):
-  def _set_response(self):
-    self.send_response(200)
-    self.send_header('Content-type', 'text/html')
+  def _set_header(self, status=200):
+    if status == 200:
+      self.send_response(200)
+      self.send_header('Content-type', 'text/html')
+      self.send_header('Cache-Control', 'no-cache')
+    else:
+      self.send_error(status)
     self.end_headers()
 
   def do_GET(self):
-    logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", str(self.path), str(self.headers))
-    self._set_response()
-    self.wfile.write("GET request for {}".format(self.path).encode('utf-8'))
+    path = self.path.strip('/')
+    delim = path.find('?')
+    params = ''
+    if delim > 0:
+      params = urllib.parse.parse_qs(path[delim+1:])
+      path = path[:delim]
+    if path == '':
+      path = "index.html"  
+    fname = os.path.join(os.path.dirname(__file__), path)
+    logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )
+
+    # publish command to MQTT
+    if 'topic' in params:
+      topic = 'frame/' + params['topic'][0]   
+      data = ''
+      if 'data' in params:
+        data = params['data'][0]
+      mqtt_publish( topic, data )
+    
+    try:
+      with open(fname, 'rb') as file: 
+        self._set_header(200)
+        self.wfile.write(file.read()) # Read the file and send the contents 
+    except IOError as e:
+      logging.warning("Couldn't open {}".format(e))
+      self._set_header(404)
 
   def do_POST(self):
     content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
@@ -25,11 +67,10 @@ class Handler(BaseHTTPRequestHandler):
     logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             str(self.path), str(self.headers), post_data.decode('utf-8'))
 
-    self._set_response()
+    self._set_header()
     self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
 def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8080):
-  logging.basicConfig(level=logging.INFO)
   server_address = (addr, port)
   httpd = server_class(server_address, handler_class)
   logging.info('Starting httpd on {}:{}'.format(addr, port))
@@ -40,8 +81,9 @@ def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8
   httpd.server_close()
   logging.info('Stopping httpd...')
 
+
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description="Run a simple HTTP server")
+  parser = argparse.ArgumentParser(description="Infotainment HTTP server")
   parser.add_argument( "-a", "--address", default="localhost", help="Specify the IP address on which the server listens" )
   parser.add_argument( "-p", "--port", type=int, default=8080, help="Specify the port on which the server listens" )
   args = parser.parse_args()

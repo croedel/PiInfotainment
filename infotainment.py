@@ -1,11 +1,12 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-''' This is the enhanced fork of a pi3d based slideshow system. 
+''' This is a infotainment project for the raspi. 
 It's largely inherited from PictureFrame2020.py which is part of pi3d_demos.
 See http://pi3d.github.io/ and https://www.thedigitalpictureframe.com/
 '''
 import os
 import logging
+import subprocess
 import time
 import datetime
 import random
@@ -19,6 +20,12 @@ import weather
 import GPSlookup
 
 logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
+
+if config.USE_MQTT:
+  try:
+    import paho.mqtt.mqttclient as mqtt
+  except Exception as e:
+    logging.warning("Couldn't set up MQTT: {}".format(e))
 
 #####################################################
 # global variables 
@@ -37,6 +44,8 @@ next_pic_num = 0
 delta_alpha = 1.0 / (config.FPS * fade_time) # delta alpha
 iFiles = []
 nFi = 0
+show_camera = None
+camera_end_tm = 0.0
 EXIF_DICT = {}
 
 #####################################################
@@ -330,14 +339,12 @@ def create_EXIF_dict():
   if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
     logging.critical( "Couldn't look-up essential EXIF Id's - exiting")
     exit(1)
-  return exif_dict
-
+  return exif_dict 
 
 # this is the main function which start the picture frame
 def start_picframe():
   global time_delay, fade_time, shuffle, subdirectory, recent_days, date_from, date_to, quit
   global paused, nexttm, last_file_change, next_pic_num, delta_alpha, iFiles, nFi, EXIF_DICT
-  global client
 
   if recent_days > 0:
     dfrom = datetime.datetime.now() - datetime.timedelta(recent_days)  
@@ -562,106 +569,158 @@ def start_picframe():
       if k==ord('s'): # go back a picture
         next_pic_num -= 2
         if next_pic_num < -1:
-          next_pic_num = -1
-    if quit: # set by MQTT
+          next_pic_num = -1      
+    if quit or show_camera: # set by MQTT
       break
 
-  try:
-    client.loop_stop()
-  except Exception as e:
-    logging.warning("Stopping MQTT client failed: {}".format(e))
   if config.KEYBOARD:
     kbd.close()
   DISPLAY.destroy()
 
-
-##############################################
 # MQTT functionality - see https://www.thedigitalpictureframe.com/
-##############################################
-if config.USE_MQTT:
+def on_mqtt_connect(mqttclient, userdata, flags, rc):
+  logging.info("Connected to MQTT broker")
+
+def on_mqtt_message(mqttclient, userdata, message):
   try:
-    import paho.mqtt.client as mqtt
-    def on_connect(client, userdata, flags, rc):
-      logging.info("Connected to MQTT broker")
+    # TODO not ideal to have global but probably only reasonable way to do it
+    global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
+    global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory, recent_days
+    global show_camera, camera_end_tm
+    msg = message.payload.decode("utf-8")
+    reselect = False
+    rand = None
+    logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
 
-    def on_message(client, userdata, message):
-      # TODO not ideal to have global but probably only reasonable way to do it
-      global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
-      global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory, recent_days
-      msg = message.payload.decode("utf-8")
-      reselect = False
-      rand = None
-      logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
+    if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
+      try:
+        msg = msg.replace(".",":").replace("/",":").replace("-",":")
+        df = msg.split(":")
+        date_from = tuple(int(i) for i in df)
+        if len(date_from) != 3:
+          raise Exception("invalid date format")
+      except:
+        date_from = None
+      reselect = True
+    elif message.topic == "frame/date_to":
+      try:
+        msg = msg.replace(".",":").replace("/",":").replace("-",":")
+        df = msg.split(":")
+        date_to = tuple(int(i) for i in df)
+        if len(date_to) != 3:
+          raise Exception("invalid date format")
+      except:
+        date_from = None
+      reselect = True
+    elif message.topic == "frame/recent_days":
+      recent_days = int(msg)  
+      if recent_days > 0:
+        date_from = datetime.datetime.now() - datetime.timedelta(recent_days)  
+        date_from = (date_from.year, date_from.month, date_from.day)
+        date_to = None
+        rand = config.INC_OUTDATED_PROP
+        reselect = True
+    elif message.topic == "frame/time_delay":
+      time_delay = float(msg)
+    elif message.topic == "frame/fade_time":
+      fade_time = float(msg)
+      delta_alpha = 1.0 / (config.FPS * fade_time)
+    elif message.topic == "frame/shuffle":
+      shuffle = True if msg == "True" else False
+      reselect = True
+    elif message.topic == "frame/quit":
+      quit = True
+    elif message.topic == "frame/pause":
+      paused = not paused # toggle from previous value
+    elif message.topic == "frame/back":
+      next_pic_num -= 2
+      if next_pic_num < -1:
+        next_pic_num = -1
+      nexttm = time.time() - 86400.0
+    elif message.topic == "frame/subdirectory":
+      subdirectory = msg
+      reselect = True
+    elif message.topic == "frame/camera":
+      show_camera = True
+      camera_end_tm = time.time() + config.CAMERA_THRESHOLD
+    else:
+      logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
-      if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
-        try:
-          msg = msg.replace(".",":").replace("/",":").replace("-",":")
-          df = msg.split(":")
-          date_from = tuple(int(i) for i in df)
-          if len(date_from) != 3:
-            raise Exception("invalid date format")
-        except:
-          date_from = None
-        reselect = True
-      elif message.topic == "frame/date_to":
-        try:
-          msg = msg.replace(".",":").replace("/",":").replace("-",":")
-          df = msg.split(":")
-          date_to = tuple(int(i) for i in df)
-          if len(date_to) != 3:
-            raise Exception("invalid date format")
-        except:
-          date_from = None
-        reselect = True
-      elif message.topic == "frame/recent_days":
-        recent_days = int(msg)  
-        if recent_days > 0:
-          date_from = datetime.datetime.now() - datetime.timedelta(recent_days)  
-          date_from = (date_from.year, date_from.month, date_from.day)
-          date_to = None
-          rand = config.INC_OUTDATED_PROP
-          reselect = True
-      elif message.topic == "frame/time_delay":
-        time_delay = float(msg)
-      elif message.topic == "frame/fade_time":
-        fade_time = float(msg)
-        delta_alpha = 1.0 / (config.FPS * fade_time)
-      elif message.topic == "frame/shuffle":
-        shuffle = True if msg == "True" else False
-        reselect = True
-      elif message.topic == "frame/quit":
-        quit = True
-      elif message.topic == "frame/paused":
-        paused = not paused # toggle from previous value
-      elif message.topic == "frame/back":
-        next_pic_num -= 2
-        if next_pic_num < -1:
-          next_pic_num = -1
-        nexttm = time.time() - 86400.0
-      elif message.topic == "frame/subdirectory":
-        subdirectory = msg
-        reselect = True
-      else:
-        logging.info('Unknown MQTT topic: {}'.format(message.topic))
-
-      if reselect:
-        iFiles, nFi = get_files(date_from, date_to, rand)
-        next_pic_num = 0
-
-    # set up MQTT listening
-    client = mqtt.Client()
-    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
-    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    client.loop_start()
-    client.subscribe("frame/+", qos=0)
-    client.on_connect = on_connect
-    client.on_message = on_message
+    if reselect:
+      iFiles, nFi = get_files(date_from, date_to, rand)
+      next_pic_num = 0
   except Exception as e:
-    logging.warning("MQTT not set up because of: {}".format(e))
+    logging.warning("Error while handling MQTT message: {}".format(e))
+
+def start_mqtt(): 
+  try: 
+    mqttclient = mqtt.mqttclient()
+    mqttclient.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
+    mqttclient.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
+    mqttclient.subscribe("frame/+", qos=0)
+    mqttclient.on_connect = on_mqtt_connect
+    mqttclient.on_message = on_mqtt_message
+    mqttclient.loop_start()
+    logging.info('MQTT client started')
+    return mqttclient
+  except Exception as e:
+    logging.warning("Couldn't start MQTT: {}".format(e))
+    return None
+
+def stop_mqtt(mqttclient):
+  try: 
+    mqttclient.loop_stop()
+    logging.info('MQTT client stopped')
+  except Exception as e:
+    logging.warning("Couldn't stop MQTT: {}".format(e))
+
+def start_vlc():
+  proc = None
+  try:
+    proc = subprocess.Popen(['vlc'])
+    logging.info("VLC started")
+  except OSError as e:
+    logging.warning("Couldn't start VLC: {}".format(e))  
+  return proc
+
+def stop_vlc(proc):
+  try:
+    if proc:
+      proc.terminate()
+      logging.info("VLC stopped")
+    else:
+      logging.warning("No VLC to stop")  
+  except OSError as e:
+    logging.warning("Couldn't stop VLC: {}".format(e)) 
+
+def start_camera():
+  global camera_end_tm
+  proc = start_vlc()
+  if camera_end_tm > time.time():
+    time.sleep(5) # wake up regularly to check if camera_end_tm changed via MQTT  
+  stop_vlc(proc)
+
+def main():
+  global date_from, date_to, iFiles, nFi, quit, show_camera, EXIF_DICT
+  logging.info('Starting infotainment system...')
+  EXIF_DICT = create_EXIF_dict() 
+  if config.USE_MQTT:
+    mqttclient = start_mqtt()
+  logging.info('Initial scan of image directory...')
+  iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+
+  while not quit:
+    logging.info('Starting picture frame')
+    start_picframe()
+    if show_camera:
+      logging.info('Starting camera viewer')
+      start_camera()
+      show_camera = False
+    
+  if config.USE_MQTT:
+    stop_mqtt(mqttclient)
+  logging.info('Infotainment system stopped')
 
 #############################################################################
-EXIF_DICT = create_EXIF_dict()  # create EXIF lookup dict
-
 if __name__ == "__main__":
-  iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
-  start_picframe()
+  main()

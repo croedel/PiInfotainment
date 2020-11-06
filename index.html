@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="stylesheet.css" media="screen">
+    <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+    <title>Infotainment System</title>
+  </head>
+  <body>
+    <h1>Infotainment Admin</h1>
+    
+    <form action="index.html" method="get" autocomplete="off">  
+      <label for="topic">Command</label>
+      <select name="topic" id="topic">
+        <option value="back">Back</option>
+        <option value="subdirectory">Subdirectory</option>
+        <option value="date_from">Start date</option>
+        <option value="date_to">End date</option>
+        <option value="recent_days">Recent days</option>
+        <option value="time_delay">Time delay</option>
+        <option value="fade_delay">Frame delay</option>
+        <option value="paused">Pause</option>
+        <option value="camera">Camera</option>
+        <option value="quit">Quit</option>
+      </select>
+      <label for="data">Data</label>
+      <input id="data" name="data">
+      <button type="submit">Send</button>
+    </form>
+    <br>
+    Date: YYYY/MM/DD
+  </body>
+</html>
