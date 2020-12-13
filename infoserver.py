@@ -8,16 +8,18 @@ import argparse
 import urllib
 import os
 import config
+logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
-logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
 try:
   import paho.mqtt.publish as publish
 except Exception as e:
   logging.warning("MQTT not set up because of: {}".format(e))
 
 def mqtt_publish( topic, payload ):  
-  auth = {'username': config.MQTT_LOGIN, 'password': config.MQTT_PASSWORD} 
-  logging.info("Publish MQTT command {}: {}".format(topic, payload))
+  auth = {}
+  auth['username'] = config.MQTT_LOGIN
+  auth['password'] = config.MQTT_PASSWORD 
+  logging.info("Publish MQTT command {}: {} {}".format(topic, payload, str(auth)))
   try:
     publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
   except Exception as e:
@@ -34,23 +36,24 @@ class Handler(BaseHTTPRequestHandler):
     self.end_headers()
 
   def do_GET(self):
-    path = self.path.strip('/')
-    delim = path.find('?')
-    params = ''
-    if delim > 0:
-      params = urllib.parse.parse_qs(path[delim+1:])
-      path = path[:delim]
+    parts = self.path.strip('/').split('?')
+    path = parts[0]
     if path == '':
       path = "index.html"  
+    if len(parts) > 1:
+      params = urllib.parse.parse_qs(parts[1])
+    else:
+      params = ''
     fname = os.path.join(os.path.dirname(__file__), path)
     logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )
-
+    
     # publish command to MQTT
     if 'topic' in params:
       topic = 'frame/' + params['topic'][0]   
-      data = ''
       if 'data' in params:
         data = params['data'][0]
+      else:
+        data = ''
       mqtt_publish( topic, data )
     
     try:
@@ -66,10 +69,10 @@ class Handler(BaseHTTPRequestHandler):
     post_data = self.rfile.read(content_length) # <--- Gets the data itself
     logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             str(self.path), str(self.headers), post_data.decode('utf-8'))
-
     self._set_header()
     self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
+#########################
 def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8080):
   server_address = (addr, port)
   httpd = server_class(server_address, handler_class)

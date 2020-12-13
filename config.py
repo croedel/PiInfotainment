@@ -3,8 +3,8 @@
 
 # Picture handling 
 #PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
-PIC_DIR = "/mnt/photo" # directory where to find the pictures
-PIC_DIR = "//SYNOLOGYDS216/photo/2020"
+PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
+#PIC_DIR = "//SYNOLOGYDS216/photo/2020"
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 #CHECK_DIR_TM = 60.0  # time in seconds between checking if the image directory has changed
@@ -14,12 +14,10 @@ INC_OUTDATED_PROP = 100 # Include outdated images with a propability of 1/x
 NO_FILES_IMG = "/home/pi/infotainment/no-pictures.jpg"  # image to show if none selected
 
 # Shader
-#FIT = False          # shrink to fit screen i.e. don't crop
 FIT = True          # shrink to fit screen i.e. don't crop
 BLUR_AMOUNT = 12.0   # larger values than 12 will increase processing load quite a bit
 BLUR_EDGES = False   # use blurred version of image to fill edges - will override FIT = False
 BLUR_ZOOM = 1.0      # must be >= 1.0 which expands the backgorund to just fill the space around the image
-#EDGE_ALPHA = 0.5     # background colour at edge. 1.0 would show reflection of image")
 EDGE_ALPHA = 0.3     # background colour at edge. 1.0 would show reflection of image")
 FPS = 20.0           # granularity of blending
 BACKGROUND = (0.2, 0.2, 0.3, 1.0) # RGBA to fill edges when fitting
@@ -48,7 +46,6 @@ TEXT_POINT_SIZE = 45
 RESOLVE_GPS = True      # Resolve GPS coordinates in EXIF 
 
 # Options
-#VERBOSE = False      # show debug messages
 VERBOSE = True      # show debug messages
 KEYBOARD = False     # set to False when running headless to avoid curses error. True for debugging
 FONT_FILE = "/home/pi/infotainment/fonts/NotoSans-Regular.ttf"
@@ -59,7 +56,7 @@ CODEPOINTS = '1234567890AÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ.,!* _-/:;@()°%abcdefgh
 USE_MQTT = True
 MQTT_SERVER = "localhost"
 MQTT_PORT = 1883
-MQTT_LOGIN  = ""
+MQTT_LOGIN  = " "
 MQTT_PASSWORD = ""
 
 # Weather
@@ -81,4 +78,6 @@ W_FORECAST_TXT  = "<temp> (<ftemp>), Wind <wind> (<winddeg>), Niederschlag <pop>
 W_POINT_SIZE = 42
 
 # CAMERA
-CAMERA_THRESHOLD = 20   # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
+CAMERA_VIEWER = "vlc"       # Path to Camera Viewer (e.g. VLC)
+CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam
+CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event

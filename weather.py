@@ -218,6 +218,7 @@ def format_weather( obj, wtype, lang ):
     
 # this is the main function to get the weather info
 def get_weather_info( lat, lon, units, lang, appid ): 
+  logging.info('Refreshing weather info')
   if lang == 'de':
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")  
 

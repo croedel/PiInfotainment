@@ -6,7 +6,6 @@ See http://pi3d.github.io/ and https://www.thedigitalpictureframe.com/
 '''
 import os
 import logging
-import subprocess
 import time
 import datetime
 import random
@@ -19,13 +18,18 @@ import config
 import weather
 import GPSlookup
 
-logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
+logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
 if config.USE_MQTT:
   try:
-    import paho.mqtt.mqttclient as mqtt
+    import paho.mqtt.client as mqtt
   except Exception as e:
-    logging.warning("Couldn't set up MQTT: {}".format(e))
+    logging.warning("Couldn't initialize MQTT: {}".format(e))
+
+try:
+  import vlc 
+except Exception as e:
+  logging.warning("Couldn't initialize VLC: {}".format(e))
 
 #####################################################
 # global variables 
@@ -44,13 +48,40 @@ next_pic_num = 0
 delta_alpha = 1.0 / (config.FPS * fade_time) # delta alpha
 iFiles = []
 nFi = 0
-show_camera = None
+show_camera = False
 camera_end_tm = 0.0
 EXIF_DICT = {}
 
 #####################################################
-# some functions to tidy subsequent code
-#####################################################
+def create_EXIF_dict():
+  exif_dict = {
+    'Orientation': None,
+    'DateTimeOriginal': None,
+    'ImageDescription': None,
+    'Rating': None,
+    'Make': None,
+    'Model': None,
+    'Artist': None,
+    'Copyright': None,
+    'ExposureTime': None,
+    'FNumber': None,
+    'ISOSpeedRatings': None,
+    'FocalLength': None,
+    'ExifImageWidth': None,
+    'ExifImageHeight': None,
+    'FocalLengthIn35mmFilm': None,
+    'GPSInfo': None
+  }
+
+  # create reverse lookup dictionary
+  for k, v in ExifTags.TAGS.items():
+    if v in exif_dict:
+      exif_dict[v] = k
+  if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
+    logging.critical( "Couldn't look-up essential EXIF Id's - exiting")
+    exit(1)
+  return exif_dict
+
 def tex_load(pic_num, iFiles, size=None):
   global date_from, date_to
   if type(pic_num) is int:
@@ -72,12 +103,12 @@ def tex_load(pic_num, iFiles, size=None):
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
         iFiles[pic_num][4] = exif_info
-      if date_from is not None:
-        if dt and dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
-          return None
-      if date_to is not None:
-        if dt and dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
-          return None
+#      if date_from is not None:
+#        if dt and dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
+#          return None
+#      if date_to is not None:
+#        if dt and dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
+#          return None
     (w, h) = im.size
     max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
@@ -217,6 +248,7 @@ def check_changes():
   return update
 
 def get_files(dt_from=None, dt_to=None, rand=None):
+  logging.info('Refreshing photo list')
   # dt_from and dt_to are either None or tuples (2016,12,25)
   if dt_from is None:
     dt_from = 0.0
@@ -256,7 +288,8 @@ def get_files(dt_from=None, dt_to=None, rand=None):
         dt = None # if exif data not read - used for checking in tex_load
         exif_info = {}
         mtime = os.path.getmtime(file_path_name)
-        if config.DELAY_EXIF and dt_from is not None and mtime < dt_from and random.randint(1,rand_file) != 1:
+        randomize = random.randint(1,rand_file)
+        if config.DELAY_EXIF and (dt_from is not None and mtime < dt_from and randomize != 1):
           include_flag = False # file is older then dt_from --> ignore
         if not config.DELAY_EXIF:
           (orientation, dt, exif_info) = get_exif_info(file_path_name)
@@ -274,6 +307,7 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     file_list = temp_list_first + temp_list_last
   else:
     file_list.sort() # if not shuffled; sort by name
+  logging.info('Photo list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
 def get_exif_info(file_path_name, im=None):
@@ -293,7 +327,7 @@ def get_exif_info(file_path_name, im=None):
       if data:
         exif_info[tag] = data
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
-    logging.warning('Warning: Exception while trying to read EXIF: ', e)
+    logging.debug('Exception while trying to read EXIF: ', e)
     if dt == None:
       dt = os.path.getmtime(file_path_name) # so use file last modified date
     if orientation == None:
@@ -304,51 +338,19 @@ def convert_heif(fname):
     try:
         import pyheif
         from PIL import Image
-
         heif_file = pyheif.read(fname)
         image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data,
                                 "raw", heif_file.mode, heif_file.stride)
         return image
     except:
-      logging.error("have you installed pyheif?")
+      logging.warning("Could't convert HEIF. Have you installed pyheif?")
+ 
 
-def create_EXIF_dict():
-  exif_dict = {
-    'Orientation': None,
-    'DateTimeOriginal': None,
-    'ImageDescription': None,
-    'Rating': None,
-    'Make': None,
-    'Model': None,
-    'Artist': None,
-    'Copyright': None,
-    'ExposureTime': None,
-    'FNumber': None,
-    'ISOSpeedRatings': None,
-    'FocalLength': None,
-    'ExifImageWidth': None,
-    'ExifImageHeight': None,
-    'FocalLengthIn35mmFilm': None,
-    'GPSInfo': None
-  }
-
-  # create reverse lookup dictionary
-  for k, v in ExifTags.TAGS.items():
-    if v in exif_dict:
-      exif_dict[v] = k
-  if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
-    logging.critical( "Couldn't look-up essential EXIF Id's - exiting")
-    exit(1)
-  return exif_dict 
-
-# this is the main function which start the picture frame
+# start the picture frame
 def start_picframe():
   global time_delay, fade_time, shuffle, subdirectory, recent_days, date_from, date_to, quit
   global paused, nexttm, last_file_change, next_pic_num, delta_alpha, iFiles, nFi, EXIF_DICT
 
-  if recent_days > 0:
-    dfrom = datetime.datetime.now() - datetime.timedelta(recent_days)  
-    date_from = (dfrom.year, dfrom.month, dfrom.day)
   if config.KENBURNS:
     kb_up = True
     config.FIT = False
@@ -360,7 +362,6 @@ def start_picframe():
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
 
- 
   # Initialize pi3d system
   DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
                 display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
@@ -424,13 +425,11 @@ def start_picframe():
   # here comes the main loop
   while DISPLAY.loop_running():
     tm = time.time()
-    redraw_texts = False
     if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
       if nFi > 0:
         nexttm = tm + time_delay
         sbg = sfg
         sfg = None
-        redraw_texts = True
 
         if (config.W_SKIP_CNT > 0) and (next_pic_num % config.W_SKIP_CNT == 1) and not weather_interstitial_active: 
           # show weather interstitial
@@ -452,7 +451,7 @@ def start_picframe():
             weather_interstitial_active = False
           
           start_pic_num = next_pic_num
-          while sfg is None: # keep going through until a usable picture is found
+          while sfg is None: # keep going through until a usable picture is found  
             pic_num = next_pic_num
             sfg = tex_load(pic_num, iFiles, (DISPLAY.width, DISPLAY.height))
             next_pic_num += 1
@@ -475,14 +474,13 @@ def start_picframe():
           else: # could have a NO IMAGES selected and being drawn
             for item in textlines:
               item.colouring.set_colour(alpha=0.0)
-#          text.regen()
 
       if sfg is None:
         sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
         sbg = sfg
 
       a = 0.0 # alpha - proportion front image to back
-      name_tm = tm + config.SHOW_NAMES_TM
+      name_tm = time.time() + config.SHOW_NAMES_TM
       if sbg is None: # first time through
         sbg = sfg
       slide.set_textures([sfg, sbg])
@@ -541,22 +539,19 @@ def start_picframe():
       textlines[0].set_text("NO IMAGES SELECTED")
       textlines[0].colouring.set_colour(alpha=1.0)
       next_check_tm = tm + 5.0
-      redraw_texts = True
     elif tm < name_tm and weather_interstitial_active == False:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0
       dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
       for item in textlines:
         item.colouring.set_colour(alpha=alpha)
-      redraw_texts = True
 
-    if redraw_texts:
-      text.regen()
-      text.draw()
-      weatherinfo.regen()
-      weatherinfo.draw()
-      for item in weathericons:
-        item.draw()
+    text.regen()
+    text.draw()
+    weatherinfo.regen()
+    weatherinfo.draw()
+    for item in weathericons:
+      item.draw()
 
     if config.KEYBOARD:
       k = kbd.read()
@@ -589,7 +584,6 @@ def on_mqtt_message(mqttclient, userdata, message):
     global show_camera, camera_end_tm
     msg = message.payload.decode("utf-8")
     reselect = False
-    rand = None
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
 
     if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
@@ -618,7 +612,6 @@ def on_mqtt_message(mqttclient, userdata, message):
         date_from = datetime.datetime.now() - datetime.timedelta(recent_days)  
         date_from = (date_from.year, date_from.month, date_from.day)
         date_to = None
-        rand = config.INC_OUTDATED_PROP
         reselect = True
     elif message.topic == "frame/time_delay":
       time_delay = float(msg)
@@ -647,74 +640,71 @@ def on_mqtt_message(mqttclient, userdata, message):
       logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
     if reselect:
-      iFiles, nFi = get_files(date_from, date_to, rand)
+      iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
       next_pic_num = 0
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
 
 def start_mqtt(): 
   try: 
-    mqttclient = mqtt.mqttclient()
-    mqttclient.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
-    mqttclient.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    mqttclient.subscribe("frame/+", qos=0)
-    mqttclient.on_connect = on_mqtt_connect
-    mqttclient.on_message = on_mqtt_message
-    mqttclient.loop_start()
+    client = mqtt.Client()
+    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
+    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
+    client.subscribe("frame/+", qos=0)
+    client.on_connect = on_mqtt_connect
+    client.on_message = on_mqtt_message
+    client.loop_start()
     logging.info('MQTT client started')
-    return mqttclient
+    return client
   except Exception as e:
     logging.warning("Couldn't start MQTT: {}".format(e))
-    return None
 
-def stop_mqtt(mqttclient):
+def stop_mqtt(client):
   try: 
-    mqttclient.loop_stop()
+    client.loop_stop()
     logging.info('MQTT client stopped')
   except Exception as e:
     logging.warning("Couldn't stop MQTT: {}".format(e))
 
-def start_vlc():
-  proc = None
-  try:
-    proc = subprocess.Popen(['vlc'])
-    logging.info("VLC started")
-  except OSError as e:
-    logging.warning("Couldn't start VLC: {}".format(e))  
-  return proc
+def start_cam_viewer():
+  logging.info("CamViewer started")
+  options = "-f"
+  player = vlc.MediaPlayer( config.CAMERA_URL + " " + options ) 
+  player.play()
+  return player
 
-def stop_vlc(proc):
-  try:
-    if proc:
-      proc.terminate()
-      logging.info("VLC stopped")
-    else:
-      logging.warning("No VLC to stop")  
-  except OSError as e:
-    logging.warning("Couldn't stop VLC: {}".format(e)) 
+def stop_cam_viewer(player):
+  logging.info("CamViewer stopped")
+  player.stop()
+  player.release()
 
 def start_camera():
   global camera_end_tm
-  proc = start_vlc()
-  if camera_end_tm > time.time():
+  player = start_cam_viewer()
+  while camera_end_tm > time.time():
     time.sleep(5) # wake up regularly to check if camera_end_tm changed via MQTT  
-  stop_vlc(proc)
+  stop_cam_viewer(player)
 
 def main():
-  global date_from, date_to, iFiles, nFi, quit, show_camera, EXIF_DICT
+  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, EXIF_DICT
   logging.info('Starting infotainment system...')
   EXIF_DICT = create_EXIF_dict() 
   if config.USE_MQTT:
     mqttclient = start_mqtt()
+  if recent_days > 0:
+    dfrom = datetime.datetime.now() - datetime.timedelta(recent_days)  
+    date_from = (dfrom.year, dfrom.month, dfrom.day)
+
   logging.info('Initial scan of image directory...')
   iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
 
   while not quit:
     logging.info('Starting picture frame')
+    nexttm = 0.0
     start_picframe()
     if show_camera:
       logging.info('Starting camera viewer')
-      start_camera()
+#      start_camera()
       show_camera = False
     
   if config.USE_MQTT:
