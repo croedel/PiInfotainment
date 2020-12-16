@@ -13,7 +13,7 @@ import math
 import pi3d
 
 from pi3d.Texture import MAX_SIZE
-from PIL import Image, ExifTags, ImageFilter # these are needed for getting exif data from images
+from PIL import Image, ImageFilter # these are needed for getting exif data from images
 import config
 import weather
 import GPSlookup
@@ -33,57 +33,20 @@ except Exception as e:
 
 #####################################################
 # global variables 
-time_delay = config.TIME_DELAY
-fade_time = config.FADE_TIME
-shuffle = config.SHUFFLE
-subdirectory = config.SUBDIRECTORY
-recent_days = config.RECENT_DAYS
 date_from = None
 date_to = None
 quit = False
-paused = False # NB must be set to True *only* after the first iteration of the show!
+paused = False 
 nexttm = 0.0
-last_file_change = 0.0 # holds last change time in directory structure
+last_file_change = 0.0 # latest change time in directory structure
 next_pic_num = 0
-delta_alpha = 1.0 / (config.FPS * fade_time) # delta alpha
 iFiles = []
 nFi = 0
 show_camera = False
 camera_end_tm = 0.0
-EXIF_DICT = {}
 
 #####################################################
-def create_EXIF_dict():
-  exif_dict = {
-    'Orientation': None,
-    'DateTimeOriginal': None,
-    'ImageDescription': None,
-    'Rating': None,
-    'Make': None,
-    'Model': None,
-    'Artist': None,
-    'Copyright': None,
-    'ExposureTime': None,
-    'FNumber': None,
-    'ISOSpeedRatings': None,
-    'FocalLength': None,
-    'ExifImageWidth': None,
-    'ExifImageHeight': None,
-    'FocalLengthIn35mmFilm': None,
-    'GPSInfo': None
-  }
-
-  # create reverse lookup dictionary
-  for k, v in ExifTags.TAGS.items():
-    if v in exif_dict:
-      exif_dict[v] = k
-  if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
-    logging.critical( "Couldn't look-up essential EXIF Id's - exiting")
-    exit(1)
-  return exif_dict
-
 def tex_load(pic_num, iFiles, size=None):
-  global date_from, date_to
   if type(pic_num) is int:
     fname = iFiles[pic_num][0]
     orientation = iFiles[pic_num][1]
@@ -103,12 +66,6 @@ def tex_load(pic_num, iFiles, size=None):
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
         iFiles[pic_num][4] = exif_info
-#      if date_from is not None:
-#        if dt and dt < time.mktime(date_from + (0, 0, 0, 0, 0, 0)):
-#          return None
-#      if date_to is not None:
-#        if dt and dt > time.mktime(date_to + (0, 0, 0, 0, 0, 0)):
-#          return None
     (w, h) = im.size
     max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
@@ -236,19 +193,16 @@ def format_text(iFiles, pic_num):
     logging.warning('Exception in format_text: ', e)
   return (txt1, txt2, txt3, txt4)
 
-def check_changes():
-  global last_file_change
-  update = False
+def check_picdir_changed( last_file_change ):
   for root, subdirs, filenames in os.walk(config.PIC_DIR, topdown=True):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
     mod_tm = os.stat(root).st_mtime
     if mod_tm > last_file_change:
       last_file_change = mod_tm
-      update = True
-  return update
+  return last_file_change
 
 def get_files(dt_from=None, dt_to=None, rand=None):
-  logging.info('Refreshing photo list')
+  logging.info('Refreshing image list')
   # dt_from and dt_to are either None or tuples (2016,12,25)
   if dt_from is None:
     dt_from = 0.0
@@ -265,10 +219,10 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     rand_dir = max(1, int(rand/10))
     rand_file = int(rand)
 
-  global shuffle, EXIF_DICT, last_file_change
+  global last_file_change
   file_list = []
   extensions = ['.png','.jpg','.jpeg','.heif','.heic'] # can add to these
-  picture_dir = os.path.join(config.PIC_DIR, subdirectory)
+  picture_dir = os.path.join(config.PIC_DIR, config.SUBDIRECTORY)
   for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
     mod_tm = os.stat(root).st_mtime # directory modification time
@@ -288,17 +242,17 @@ def get_files(dt_from=None, dt_to=None, rand=None):
         dt = None # if exif data not read - used for checking in tex_load
         exif_info = {}
         mtime = os.path.getmtime(file_path_name)
-        randomize = random.randint(1,rand_file)
-        if config.DELAY_EXIF and (dt_from is not None and mtime < dt_from and randomize != 1):
-          include_flag = False # file is older then dt_from --> ignore
-        if not config.DELAY_EXIF:
+        if config.DELAY_EXIF:
+          if dt_from is not None and mtime < dt_from and randomize!=random.randint(1,rand_file):
+            include_flag = False # file is older then dt_from --> ignore
+        else:    
           (orientation, dt, exif_info) = get_exif_info(file_path_name)
           if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
             include_flag = False
         if include_flag:
-          # iFiles now list of lists [file_name, orientation, file_changed_date, exif_date, exif_info] 
+          # append [file_name, orientation, file_changed_date, exif_date, exif_info] 
           file_list.append([file_path_name, orientation, mtime, dt, exif_info])
-  if shuffle:
+  if config.SHUFFLE:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]
     temp_list_last = file_list[:-config.RECENT_N]
@@ -306,8 +260,8 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     random.shuffle(temp_list_last)
     file_list = temp_list_first + temp_list_last
   else:
-    file_list.sort() # if not shuffled; sort by name
-  logging.info('Photo list refreshed: {} images found'.format(len(file_list)) )
+    file_list.sort() # if not config.SHUFFLEd; sort by name
+  logging.info('Image list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
 def get_exif_info(file_path_name, im=None):
@@ -319,10 +273,10 @@ def get_exif_info(file_path_name, im=None):
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
     exif_data = im._getexif() # TODO check if/when this becomes proper function
     dt = time.mktime(
-        time.strptime(exif_data[EXIF_DICT['DateTimeOriginal']], '%Y:%m:%d %H:%M:%S'))
-    orientation = int(exif_data[EXIF_DICT['Orientation']])
+        time.strptime(exif_data[config.EXIF_DICT['DateTimeOriginal']], '%Y:%m:%d %H:%M:%S'))
+    orientation = int(exif_data[config.EXIF_DICT['Orientation']])
     # assemble exif_info
-    for tag, val in EXIF_DICT.items():
+    for tag, val in config.EXIF_DICT.items():
       data = exif_data.get(val)
       if data:
         exif_info[tag] = data
@@ -335,21 +289,19 @@ def get_exif_info(file_path_name, im=None):
   return (orientation, dt, exif_info)
 
 def convert_heif(fname):
-    try:
-        import pyheif
-        from PIL import Image
-        heif_file = pyheif.read(fname)
-        image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data,
-                                "raw", heif_file.mode, heif_file.stride)
-        return image
-    except:
-      logging.warning("Could't convert HEIF. Have you installed pyheif?")
+  try:
+    import pyheif
+    from PIL import Image
+    heif_file = pyheif.read(fname)
+    image = Image.frombytes(heif_file.mode, heif_file.size, heif_file.data, "raw", heif_file.mode, heif_file.stride)
+    return image
+  except:
+    logging.warning("Could't convert HEIF. Have you installed pyheif?")
  
 
 # start the picture frame
 def start_picframe():
-  global time_delay, fade_time, shuffle, subdirectory, recent_days, date_from, date_to, quit
-  global paused, nexttm, last_file_change, next_pic_num, delta_alpha, iFiles, nFi, EXIF_DICT
+  global date_from, date_to, quit, paused, nexttm, last_file_change, next_pic_num, iFiles, nFi
 
   if config.KENBURNS:
     kb_up = True
@@ -361,6 +313,7 @@ def start_picframe():
   sfg = None # slide for background
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
+  delta_alpha = 1.0 / (config.FPS * config.FADE_TIME) # delta alpha
 
   # Initialize pi3d system
   DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
@@ -427,7 +380,7 @@ def start_picframe():
     tm = time.time()
     if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
       if nFi > 0:
-        nexttm = tm + time_delay
+        nexttm = tm + config.TIME_DELAY
         sbg = sfg
         sfg = None
 
@@ -457,9 +410,9 @@ def start_picframe():
             next_pic_num += 1
             if next_pic_num >= nFi:
               num_run_through += 1
-              if shuffle and num_run_through >= config.RESHUFFLE_NUM:
+              if config.SHUFFLE and num_run_through >= config.REconfig.SHUFFLE_NUM:
                 num_run_through = 0
-                random.shuffle(iFiles)
+                random.config.SHUFFLE(iFiles)
               next_pic_num = 0
             if next_pic_num == start_pic_num:
               nFi = 0
@@ -497,15 +450,15 @@ def start_picframe():
       slide.unif[os1] = (wh_rat - 1.0) * 0.5
       slide.unif[os2] = 0.0
       if config.KENBURNS:
-          xstep, ystep = (slide.unif[i] * 2.0 / time_delay for i in (48, 49))
-          slide.unif[48] = 0.0
-          slide.unif[49] = 0.0
-          kb_up = not kb_up
+        xstep, ystep = (slide.unif[i] * 2.0 / config.TIME_DELAY for i in (48, 49))
+        slide.unif[48] = 0.0
+        slide.unif[49] = 0.0
+        kb_up = not kb_up
 
     if config.KENBURNS:
       t_factor = nexttm - tm
       if kb_up:
-        t_factor = time_delay - t_factor
+        t_factor = config.TIME_DELAY - t_factor
       slide.unif[48] = xstep * t_factor
       slide.unif[49] = ystep * t_factor
 
@@ -514,11 +467,11 @@ def start_picframe():
       if a > 1.0:
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
-    else: # no transition effect safe to reshuffle etc
+    else: # no transition effect safe to reconfig.SHUFFLE etc
       if tm > next_check_tm:
-        if check_changes():
-          if recent_days > 0: # reset data_from to reflect time is proceeding
-            date_from = datetime.datetime.now() - datetime.timedelta(recent_days)
+        if check_picdir_changed(last_file_change) > last_file_change:
+          if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
+            date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
           iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
           num_run_through = 0
@@ -558,6 +511,7 @@ def start_picframe():
       if k != -1:
         nexttm = time.time() - 86400.0
       if k==27: #ESC
+        DISPLAY.destroy()
         break
       if k==ord(' '):
         paused = not paused
@@ -566,11 +520,11 @@ def start_picframe():
         if next_pic_num < -1:
           next_pic_num = -1      
     if quit or show_camera: # set by MQTT
+      DISPLAY.destroy()
       break
 
   if config.KEYBOARD:
     kbd.close()
-  DISPLAY.destroy()
 
 # MQTT functionality - see https://www.thedigitalpictureframe.com/
 def on_mqtt_connect(mqttclient, userdata, flags, rc):
@@ -579,14 +533,13 @@ def on_mqtt_connect(mqttclient, userdata, flags, rc):
 def on_mqtt_message(mqttclient, userdata, message):
   try:
     # TODO not ideal to have global but probably only reasonable way to do it
-    global next_pic_num, iFiles, nFi, date_from, date_to, time_delay
-    global delta_alpha, fade_time, shuffle, quit, paused, nexttm, subdirectory, recent_days
-    global show_camera, camera_end_tm
+    global next_pic_num, iFiles, nFi, date_from, date_to 
+    global quit, paused, nexttm, show_camera, camera_end_tm
     msg = message.payload.decode("utf-8")
     reselect = False
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
 
-    if message.topic == "frame/date_from": # NB entered as mqtt string "2016:12:25"
+    if message.topic == "screen/date_from": # NB entered as mqtt string "2016:12:25"
       try:
         msg = msg.replace(".",":").replace("/",":").replace("-",":")
         df = msg.split(":")
@@ -596,7 +549,7 @@ def on_mqtt_message(mqttclient, userdata, message):
       except:
         date_from = None
       reselect = True
-    elif message.topic == "frame/date_to":
+    elif message.topic == "screen/date_to":
       try:
         msg = msg.replace(".",":").replace("/",":").replace("-",":")
         df = msg.split(":")
@@ -606,34 +559,31 @@ def on_mqtt_message(mqttclient, userdata, message):
       except:
         date_from = None
       reselect = True
-    elif message.topic == "frame/recent_days":
-      recent_days = int(msg)  
-      if recent_days > 0:
-        date_from = datetime.datetime.now() - datetime.timedelta(recent_days)  
+    elif message.topic == "screen/recent_days":
+      config.RECENT_DAYS = int(msg)  
+      if config.RECENT_DAYS > 0:
+        date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
         date_from = (date_from.year, date_from.month, date_from.day)
         date_to = None
         reselect = True
-    elif message.topic == "frame/time_delay":
-      time_delay = float(msg)
-    elif message.topic == "frame/fade_time":
-      fade_time = float(msg)
-      delta_alpha = 1.0 / (config.FPS * fade_time)
-    elif message.topic == "frame/shuffle":
-      shuffle = True if msg == "True" else False
+    elif message.topic == "screen/time_delay":
+      config.TIME_DELAY = float(msg)
+    elif message.topic == "screen/shuffle":
+      config.SHUFFLE = True if msg == "True" else False
       reselect = True
-    elif message.topic == "frame/quit":
+    elif message.topic == "screen/quit":
       quit = True
-    elif message.topic == "frame/pause":
+    elif message.topic == "screen/pause":
       paused = not paused # toggle from previous value
-    elif message.topic == "frame/back":
+    elif message.topic == "screen/back":
       next_pic_num -= 2
       if next_pic_num < -1:
         next_pic_num = -1
       nexttm = time.time() - 86400.0
-    elif message.topic == "frame/subdirectory":
-      subdirectory = msg
+    elif message.topic == "screen/subdirectory":
+      config.SUBDIRECTORY = msg
       reselect = True
-    elif message.topic == "frame/camera":
+    elif message.topic == "screen/camera":
       show_camera = True
       camera_end_tm = time.time() + config.CAMERA_THRESHOLD
     else:
@@ -645,12 +595,13 @@ def on_mqtt_message(mqttclient, userdata, message):
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
 
-def start_mqtt(): 
+#-------------------------------------------
+def mqtt_start(): 
   try: 
     client = mqtt.Client()
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    client.subscribe("frame/+", qos=0)
+    client.subscribe("screen/+", qos=0)
     client.on_connect = on_mqtt_connect
     client.on_message = on_mqtt_message
     client.loop_start()
@@ -659,40 +610,42 @@ def start_mqtt():
   except Exception as e:
     logging.warning("Couldn't start MQTT: {}".format(e))
 
-def stop_mqtt(client):
+def mqtt_stop(client):
   try: 
     client.loop_stop()
     logging.info('MQTT client stopped')
   except Exception as e:
     logging.warning("Couldn't stop MQTT: {}".format(e))
 
-def start_cam_viewer():
+#-------------------------------------------
+def cam_viewer_start():
   logging.info("CamViewer started")
-  options = "-f"
+  options = "--canvas-width " + config.CAMERA_VIEWER_WIDTH
+  options += " --canvas-height" + config.CAMERA_VIEWER_HEIGHT
   player = vlc.MediaPlayer( config.CAMERA_URL + " " + options ) 
   player.play()
   return player
 
-def stop_cam_viewer(player):
+def cam_viewer_stop(player):
   logging.info("CamViewer stopped")
   player.stop()
   player.release()
 
-def start_camera():
+def cam_start():
   global camera_end_tm
-  player = start_cam_viewer()
+  player = cam_viewer_start()
   while camera_end_tm > time.time():
-    time.sleep(5) # wake up regularly to check if camera_end_tm changed via MQTT  
-  stop_cam_viewer(player)
+    time.sleep(5) # wake up regularly to check if camera_end_tm changed async via MQTT   
+  cam_viewer_stop(player)
 
+#-------------------------------------------
 def main():
-  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, EXIF_DICT
+  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera
   logging.info('Starting infotainment system...')
-  EXIF_DICT = create_EXIF_dict() 
   if config.USE_MQTT:
-    mqttclient = start_mqtt()
-  if recent_days > 0:
-    dfrom = datetime.datetime.now() - datetime.timedelta(recent_days)  
+    mqttclient = mqtt_start()
+  if config.RECENT_DAYS > 0:
+    dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
     date_from = (dfrom.year, dfrom.month, dfrom.day)
 
   logging.info('Initial scan of image directory...')
@@ -704,11 +657,11 @@ def main():
     start_picframe()
     if show_camera:
       logging.info('Starting camera viewer')
-#      start_camera()
+#      cam_start()
       show_camera = False
     
   if config.USE_MQTT:
-    stop_mqtt(mqttclient)
+    mqtt_stop(mqttclient)
   logging.info('Infotainment system stopped')
 
 #############################################################################

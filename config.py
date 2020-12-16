@@ -79,5 +79,42 @@ W_POINT_SIZE = 42
 
 # CAMERA
 CAMERA_VIEWER = "vlc"       # Path to Camera Viewer (e.g. VLC)
+CAMERA_VIEWER_WIDTH = 1920
+CAMERA_VIEWER_HEIGHT = 1080
 CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam
 CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
+
+EXIF_DICT = {}
+
+from PIL import ExifTags
+def create_EXIF_dict():
+  exif_dict = {
+    'Orientation': None,
+    'DateTimeOriginal': None,
+    'ImageDescription': None,
+    'Rating': None,
+    'Make': None,
+    'Model': None,
+    'Artist': None,
+    'Copyright': None,
+    'ExposureTime': None,
+    'FNumber': None,
+    'ISOSpeedRatings': None,
+    'FocalLength': None,
+    'ExifImageWidth': None,
+    'ExifImageHeight': None,
+    'FocalLengthIn35mmFilm': None,
+    'GPSInfo': None
+  }
+
+  # create reverse lookup dictionary
+  for k, v in ExifTags.TAGS.items():
+    if v in exif_dict:
+      exif_dict[v] = k
+  if (exif_dict['Orientation'] == None) or (exif_dict['DateTimeOriginal'] == None):
+    logging.critical( "Couldn't look-up essential EXIF Id's - exiting")
+    exit(1)
+  return exif_dict
+
+EXIF_DICT = create_EXIF_dict() 
+

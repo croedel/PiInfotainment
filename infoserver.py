@@ -49,7 +49,7 @@ class Handler(BaseHTTPRequestHandler):
     
     # publish command to MQTT
     if 'topic' in params:
-      topic = 'frame/' + params['topic'][0]   
+      topic = 'screen/' + params['topic'][0]   
       if 'data' in params:
         data = params['data'][0]
       else:
