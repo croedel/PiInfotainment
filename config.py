@@ -3,17 +3,18 @@
 
 # Picture handling 
 #PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
-PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
-#PIC_DIR = "//SYNOLOGYDS216/photo/2020"
+#PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
+PIC_DIR = "//SYNOLOGYDS216/photo/2020"
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 #CHECK_DIR_TM = 60.0  # time in seconds between checking if the image directory has changed
 CHECK_DIR_TM = 600.0  # time in seconds between checking if the image directory has changed
 RECENT_DAYS = 30      # If set to > 0, only images which were created within the last N days are shown.
-INC_OUTDATED_PROP = 100 # Include outdated images with a propability of 1/x  
+OUTDATED_DIR_PROP = 10    # Include outdated directories with a propability of 1/x  
+OUTDATED_FILE_PROP = 50  # Include outdated images with a propability of 1/x  
 NO_FILES_IMG = "/home/pi/infotainment/no-pictures.jpg"  # image to show if none selected
 
-# Shader
+# Shader 
 FIT = True          # shrink to fit screen i.e. don't crop
 BLUR_AMOUNT = 12.0   # larger values than 12 will increase processing load quite a bit
 BLUR_EDGES = False   # use blurred version of image to fill edges - will override FIT = False
@@ -81,7 +82,7 @@ W_POINT_SIZE = 42
 CAMERA_VIEWER = "vlc"       # Path to Camera Viewer (e.g. VLC)
 CAMERA_VIEWER_WIDTH = 1920
 CAMERA_VIEWER_HEIGHT = 1080
-CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam
+CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam stream
 CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
 
 EXIF_DICT = {}

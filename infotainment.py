@@ -201,23 +201,17 @@ def check_picdir_changed( last_file_change ):
       last_file_change = mod_tm
   return last_file_change
 
-def get_files(dt_from=None, dt_to=None, rand=None):
-  logging.info('Refreshing image list')
+def get_files(dt_from=None, dt_to=None):
+  logging.info('Refreshing file list')
   # dt_from and dt_to are either None or tuples (2016,12,25)
   if dt_from is None:
     dt_from = 0.0
-  else:
+  else:  
     dt_from = time.mktime(dt_from + (0, 0, 0, 0, 0, 0))
   if dt_to is None:
     dt_to = float(pow(2,32))
   else:  
     dt_to = time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
-  if rand == None or rand < 1:
-    rand_dir = 1
-    rand_file = 1
-  else:
-    rand_dir = max(1, int(rand/10))
-    rand_file = int(rand)
 
   global last_file_change
   file_list = []
@@ -227,10 +221,13 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
     mod_tm = os.stat(root).st_mtime # directory modification time
     create_tm = os.stat(root).st_ctime # directory creation time
-    if (mod_tm < dt_from or create_tm > dt_to) and random.randint(1,rand_dir) != 1:
-      logging.info('Ignoring dir {}'.format(root))  
+    if (mod_tm < dt_from or create_tm > dt_to) and random.randint(1,config.OUTDATED_DIR_PROP) != 1:
+      logging.info(' - {}: Ignored - Time restriction'.format(root))  
       continue
-    logging.info('Checking dir {}'.format(root) )  
+    if ".INFOTAINMENT_IGNORE.txt" in filenames:
+      logging.info(' - {}: Ignored - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
+      continue
+    logging.info(' - {}: Reading files'.format(root) )  
     if mod_tm > last_file_change:
       last_file_change = mod_tm
     for filename in filenames:
@@ -243,7 +240,7 @@ def get_files(dt_from=None, dt_to=None, rand=None):
         exif_info = {}
         mtime = os.path.getmtime(file_path_name)
         if config.DELAY_EXIF:
-          if dt_from is not None and mtime < dt_from and randomize!=random.randint(1,rand_file):
+          if dt_from is not None and mtime < dt_from and random.randint(1,config.OUTDATED_FILE_PROP) != 1:
             include_flag = False # file is older then dt_from --> ignore
         else:    
           (orientation, dt, exif_info) = get_exif_info(file_path_name)
@@ -261,7 +258,7 @@ def get_files(dt_from=None, dt_to=None, rand=None):
     file_list = temp_list_first + temp_list_last
   else:
     file_list.sort() # if not config.SHUFFLEd; sort by name
-  logging.info('Image list refreshed: {} images found'.format(len(file_list)) )
+  logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
 def get_exif_info(file_path_name, im=None):
@@ -473,7 +470,7 @@ def start_picframe():
           if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
             date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
-          iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+          iFiles, nFi = get_files(date_from, date_to)
           num_run_through = 0
           next_pic_num = 0
         next_check_tm = tm + config.CHECK_DIR_TM # create new file list at this time
@@ -590,7 +587,7 @@ def on_mqtt_message(mqttclient, userdata, message):
       logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
     if reselect:
-      iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+      iFiles, nFi = get_files(date_from, date_to)
       next_pic_num = 0
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
@@ -649,7 +646,7 @@ def main():
     date_from = (dfrom.year, dfrom.month, dfrom.day)
 
   logging.info('Initial scan of image directory...')
-  iFiles, nFi = get_files(date_from, date_to, config.INC_OUTDATED_PROP)
+  iFiles, nFi = get_files(date_from, date_to)
 
   while not quit:
     logging.info('Starting picture frame')
