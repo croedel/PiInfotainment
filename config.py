@@ -55,16 +55,16 @@ CODEPOINTS = '1234567890AÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ.,!* _-/:;@()°%abcdefgh
 
 # MQTT
 USE_MQTT = True
-MQTT_SERVER = "localhost"
-MQTT_PORT = 1883
-MQTT_LOGIN  = " "
-MQTT_PASSWORD = ""
+MQTT_SERVER = "localhost"   # Just change if you want to use a different MQTT server
+MQTT_PORT = 1883            # Just change if you want to use a different MQTT server
+MQTT_LOGIN  = " "           # Just change if you want to use a different MQTT server
+MQTT_PASSWORD = ""          # Just change if you want to use a different MQTT server  
 
 # Weather
 W_SKIP_CNT = 2             # show weather info after each N pictures (=0 disables weather info)
 W_REFRESH_DELAY = 300      # refresh weather info every N seconds
-W_LATITUDE = 48.1355979    # latitude of your location
-W_LONGITUDE = 11.3627159   # longitude of your location
+W_LATITUDE = 48.1355979    # latitude of your location (decimal degrees, e.g. 48.12345)
+W_LONGITUDE = 11.3627159   # longitude of your location (decimal degrees, e.g. 11.98765)
 W_UNIT = "metric"          # metric 
 W_LANGUAGE = "de"          # language
 W_API_KEY = "6ebd6acb5966433fad4c667062d4c18e" # openweathermap API key for "One Call API" 
@@ -84,6 +84,9 @@ CAMERA_VIEWER_WIDTH = 1920
 CAMERA_VIEWER_HEIGHT = 1080
 CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam stream
 CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
+
+#############################################################################
+######### Usually you don't ned to change anything below this line ##########
 
 EXIF_DICT = {}
 
