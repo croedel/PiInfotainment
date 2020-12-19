@@ -1,8 +1,7 @@
 #!/usr/bin/python
 from __future__ import absolute_import, division, print_function, unicode_literals
-''' This is a infotainment project for the raspi. 
-It's largely inherited from PictureFrame2020.py which is part of pi3d_demos.
-See http://pi3d.github.io/ and https://www.thedigitalpictureframe.com/
+''' RaspiInfotainment: Infotainment display for the Raspberry Pi. 
+It combines an advanced digital picture frame, a weather forecast and a surveillance camera viewer.  
 '''
 import os
 import logging
@@ -475,7 +474,7 @@ def start_picframe():
           next_pic_num = 0
         next_check_tm = tm + config.CHECK_DIR_TM # create new file list at this time
       if tm > next_weather_tm and not paused: # refresh weather info
-        weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_APPID )
+        weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
         for i in range( min(len(weather_info), w_item_cnt) ):
           weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
           weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   

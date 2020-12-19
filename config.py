@@ -1,4 +1,4 @@
-""" This is the config file used by Raspi Infotainment. 
+""" Config file of RaspiInfotainment project. 
 """
 
 # Picture handling 
@@ -29,14 +29,14 @@ BLEND_TYPE = 0.0     # choose between ["blend":0.0, "burn":1.0, "bump:2.0"]; typ
 BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend_new fragment shader (better don't change!)
 
 # Shuffle
-SHUFFLE = True       # shuffle on reloading image files - can be changed by MQTT
-RESHUFFLE_NUM = 1    # no of loops before reshuffling"
-RECENT_N = 0         # when shuffling the keep n most recent ones to play before the rest
+SHUFFLE = True        # shuffle on reloading image files - can be changed by MQTT
+RESHUFFLE_NUM = 1     # no of loops before reshuffling"
+RECENT_N = 0          # when shuffling the keep n most recent ones to play before the rest
 #TIME_DELAY = 30.0    # time between consecutive slide starts - can be changed by MQTT
-TIME_DELAY = 12.0    # time between consecutive slide starts - can be changed by MQTT
-#FADE_TIME = 4.0      # change time during which slides overlap - can be changed by MQTT
-FADE_TIME = 2      # change time during which slides overlap - can be changed by MQTT
-SHOW_NAMES_TM = 6.0 # duration for shhowing text overlay over image 
+TIME_DELAY = 12.0     # time between consecutive slide starts - can be changed by MQTT
+#FADE_TIME = 4.0      # change time during which slides overlap 
+FADE_TIME = 2         # change time during which slides overlap 
+SHOW_NAMES_TM = 6.0   # duration for shhowing text overlay over image 
 
 # Text overlay
 TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
@@ -67,7 +67,7 @@ W_LATITUDE = 48.1355979    # latitude of your location
 W_LONGITUDE = 11.3627159   # longitude of your location
 W_UNIT = "metric"          # metric 
 W_LANGUAGE = "de"          # language
-W_APPID = "6ebd6acb5966433fad4c667062d4c18e" # openweathermap API key for "One Call API" 
+W_API_KEY = "6ebd6acb5966433fad4c667062d4c18e" # openweathermap API key for "One Call API" 
 W_BACK_IMG = "/home/pi/infotainment/weather_icons/weather_back_16_9.jpg"   # background image for weather info
 
 W_NOW_TITLE     = "<date>: <pressure>, Luftf. <humidity>, Wolken <clouds>, Sonne <sunrise> / <sunset>"
