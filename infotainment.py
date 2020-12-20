@@ -644,13 +644,16 @@ def main():
  
   logging.info('Initial scan of image directory...')
   iFiles, nFi = get_files(date_from, date_to)
-  
-  logging.info('Starting picture frame')
-  start_picframe()
-  if show_camera:
-    logging.info('Starting camera viewer')
-    cam_start()
-    show_camera = False
+    
+  while not quit:
+    logging.info('Starting picture frame')
+    nexttm = 0.0
+    start_picframe()
+    if show_camera:
+      logging.info('Starting camera viewer')
+      cam_start()
+      show_camera = False
+      quit = True # TODO just as workaround!
     
   if config.USE_MQTT:
     mqtt_stop(mqttclient)
