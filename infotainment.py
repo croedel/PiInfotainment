@@ -298,7 +298,7 @@ def convert_heif(fname):
 # start the picture frame
 def start_picframe():
   global date_from, date_to, quit, paused, nexttm, last_file_change, next_pic_num, iFiles, nFi
-
+ 
   if config.KENBURNS:
     kb_up = True
     config.FIT = False
@@ -406,7 +406,7 @@ def start_picframe():
             next_pic_num += 1
             if next_pic_num >= nFi:
               num_run_through += 1
-              if config.SHUFFLE and num_run_through >= config.REconfig.SHUFFLE_NUM:
+              if config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM:
                 num_run_through = 0
                 random.config.SHUFFLE(iFiles)
               next_pic_num = 0
@@ -507,7 +507,6 @@ def start_picframe():
       if k != -1:
         nexttm = time.time() - 86400.0
       if k==27: #ESC
-        DISPLAY.destroy()
         break
       if k==ord(' '):
         paused = not paused
@@ -516,11 +515,11 @@ def start_picframe():
         if next_pic_num < -1:
           next_pic_num = -1      
     if quit or show_camera: # set by MQTT
-      DISPLAY.destroy()
       break
 
   if config.KEYBOARD:
     kbd.close()
+  DISPLAY.destroy()
 
 # MQTT functionality - see https://www.thedigitalpictureframe.com/
 def on_mqtt_connect(mqttclient, userdata, flags, rc):
@@ -616,9 +615,8 @@ def mqtt_stop(client):
 #-------------------------------------------
 def cam_viewer_start():
   logging.info("CamViewer started")
-  options = "--canvas-width " + config.CAMERA_VIEWER_WIDTH
-  options += " --canvas-height" + config.CAMERA_VIEWER_HEIGHT
-  player = vlc.MediaPlayer( config.CAMERA_URL + " " + options ) 
+  player = vlc.MediaPlayer(config.CAMERA_URL) 
+  player.video_set_scale(config.CAMERA_ZOOM)
   player.play()
   return player
 
@@ -643,18 +641,16 @@ def main():
   if config.RECENT_DAYS > 0:
     dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
     date_from = (dfrom.year, dfrom.month, dfrom.day)
-
+ 
   logging.info('Initial scan of image directory...')
   iFiles, nFi = get_files(date_from, date_to)
-
-  while not quit:
-    logging.info('Starting picture frame')
-    nexttm = 0.0
-    start_picframe()
-    if show_camera:
-      logging.info('Starting camera viewer')
-#      cam_start()
-      show_camera = False
+  
+  logging.info('Starting picture frame')
+  start_picframe()
+  if show_camera:
+    logging.info('Starting camera viewer')
+    cam_start()
+    show_camera = False
     
   if config.USE_MQTT:
     mqtt_stop(mqttclient)

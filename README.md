@@ -55,7 +55,7 @@ This fuctionality is meant to display e.g. a frontdoor surveillance camera. It g
 ## Installation
 You might want to follow the instructions on https://www.thedigitalpictureframe.com/how-to-add-crossfading-slide-transitions-to-your-digital-picture-frame-using-pi3d/
 
-Instead of starting PictureFrame2020.py as listed within this article, just download the files of this repository to your Raspberry Pi. The main file you need to start is `infotainment.py`. 
+Instead of starting `PictureFrame2020.py` as listed within this article, just download the files of *this* repository to your Raspberry Pi. The main file you need to start is `infotainment.py`. 
 
 Additionally, you should install
 - sudo apt-get install vlc
@@ -109,5 +109,5 @@ The project assumes you have a surveillance camera which can be accessed via e.g
 This then gets displayed by VLC.
 
 Add this to config.py e.g. as
-> CAMERA_URL = "rtsp://<user>:<pw>@<ip-address>:<port>/<path>"  # URL of webcam stream
-
+> CAMERA_URL    # URL of webcam stream
+> CAMERA_ZOOM   # zoom level for VLC to e.g. shrink or enlarge video being displayed

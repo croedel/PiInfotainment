@@ -3,8 +3,8 @@
 
 # Picture handling 
 #PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
-#PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
-PIC_DIR = "//SYNOLOGYDS216/photo/2020"
+PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
+#PIC_DIR = "//SYNOLOGYDS216/photo/2020"
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 #CHECK_DIR_TM = 60.0  # time in seconds between checking if the image directory has changed
@@ -79,10 +79,8 @@ W_FORECAST_TXT  = "<temp> (<ftemp>), Wind <wind> (<winddeg>), Niederschlag <pop>
 W_POINT_SIZE = 42
 
 # CAMERA
-CAMERA_VIEWER = "vlc"       # Path to Camera Viewer (e.g. VLC)
-CAMERA_VIEWER_WIDTH = 1920
-CAMERA_VIEWER_HEIGHT = 1080
-CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam stream
+CAMERA_ZOOM = 0.56          # zoom level for vlc player (e.g. shrink or enlarge video)
+CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam stream, e.g. "rtsp://<user>:<pw>@<ip-address>:<port>/<path>"
 CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
 
 #############################################################################
