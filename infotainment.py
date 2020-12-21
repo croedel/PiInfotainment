@@ -37,7 +37,6 @@ date_to = None
 quit = False
 paused = False 
 nexttm = 0.0
-last_file_change = 0.0 # latest change time in directory structure
 next_pic_num = 0
 iFiles = []
 nFi = 0
@@ -192,13 +191,14 @@ def format_text(iFiles, pic_num):
     logging.warning('Exception in format_text: ', e)
   return (txt1, txt2, txt3, txt4)
 
-def check_picdir_changed( last_file_change ):
+def check_picdir_changed():
+  last_change = 0.0
   for root, subdirs, filenames in os.walk(config.PIC_DIR, topdown=True):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
     mod_tm = os.stat(root).st_mtime
-    if mod_tm > last_file_change:
-      last_file_change = mod_tm
-  return last_file_change
+    if mod_tm > last_change:
+      last_change = mod_tm
+  return last_change
 
 def get_files(dt_from=None, dt_to=None):
   logging.info('Refreshing file list')
@@ -212,7 +212,6 @@ def get_files(dt_from=None, dt_to=None):
   else:  
     dt_to = time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
 
-  global last_file_change
   file_list = []
   extensions = ['.png','.jpg','.jpeg','.heif','.heic'] # can add to these
   picture_dir = os.path.join(config.PIC_DIR, config.SUBDIRECTORY)
@@ -227,8 +226,6 @@ def get_files(dt_from=None, dt_to=None):
       logging.info(' - {}: Ignored - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
       continue
     logging.info(' - {}: Reading files'.format(root) )  
-    if mod_tm > last_file_change:
-      last_file_change = mod_tm
     for filename in filenames:
       ext = os.path.splitext(filename)[1].lower()
       if ext in extensions and not filename.startswith('.'):
@@ -297,7 +294,7 @@ def convert_heif(fname):
 
 # start the picture frame
 def start_picframe():
-  global date_from, date_to, quit, paused, nexttm, last_file_change, next_pic_num, iFiles, nFi
+  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi
  
   if config.KENBURNS:
     kb_up = True
@@ -306,6 +303,7 @@ def start_picframe():
   if config.BLUR_ZOOM < 1.0:
     config.BLUR_ZOOM = 1.0
 
+  last_file_change = check_picdir_changed()
   sfg = None # slide for background
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
@@ -408,7 +406,8 @@ def start_picframe():
               num_run_through += 1
               if config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM:
                 num_run_through = 0
-                random.config.SHUFFLE(iFiles)
+                last_file_change = 0.0
+#                random.shuffle(iFiles)
               next_pic_num = 0
             if next_pic_num == start_pic_num:
               nFi = 0
@@ -463,15 +462,17 @@ def start_picframe():
       if a > 1.0:
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
-    else: # no transition effect safe to reconfig.SHUFFLE etc
+    else: # no transition effect safe to reshuffle etc
       if tm > next_check_tm:
-        if check_picdir_changed(last_file_change) > last_file_change:
+        mtime = check_picdir_changed()
+        if mtime > last_file_change:
           if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
             date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
           iFiles, nFi = get_files(date_from, date_to)
           num_run_through = 0
           next_pic_num = 0
+          last_file_change = mtime
         next_check_tm = tm + config.CHECK_DIR_TM # create new file list at this time
       if tm > next_weather_tm and not paused: # refresh weather info
         weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
