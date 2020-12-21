@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 It combines an advanced digital picture frame, a weather forecast and a surveillance camera viewer.  
 '''
 import os
+import sys
 import logging
 import time
 import datetime
@@ -191,14 +192,14 @@ def format_text(iFiles, pic_num):
     logging.warning('Exception in format_text: ', e)
   return (txt1, txt2, txt3, txt4)
 
-def check_picdir_changed():
-  last_change = 0.0
+def get_picdir_change_date():
+  change_date = 0.0
   for root, subdirs, filenames in os.walk(config.PIC_DIR, topdown=True):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
-    mod_tm = os.stat(root).st_mtime
-    if mod_tm > last_change:
-      last_change = mod_tm
-  return last_change
+    mtime = os.stat(root).st_mtime
+    if mtime > change_date:
+      change_date = mtime
+  return change_date
 
 def get_files(dt_from=None, dt_to=None):
   logging.info('Refreshing file list')
@@ -217,10 +218,10 @@ def get_files(dt_from=None, dt_to=None):
   picture_dir = os.path.join(config.PIC_DIR, config.SUBDIRECTORY)
   for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
-    mod_tm = os.stat(root).st_mtime # directory modification time
+    mtime = os.stat(root).st_mtime # directory modification time
     create_tm = os.stat(root).st_ctime # directory creation time
-    if (mod_tm < dt_from or create_tm > dt_to) and random.randint(1,config.OUTDATED_DIR_PROP) != 1:
-      logging.info(' - {}: Ignored - Time restriction'.format(root))  
+    if (mtime < dt_from or create_tm > dt_to) and random.randint(1,config.OUTDATED_DIR_PROP) != 1:
+      logging.info(' - {}: Ignored - Time not matching'.format(root))  
       continue
     if ".INFOTAINMENT_IGNORE.txt" in filenames:
       logging.info(' - {}: Ignored - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
@@ -295,7 +296,6 @@ def convert_heif(fname):
 # start the picture frame
 def start_picframe():
   global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi
- 
   if config.KENBURNS:
     kb_up = True
     config.FIT = False
@@ -303,7 +303,7 @@ def start_picframe():
   if config.BLUR_ZOOM < 1.0:
     config.BLUR_ZOOM = 1.0
 
-  last_file_change = check_picdir_changed()
+  picdir_change_date = get_picdir_change_date()
   sfg = None # slide for background
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
@@ -406,7 +406,7 @@ def start_picframe():
               num_run_through += 1
               if config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM:
                 num_run_through = 0
-                last_file_change = 0.0
+                picdir_change_date = 0.0
 #                random.shuffle(iFiles)
               next_pic_num = 0
             if next_pic_num == start_pic_num:
@@ -464,16 +464,16 @@ def start_picframe():
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
       if tm > next_check_tm:
-        mtime = check_picdir_changed()
-        if mtime > last_file_change:
+        mtime = get_picdir_change_date()
+        if mtime > picdir_change_date:
+          num_run_through = 0
+          next_pic_num = 0
+          picdir_change_date = mtime
           if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
             date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
           iFiles, nFi = get_files(date_from, date_to)
-          num_run_through = 0
-          next_pic_num = 0
-          last_file_change = mtime
-        next_check_tm = tm + config.CHECK_DIR_TM # create new file list at this time
+        next_check_tm = tm + config.CHECK_DIR_TM # check next time
       if tm > next_weather_tm and not paused: # refresh weather info
         weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
         for i in range( min(len(weather_info), w_item_cnt) ):
@@ -626,7 +626,7 @@ def cam_viewer_stop(player):
   player.stop()
   player.release()
 
-def cam_start():
+def cam_show():
   global camera_end_tm
   player = cam_viewer_start()
   while camera_end_tm > time.time():
@@ -635,6 +635,7 @@ def cam_start():
 
 #-------------------------------------------
 def main():
+  ret = 0
   global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera
   logging.info('Starting infotainment system...')
   if config.USE_MQTT:
@@ -652,13 +653,15 @@ def main():
     start_picframe()
     if show_camera:
       logging.info('Starting camera viewer')
-      cam_start()
+      cam_show()
       show_camera = False
-      quit = True # TODO just as workaround!
+      quit = True # TODO just as workaround since PI3D can't be re-initialized
+      ret = 10 # Tell surrounding shell script to restart
     
   if config.USE_MQTT:
     mqtt_stop(mqttclient)
   logging.info('Infotainment system stopped')
+  sys.exit(ret)
 
 #############################################################################
 if __name__ == "__main__":

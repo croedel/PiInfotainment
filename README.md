@@ -53,16 +53,30 @@ This fuctionality is meant to display e.g. a frontdoor surveillance camera. It g
 --------------------------------------
 
 ## Installation
-You might want to follow the instructions on https://www.thedigitalpictureframe.com/how-to-add-crossfading-slide-transitions-to-your-digital-picture-frame-using-pi3d/
+You might want to follow the instructions on https://www.thedigitalpictureframe.com/how-to-add-crossfading-slide-transitions-to-your-digital-picture-frame-using-pi3d/. This is a really good decription how to setup the Rasperry Pi.
 
-Instead of starting `PictureFrame2020.py` as listed within this article, just download the files of *this* repository to your Raspberry Pi. The main file you need to start is `infotainment.py`. 
+Instead of starting `PictureFrame2020.py` as listed within this article, just download the files of *this* repository to your Raspberry Pi. The main script you need to start is `PiInfotainment.sh`.
 
-Additionally, you should install
+Additionally, you should install:
 - sudo apt-get install vlc
 - sudo apt-get install mosquitto mosquitto-clients
 - pip install python-vlc 
 - pip install paho-mqtt
 - pip install pyheif
+
+### Auto start using systemd
+In order to start the PiInfotainment system automatically, you can use the systemd script templates within systemd directory:
+- infotainment.service: Start script for the main PiInfotainment system
+- infoserver.service: Start the Webserver to remote control the PiInfotainment system
+- mnt-photo.mnt: You can optionally use this to auto-mount a NFS share e.g. from your NAS 
+
+You just might need to replace some minor things like IP addresses etc.
+
+In order to install them, you need to be root (or use sudo):
+- Copy them to `/etc/systemd/system`
+- Reload systemctl units by `systemctl daemon-reload`
+- To start a service manually, use `systemctl start infotainment.service` etc. 
+- To start a service at boot time automatically, use `systemctl enable infotainment.service` etc.
 
 --------------------------------------
 

@@ -1,0 +1,14 @@
+[Unit]
+Description=Webserver for PiInfotainment system
+After=multi-user.target
+
+[Service]
+Type=idle
+
+User=root
+ExecStart=/usr/bin/python3 /home/pi/infotainment/infoserver.py -a <IP Address> -p 80
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
