@@ -17,7 +17,7 @@ Following sections explain the 3 core functionalities.
 ### Picture Frame
 The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 
-- Optimized for direct mounting of image directory via WIFI
+- Optimized for direct mounting of image directory via WIFI (e.g. from a NAS) - no copying required!
 - Fast startup time - even if image directory contains a huge number of sub-directories and pictures 
 - Largely enhanced ability to overlay info texts: directory, pathname, image date, ...
 - Read image EXIF info and enable to show them as text overlay
@@ -48,7 +48,8 @@ RaspiInfotainment enables to show a weather forecast page. It uses https://openw
 This forecast page then gets shown as every Nth slide between the images of the picture viewer.
 
 ### Surveillance camera viewer
-This fuctionality is meant to display e.g. a frontdoor surveillance camera. It gets automatically displayed when the camera detects a motion. 
+This fuctionality is meant to display e.g. a frontdoor surveillance camera. It gets automatically displayed when the camera detects a motion.
+ 
 
 --------------------------------------
 
