@@ -1,13 +1,13 @@
-# RaspiInfotainment
+# Raspi Infotainment system
 
-> This project is still work-in-progress!
+**This project is still work-in-progress!**
 
-Welcome to my Infotainment System project for the Raspberry Pi! 
-This ia a hobby project which combines following core functionalities:
-- Advanced digital picture frame: Displays you digital images 
-- Simple webserver: Enables you to remotely control the Infotainment System
+Welcome to the Raspi Infotainment system project!  
+This ia a hobby project meant for Raspberry Pi which combines following core functionalities:
+- Advanced digital picture frame: Enables to displays you digital images in a slideshow with smooth transitions 
 - Weather forecast: Show your local weather forecast
-- Surveillance camera viewer: Show live picture of a surveillance camera  
+- Surveillance camera viewer: Show live picture of a surveillance camera when it detects motion  
+- Simple webserver: Enables you to remotely control the Infotainment System
 
 The Picture Frame functionality of RaspiInfotainment uses the pi3d (https://pi3d.github.io/) project and is heavily based on PictureFrame2020.py from https://github.com/pi3d/pi3d_demos.
 
