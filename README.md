@@ -1,4 +1,7 @@
 # RaspiInfotainment
+
+> This project is still work-in-progress!
+
 Welcome to my Infotainment System project for the Raspberry Pi! 
 This ia a hobby project which combines following core functionalities:
 - Advanced digital picture frame: Displays you digital images 
