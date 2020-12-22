@@ -10,8 +10,8 @@ IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore 
 #CHECK_DIR_TM = 60.0  # time in seconds between checking if the image directory has changed
 CHECK_DIR_TM = 300.0  # time in seconds between checking if the image directory has changed
 RECENT_DAYS = 30      # If set to > 0, only images which were created within the last N days are shown.
-OUTDATED_DIR_PROP = 10    # Include outdated directories with a propability of 1/x  
-OUTDATED_FILE_PROP = 50  # Include outdated images with a propability of 1/x  
+OUTDATED_DIR_PROP = 10    # Include outdated directories with a propability of 1/x (0=disable)  
+OUTDATED_FILE_PROP = 50  # Include outdated images with a propability of 1/x (0=disable) 
 NO_FILES_IMG = "/home/pi/infotainment/no-pictures.jpg"  # image to show if none selected
 
 # Shader 
@@ -32,11 +32,11 @@ BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend
 SHUFFLE = True        # shuffle on reloading image files - can be changed by MQTT
 RESHUFFLE_NUM = 1     # no of loops before reshuffling
 RECENT_N = 5          # when shuffling the keep n most recent ones to play before the rest
-#TIME_DELAY = 30.0    # time between consecutive slide starts - can be changed by MQTT
-TIME_DELAY = 12.0     # time between consecutive slide starts - can be changed by MQTT
+#TIME_DELAY = 30.0    # Defines how long a single slide is shown - can be changed by MQTT
+TIME_DELAY = 12.0     # Defines how long a single slide is shown - can be changed by MQTT
 #FADE_TIME = 4.0      # change time during which slides overlap 
 FADE_TIME = 2         # change time during which slides overlap 
-SHOW_NAMES_TM = 6.0   # duration for shhowing text overlay over image 
+INFO_TXT_TIME = 6.0   # duration for showing text overlay over image 
 
 # Text overlay
 TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           

@@ -220,8 +220,9 @@ def get_files(dt_from=None, dt_to=None):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
     mtime = os.stat(root).st_mtime # directory modification time
     create_tm = os.stat(root).st_ctime # directory creation time
-    if (mtime < dt_from or create_tm > dt_to) and random.randint(1,config.OUTDATED_DIR_PROP) != 1:
-      logging.info(' - {}: Ignored - Time not matching'.format(root))  
+    if mtime < dt_from or create_tm > dt_to
+      if config.OUTDATED_DIR_PROP==0 or random.randint(1,config.OUTDATED_DIR_PROP) != 1:
+        logging.info(' - {}: Ignored - Time not matching'.format(root))  
       continue
     if ".INFOTAINMENT_IGNORE.txt" in filenames:
       logging.info(' - {}: Ignored - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
@@ -236,9 +237,10 @@ def get_files(dt_from=None, dt_to=None):
         dt = None # if exif data not read - used for checking in tex_load
         exif_info = {}
         mtime = os.path.getmtime(file_path_name)
-        if config.DELAY_EXIF:
-          if dt_from is not None and mtime < dt_from and random.randint(1,config.OUTDATED_FILE_PROP) != 1:
-            include_flag = False # file is older then dt_from --> ignore
+        if cofnfig.DELAY_EXIF:
+          if dt_from is not None and mtime < dt_from: 
+            if config.OUTDATED_FILE_PROP==0 or random.randint(1,config.OUTDATED_FILE_PROP) != 1:
+              include_flag = False # file is older then dt_from --> ignore
         else:    
           (orientation, dt, exif_info) = get_exif_info(file_path_name)
           if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
@@ -323,7 +325,7 @@ def start_picframe():
   if config.KEYBOARD:
     kbd = pi3d.Keyboard()
 
-  # PointText and TextBlock. If SHOW_NAMES_TM <= 0 then this is just used for no images message
+  # PointText and TextBlock. If INFO_TXT_TIME <= 0 then this is just used for no images message
   grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
   font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
                   shadow=(0,0,0,128))
@@ -413,7 +415,7 @@ def start_picframe():
               nFi = 0
               break
           # set description
-          if config.SHOW_NAMES_TM > 0.0:
+          if config.INFO_TXT_TIME > 0.0:
             texts = format_text(iFiles, pic_num)
             i=0
             for item in textlines:
@@ -428,7 +430,7 @@ def start_picframe():
         sbg = sfg
 
       a = 0.0 # alpha - proportion front image to back
-      name_tm = time.time() + config.SHOW_NAMES_TM
+      name_tm = time.time() + config.INFO_TXT_TIME
       if sbg is None: # first time through
         sbg = sfg
       slide.set_textures([sfg, sbg])
@@ -491,7 +493,7 @@ def start_picframe():
       next_check_tm = tm + 5.0
     elif tm < name_tm and weather_interstitial_active == False:
       # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.SHOW_NAMES_TM - name_tm + tm + 0.1) / config.SHOW_NAMES_TM
+      dt = (config.INFO_TXT_TIME - name_tm + tm + 0.1) / config.INFO_TXT_TIME
       alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
       for item in textlines:
         item.colouring.set_colour(alpha=alpha)

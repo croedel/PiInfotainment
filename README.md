@@ -27,7 +27,7 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 - Enable to show images created within the last N days
 - Optionally add randomly older pictures 
 - Enable to specify blacklist for image directories which shall be ignored (e.g. backup, system directories, thumbnails, ...)
-- Enable to ignore directories which contain a "magic filename" (.INFOTAINMENT_IGNORE.txt)
+- Enable to ignore directories which contain a "magic filename" `.INFOTAINMENT_IGNORE.txt`
 
 ### Webserver
 RaspiInfotainment provides a simple HTTP server which can be used to remote control the Infotainment server.
@@ -60,7 +60,11 @@ You might want to follow the instructions on https://www.thedigitalpictureframe.
 
 Instead of starting `PictureFrame2020.py` as listed within this article, just download the files of *this* repository to your Raspberry Pi. The main script you need to start is `PiInfotainment.sh`.
 
-Additionally, you should install:
+To install, you might want to follow this instruction:
+
+_Hint:_ You need to be root (or use sudo).
+
+Some prerequisites:
 
 ```
 apt-get install vlc
@@ -71,10 +75,16 @@ pip3 install paho-mqtt
 pip3 install pyheif
 ```
 
+Now let's install the PIInfotainment system:
+
+```
+cd /home/pi/infotainment && wget https://github.com/croedel/PiInfotainment/archive/main.zip && unzip main.zip && rm main.zip
+```
+
 ### Auto start using systemd
 In order to start the PiInfotainment system automatically, you can use the systemd script templates within systemd directory:
 
-| script                | description
+| Script                | Description
 |-----------------------|----------------------------------------------
 | infotainment.service  | Start script for the main PiInfotainment system
 | infoserver.service    | Start the Webserver to remote control the PiInfotainment system
@@ -82,7 +92,7 @@ In order to start the PiInfotainment system automatically, you can use the syste
 
 You just might need to replace some minor things like IP addresses etc.
 
-In order to install them, you need to be root (or use sudo):
+_Hint:_ In order to install them, you need to be root (or use sudo):
 
 - Copy them to the systemd directory `/etc/systemd/system`
 - Make them readable for everybody: `chmod 644 /etc/systemd/system/infotainment.service` etc 
@@ -100,7 +110,7 @@ You'll easily recognize the inherited options from PictureFrame2020config. They 
 Some config options you might want to have a special look on:
 
 ### Digital picture frame
-Quite obviously, you need to configure where to find your photos:
+Quite obviously, you need to configure where to find your photos. This can be a local drive or a mounted drive e.g. from your NAS. 
 
 ```
 PIC_DIR     # directory where to find the pictures
@@ -118,19 +128,19 @@ I personally like that the Infotainment system should display the most recent ph
 RECENT_DAYS   # If set to > 0, only images which were created within the last N days are shown```
 ```
 
-It's nice to ransomly add some older pictures:
+It's nice to randomly add some older pictures. You can set the propabitily the Infotainemt systems selects an outdated directory or file by using the following options:
 
 ```
-OUTDATED_DIR_PROP   # Include outdated directories with a propability of 1/x  
-OUTDATED_FILE_PROP  # Include outdated images with a propability of 1/x  
+OUTDATED_DIR_PROP   # Include outdated directories with a propability of 1/x (0=disable) 
+OUTDATED_FILE_PROP  # Include outdated images with a propability of 1/x (0=disable)
 ```
 
 Some config options which define the timing
 
 ```
-TIME_DELAY      # time between consecutive slide starts 
+TIME_DELAY      # Defines how long a single slide is shown 
 FADE_TIME       # change time during which slides overlap 
-SHOW_NAMES_TM   # duration for shhowing text overlay over image 
+INFO_TXT_TIME   # duration for showing text overlay over image 
 ```
 
 __Tipp:__ If you have certain sub-directories within your `PIC_DIR` which you don't want to be displayed, just create or touch) a "magic file" named `.INFOTAINMENT_IGNORE.txt` within them. RaspiInfotainment will ignore all images within these directories. 
