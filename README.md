@@ -70,6 +70,7 @@ Some prerequisites:
 apt-get install vlc
 apt-get install mosquitto mosquitto-clients
 pip3 install exifread
+pip3 install Pillow
 pip3 install python-vlc 
 pip3 install paho-mqtt
 pip3 install pyheif
@@ -79,6 +80,12 @@ Now let's install the PIInfotainment system:
 
 ```
 cd /home/pi/infotainment && wget https://github.com/croedel/PiInfotainment/archive/main.zip && unzip main.zip && rm main.zip
+```
+
+In a next step, you need to copy the config-template.py to config.py. Within this, you need to config e.g. your picture directory, your geo-location, API key etc. (See below for more details on configuration)
+
+```
+cd /home/pi/infotainment && cp config-template.py config.py
 ```
 
 ### Auto start using systemd

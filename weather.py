@@ -266,7 +266,7 @@ def get_weather_info( lat, lon, units, lang, appid ):
 #############################################################################
 if __name__ == "__main__":
   logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
-  weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', ' ' )
+  weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', config.W_API_KEY )
 
   for item in weather_info:
     print( item['title'] )
