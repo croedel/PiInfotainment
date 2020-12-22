@@ -33,7 +33,7 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 RaspiInfotainment provides a simple HTTP server which can be used to remote control the Infotainment server.
 It enables following commands:
 
-| *Command*     | *Parameter* | *Description*
+| Command       | Parameter   | Description
 |---------------|-------------|-----------------------
 | Back          | -           | Back to previous image
 | Subdirectory  | -           | Scan and display images withi this subdirectory
@@ -74,6 +74,8 @@ pip3 install pyheif
 ### Auto start using systemd
 In order to start the PiInfotainment system automatically, you can use the systemd script templates within systemd directory:
 
+| script                | description
+|-----------------------|----------------------------------------------
 | infotainment.service  | Start script for the main PiInfotainment system
 | infoserver.service    | Start the Webserver to remote control the PiInfotainment system
 | mnt-photo.mnt         | You can optionally use this to auto-mount a NFS share e.g. from your NAS 
