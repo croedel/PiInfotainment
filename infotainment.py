@@ -220,7 +220,7 @@ def get_files(dt_from=None, dt_to=None):
     subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
     mtime = os.stat(root).st_mtime # directory modification time
     create_tm = os.stat(root).st_ctime # directory creation time
-    if mtime < dt_from or create_tm > dt_to
+    if mtime < dt_from or create_tm > dt_to:
       if config.OUTDATED_DIR_PROP==0 or random.randint(1,config.OUTDATED_DIR_PROP) != 1:
         logging.info(' - {}: Ignored - Time not matching'.format(root))  
       continue
@@ -237,7 +237,7 @@ def get_files(dt_from=None, dt_to=None):
         dt = None # if exif data not read - used for checking in tex_load
         exif_info = {}
         mtime = os.path.getmtime(file_path_name)
-        if cofnfig.DELAY_EXIF:
+        if config.DELAY_EXIF:
           if dt_from is not None and mtime < dt_from: 
             if config.OUTDATED_FILE_PROP==0 or random.randint(1,config.OUTDATED_FILE_PROP) != 1:
               include_flag = False # file is older then dt_from --> ignore

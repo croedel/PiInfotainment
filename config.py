@@ -4,7 +4,7 @@
 # Picture handling 
 #PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
 PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
-#PIC_DIR = "//SYNOLOGYDS216/photo/2020"
+PIC_DIR = "//SYNOLOGYDS216/photo/2020"
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 #CHECK_DIR_TM = 60.0  # time in seconds between checking if the image directory has changed
