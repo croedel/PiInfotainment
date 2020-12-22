@@ -2,12 +2,10 @@
 """
 
 # Picture handling 
-#PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
-PIC_DIR = "/mnt/photo/2020" # directory where to find the pictures
-#PIC_DIR = "//SYNOLOGYDS216/photo/2020"
+PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
+#PIC_DIR = "/mnt/photo" # directory where to find the pictures
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
-#CHECK_DIR_TM = 60.0  # time in seconds between checking if the image directory has changed
 CHECK_DIR_TM = 300.0  # time in seconds between checking if the image directory has changed
 RECENT_DAYS = 30      # If set to > 0, only images which were created within the last N days are shown.
 OUTDATED_DIR_PROP = 10    # Include outdated directories with a propability of 1/x (0=disable)  
@@ -32,11 +30,9 @@ BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend
 SHUFFLE = True        # shuffle on reloading image files - can be changed by MQTT
 RESHUFFLE_NUM = 1     # no of loops before reshuffling
 RECENT_N = 5          # when shuffling the keep n most recent ones to play before the rest
-#TIME_DELAY = 30.0    # Defines how long a single slide is shown - can be changed by MQTT
-TIME_DELAY = 12.0     # Defines how long a single slide is shown - can be changed by MQTT
-#FADE_TIME = 4.0      # change time during which slides overlap 
-FADE_TIME = 2         # change time during which slides overlap 
-INFO_TXT_TIME = 6.0   # duration for showing text overlay over image 
+TIME_DELAY = 30.0     # Defines how long a single slide is shown - can be changed by MQTT
+FADE_TIME = 3         # change time during which slides overlap 
+INFO_TXT_TIME = 10.0   # duration for showing text overlay over image 
 
 # Text overlay
 TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
@@ -61,13 +57,13 @@ MQTT_LOGIN  = " "           # Just change if you want to use a different MQTT se
 MQTT_PASSWORD = ""          # Just change if you want to use a different MQTT server  
 
 # Weather
-W_SKIP_CNT = 2             # show weather info after each N pictures (=0 disables weather info)
-W_REFRESH_DELAY = 300      # refresh weather info every N seconds
-W_LATITUDE = 48.1355979    # latitude of your location (decimal degrees, e.g. 48.12345)
-W_LONGITUDE = 11.3627159   # longitude of your location (decimal degrees, e.g. 11.98765)
-W_UNIT = "metric"          # metric 
-W_LANGUAGE = "de"          # language
-W_API_KEY = "6ebd6acb5966433fad4c667062d4c18e" # openweathermap API key for "One Call API" 
+W_SKIP_CNT = 2              # show weather info after each N pictures (=0 disables weather info)
+W_REFRESH_DELAY = 300       # refresh weather info every N seconds
+W_LATITUDE =                # latitude of your location (decimal degrees, e.g. 48.12345)
+W_LONGITUDE =               # longitude of your location (decimal degrees, e.g. 11.98765)
+W_UNIT = "metric"           # metric 
+W_LANGUAGE = "de"           # language
+W_API_KEY = " "             # openweathermap API key for "One Call API" 
 W_BACK_IMG = "/home/pi/infotainment/weather_icons/weather_back_16_9.jpg"   # background image for weather info
 
 W_NOW_TITLE     = "<date>: <pressure>, Luftf. <humidity>, Wolken <clouds>, Sonne <sunrise> / <sunset>"
@@ -80,7 +76,7 @@ W_POINT_SIZE = 42
 
 # CAMERA
 CAMERA_ZOOM = 0.56          # zoom level for vlc player (e.g. shrink or enlarge video)
-CAMERA_URL = "rtsp://user:webcamuser@192.168.178.51:554/h264Preview_01_main"  # URL of webcam stream, e.g. "rtsp://<user>:<pw>@<ip-address>:<port>/<path>"
+CAMERA_URL = " "            # URL of webcam stream, e.g. "rtsp://<user>:<pw>@<ip-address>:<port>/<path>"
 CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
 
 #############################################################################
