@@ -1,5 +1,4 @@
 # RaspiInfotainment
-
 Welcome to my Infotainment System project for the Raspberry Pi! 
 This ia a hobby project which combines following core functionalities:
 - Advanced digital picture frame: Displays you digital images 
@@ -31,15 +30,16 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 RaspiInfotainment provides a simple HTTP server which can be used to remote control the Infotainment server.
 It enables following commands:
 
-- Back: Back to previous image
-- Subdirectory: Scan and display images withi this subdirectory
-- Start date: Show only images which were taken after this date (YYYY/MM/DD)
-- End date: Show only images which were taken before this date (YYYY/MM/DD)
-- Recent days: Show only images which were taken within the last N days
-- Time delay: How long each photo shall be shown
-- Pause: Pause photos
-- Camera: Switch to surveillance camera viewer
-- Quit: Quit Infotainment Server
+| *Command*     | *Parameter* | *Description*
+|---------------|-------------|-----------------------
+| Back          | -           | Back to previous image
+| Subdirectory  | -           | Scan and display images withi this subdirectory
+| Start date    | YYYY/MM/DD  |  Show only images which were taken after this date
+| End date      | YYYY/MM/DD  |  Show only images which were taken before this date 
+| Recent days   | N           |  Show only images which were taken within the last N days
+| Time delay    | N           |  How long each photo shall be shown (in seconds)
+| Pause         | -           |  Pause photos
+| Camera        | -           |  Switch to surveillance camera viewer
 
 Feel free to make it look nicer by e.g. customizing `stylesheet.css` ;-)
 
@@ -49,7 +49,6 @@ This forecast page then gets shown as every Nth slide between the images of the 
 
 ### Surveillance camera viewer
 This fuctionality is meant to display e.g. a frontdoor surveillance camera. It gets automatically displayed when the camera detects a motion.
- 
 
 --------------------------------------
 
@@ -59,22 +58,29 @@ You might want to follow the instructions on https://www.thedigitalpictureframe.
 Instead of starting `PictureFrame2020.py` as listed within this article, just download the files of *this* repository to your Raspberry Pi. The main script you need to start is `PiInfotainment.sh`.
 
 Additionally, you should install:
-- sudo apt-get install vlc
-- sudo apt-get install mosquitto mosquitto-clients
-- pip install python-vlc 
-- pip install paho-mqtt
-- pip install pyheif
+
+```
+apt-get install vlc
+apt-get install mosquitto mosquitto-clients
+pip3 install exifread
+pip3 install python-vlc 
+pip3 install paho-mqtt
+pip3 install pyheif
+```
 
 ### Auto start using systemd
 In order to start the PiInfotainment system automatically, you can use the systemd script templates within systemd directory:
-- infotainment.service: Start script for the main PiInfotainment system
-- infoserver.service: Start the Webserver to remote control the PiInfotainment system
-- mnt-photo.mnt: You can optionally use this to auto-mount a NFS share e.g. from your NAS 
+
+| infotainment.service  | Start script for the main PiInfotainment system
+| infoserver.service    | Start the Webserver to remote control the PiInfotainment system
+| mnt-photo.mnt         | You can optionally use this to auto-mount a NFS share e.g. from your NAS 
 
 You just might need to replace some minor things like IP addresses etc.
 
 In order to install them, you need to be root (or use sudo):
-- Copy them to `/etc/systemd/system`
+
+- Copy them to the systemd directory `/etc/systemd/system`
+- Make them readable for everybody: `chmod 644 /etc/systemd/system/infotainment.service` etc 
 - Reload systemctl units by `systemctl daemon-reload`
 - To start a service manually, use `systemctl start infotainment.service` etc. 
 - To start a service at boot time automatically, use `systemctl enable infotainment.service` etc.
@@ -90,22 +96,37 @@ Some config options you might want to have a special look on:
 
 ### Digital picture frame
 Quite obviously, you need to configure where to find your photos:
-> PIC_DIR     # directory where to find the pictures
+
+```
+PIC_DIR     # directory where to find the pictures
+```
 
 Depending of the directory structure you're using for your pictures, you might have some naming convention for directories which shouldn't be used for the Infotainment system. (e.g. Backup, Archive, ...)
-> IGNORE_DIRS   # Ignore images if they are in one of those directories
+
+```
+IGNORE_DIRS   # Ignore images if they are in one of those directories
+```
 
 I personally like that the Infotainment system should display the most recent photos:
-> RECENT_DAYS   # If set to > 0, only images which were created within the last N days are shown```
+
+```
+RECENT_DAYS   # If set to > 0, only images which were created within the last N days are shown```
+```
 
 It's nice to ransomly add some older pictures:
-> OUTDATED_DIR_PROP   # Include outdated directories with a propability of 1/x  
-> OUTDATED_FILE_PROP  # Include outdated images with a propability of 1/x  
+
+```
+OUTDATED_DIR_PROP   # Include outdated directories with a propability of 1/x  
+OUTDATED_FILE_PROP  # Include outdated images with a propability of 1/x  
+```
 
 Some config options which define the timing
-> TIME_DELAY      # time between consecutive slide starts 
-> FADE_TIME       # change time during which slides overlap 
-> SHOW_NAMES_TM   # duration for shhowing text overlay over image 
+
+```
+TIME_DELAY      # time between consecutive slide starts 
+FADE_TIME       # change time during which slides overlap 
+SHOW_NAMES_TM   # duration for shhowing text overlay over image 
+```
 
 __Tipp:__ If you have certain sub-directories within your `PIC_DIR` which you don't want to be displayed, just create or touch) a "magic file" named `.INFOTAINMENT_IGNORE.txt` within them. RaspiInfotainment will ignore all images within these directories. 
 
@@ -114,15 +135,21 @@ For the weather forecast feature you need to create a free account on https://op
 Then please create an API key for https://openweathermap.org/api/one-call-api
 
 Now you might want to have a look on following config entries:
-> W_SKIP_CNT      # show weather info after each N pictures (=0 disables weather info)
-> W_LATITUDE      # latitude of your location
-> W_LONGITUDE     # longitude of your location
-> W_API_KEY       # put your API key here       
+
+```
+W_SKIP_CNT      # show weather info after each N pictures (=0 disables weather info)
+W_LATITUDE      # latitude of your location
+W_LONGITUDE     # longitude of your location
+W_API_KEY       # put your API key here       
+```
 
 ### Surveillance camera viewer
 The project assumes you have a surveillance camera which can be accessed via e.g rtsp protocol.
 This then gets displayed by VLC.
 
 Add this to config.py e.g. as
-> CAMERA_URL    # URL of webcam stream
-> CAMERA_ZOOM   # zoom level for VLC to e.g. shrink or enlarge video being displayed
+
+```
+CAMERA_URL    # URL of webcam stream
+CAMERA_ZOOM   # zoom level for VLC to e.g. shrink or enlarge video being displayed
+```
