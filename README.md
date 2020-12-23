@@ -32,6 +32,8 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 
 ### Webserver
 RaspiInfotainment provides a simple HTTP server which can be used to remote control the Infotainment server.
+Per default it will start on your Raspberry PI on standard port 80. So you can easily access it within any browser within your lokal network by entering `http://<IP address of yor Raspberry Pi>`
+
 It enables following commands:
 
 | Command       | Parameter   | Description
@@ -44,9 +46,11 @@ It enables following commands:
 | Time delay    | N           |  How long each photo shall be shown (in seconds)
 | Pause         | -           |  Pause photos
 | Camera        | -           |  Switch to surveillance camera viewer
-| Monitor       | ON or OFF   | Switch monitor ON or OFF 
+| Monitor       | ON, OFF, AUTO | Switch monitor ON or OFF manually or re-set to AUTO mode
 
 Feel free to make it look nicer by e.g. customizing `stylesheet.css` ;-)
+
+The webserver writes a message into the mosquitto MQTT broker on your Pi which is then again read by the infotainment system.
 
 ### Weather forecast
 RaspiInfotainment enables to show a weather forecast page. It uses https://openweathermap.org/ to retrieve the forecast data for your location.
@@ -63,6 +67,16 @@ This functionality automatically switches the monitor ON evan if it was schedule
 You might want to follow the instructions on https://www.thedigitalpictureframe.com/how-to-add-crossfading-slide-transitions-to-your-digital-picture-frame-using-pi3d/. This is a really good decription how to setup the Rasperry Pi.
 
 Instead of starting `PictureFrame2020.py` as listed within this article, just download the files of *this* repository to your Raspberry Pi. The main script you need to start is `PiInfotainment.sh`.
+
+The whole package consists of:
+```
+Raspberry Pi
+  - PiInfotainment.sh
+     - infotainment.py    # the main program
+       - vlc              # surveillance camera viewer
+  - infoserver.py         # Webserver
+  - mosquitto             # MQTT broker
+```
 
 To install, you might want to follow this instruction:
 
@@ -111,6 +125,8 @@ _Hint:_ In order to install them, you need to be root (or use sudo):
 - To start a service manually, use `systemctl start infotainment.service` etc. 
 - To start a service at boot time automatically, use `systemctl enable infotainment.service` etc.
 
+_Tipp:_ The logs will get written to `/var/log/syslog`
+
 --------------------------------------
 
 ## Configuration
@@ -156,17 +172,17 @@ INFO_TXT_TIME   # duration for showing text overlay over image
 
 __Tipp:__ If you have certain sub-directories within your `PIC_DIR` which you don't want to be displayed, just create or touch) a "magic file" named `.INFOTAINMENT_IGNORE.txt` within them. RaspiInfotainment will ignore all images within these directories. 
 
-For convenience, you can schedule to switch you monitor ON and OFF at certain times. You can schedule this very fine grain:
+For convenience and energy saving purposes you can schedule to switch you PI's monitor ON and OFF at certain times. You can schedule this very fine grain an a weekday basis. If you switch the monitor manually (e.g. by using the Webserver), the manually set status has precedence and "wins" over the automated scheduling.
 
 ```
 # Monitor schedule
 # One line per day: 0=Monday ... 6=Sunday
-# For each day you can define an array of start-stop time pairs 
+# For each day you can define an array of start-stop time pairs, each of them consists of hour and minute 
 MONITOR_SCHEDULE = {
   0: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
-  1: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
-  2: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
-  3: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  1: [ [(7,15), (10,30)], [(16,0), (22,0)] ], 
+  2: [ [(7,0), (18,0)] ], 
+  3: [ [(7,0), (10,0)], [(16,0), (18,0), [(10,0), (22,30)]] ], 
   4: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
   5: [ [(8,0), (23,30)] ], 
   6: [ [(8,0), (23,30)] ] 
@@ -196,3 +212,24 @@ Add this to config.py e.g. as
 CAMERA_URL    # URL of webcam stream
 CAMERA_ZOOM   # zoom level for VLC to e.g. shrink or enlarge video being displayed
 ```
+
+Now you need to add a Web Hook to you surveillance camera. If you're using Surveillance Station, you e.g. can do this via `Action rules`.
+
+Create a rule which gets triggered when the camera detects a motion. Let it be repeated in a slightly shorter interval then you've set the `CAMERA_THRESHOLD`. This ensures that the surveillance camera keeps being displayed as long as the motion is still active. 
+
+And add following URL as Web Hook:
+
+```
+http://<IP Address of you RasperryPi>/index.html?topic=camera
+```
+
+## Home-Automation integration
+It's very easy to integrate the Infotainment system into any existing Home-Automation environment which support web hooks (e.g. Alexa, Google Home, ...).
+
+You can easily use any command which is provided by the Webserver:
+
+```
+http://<IP Address of you RasperryPi>/index.html?topic=<command>&data=<data>
+```  
+
+The webserver writes a message into the mosquitto MQTT broker on ypur Pi which is then again read by the infotainment system.

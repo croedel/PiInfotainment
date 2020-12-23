@@ -600,6 +600,9 @@ def on_mqtt_message(mqttclient, userdata, message):
       elif msg == "OFF":
         monitor_status = "OFF-MANUAL"
         switch_HDMI( monitor_status )
+      else:
+        monitor_status = "ON"
+        switch_HDMI( monitor_status )
     else:
       logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
