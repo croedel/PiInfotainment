@@ -28,6 +28,7 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 - Optionally add randomly older pictures 
 - Enable to specify blacklist for image directories which shall be ignored (e.g. backup, system directories, thumbnails, ...)
 - Enable to ignore directories which contain a "magic filename" `.INFOTAINMENT_IGNORE.txt`
+- Monitor can be scheduled to be switched ON/OFF automatically at certain times 
 
 ### Webserver
 RaspiInfotainment provides a simple HTTP server which can be used to remote control the Infotainment server.
@@ -43,6 +44,7 @@ It enables following commands:
 | Time delay    | N           |  How long each photo shall be shown (in seconds)
 | Pause         | -           |  Pause photos
 | Camera        | -           |  Switch to surveillance camera viewer
+| Monitor       | ON or OFF   | Switch monitor ON or OFF 
 
 Feel free to make it look nicer by e.g. customizing `stylesheet.css` ;-)
 
@@ -52,6 +54,8 @@ This forecast page then gets shown as every Nth slide between the images of the 
 
 ### Surveillance camera viewer
 This fuctionality is meant to display e.g. a frontdoor surveillance camera. It gets automatically displayed when the camera detects a motion.
+
+This functionality automatically switches the monitor ON evan if it was scheduled to be OFF at this pount in time.
 
 --------------------------------------
 
@@ -151,6 +155,23 @@ INFO_TXT_TIME   # duration for showing text overlay over image
 ```
 
 __Tipp:__ If you have certain sub-directories within your `PIC_DIR` which you don't want to be displayed, just create or touch) a "magic file" named `.INFOTAINMENT_IGNORE.txt` within them. RaspiInfotainment will ignore all images within these directories. 
+
+For convenience, you can schedule to switch you monitor ON and OFF at certain times. You can schedule this very fine grain:
+
+```
+# Monitor schedule
+# One line per day: 0=Monday ... 6=Sunday
+# For each day you can define an array of start-stop time pairs 
+MONITOR_SCHEDULE = {
+  0: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  1: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  2: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  3: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  4: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  5: [ [(8,0), (23,30)] ], 
+  6: [ [(8,0), (23,30)] ] 
+}
+```
 
 ### Weather forecast
 For the weather forecast feature you need to create a free account on https://openweathermap.org/

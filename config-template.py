@@ -79,6 +79,19 @@ CAMERA_ZOOM = 0.56          # zoom level for vlc player (e.g. shrink or enlarge 
 CAMERA_URL = " "            # URL of webcam stream, e.g. "rtsp://<user>:<pw>@<ip-address>:<port>/<path>"
 CAMERA_THRESHOLD = 30       # threshold for the camera viewer. Defines how long viewer will be displayed after a MQTT event
 
+# Monitor schedule
+# One line per day: 0=Monday ... 6=Sunday
+# For each day you can define an array of start-stop time pairs 
+MONITOR_SCHEDULE = {
+  0: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  1: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  2: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  3: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  4: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
+  5: [ [(8,0), (23,30)] ], 
+  6: [ [(8,0), (23,30)] ] 
+}
+
 #############################################################################
 ######### Usually you don't ned to change anything below this line ##########
 

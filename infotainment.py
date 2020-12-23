@@ -10,6 +10,7 @@ import time
 import datetime
 import random
 import math
+import subprocess
 import pi3d
 
 from pi3d.Texture import MAX_SIZE
@@ -43,6 +44,7 @@ iFiles = []
 nFi = 0
 show_camera = False
 camera_end_tm = 0.0
+monitor_status = "ON"
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -293,11 +295,11 @@ def convert_heif(fname):
     return image
   except:
     logging.warning("Could't convert HEIF. Have you installed pyheif?")
- 
+
 
 # start the picture frame
 def start_picframe():
-  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi
+  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status
   if config.KENBURNS:
     kb_up = True
     config.FIT = False
@@ -369,8 +371,9 @@ def start_picframe():
   
   weather_interstitial_active = True
   next_weather_tm = 0.0
+  next_monitor_check_tm = 0.0
   num_run_through = 0
-
+  
   # here comes the main loop
   while DISPLAY.loop_running():
     tm = time.time()
@@ -465,7 +468,7 @@ def start_picframe():
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
-      if tm > next_check_tm:
+      if tm > next_check_tm: # refresh image directory
         mtime = get_picdir_change_date()
         if mtime > picdir_change_date:
           num_run_through = 0
@@ -475,15 +478,21 @@ def start_picframe():
             date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
           iFiles, nFi = get_files(date_from, date_to)
-        next_check_tm = tm + config.CHECK_DIR_TM # check next time
-      if tm > next_weather_tm and not paused: # refresh weather info
+        next_check_tm = tm + config.CHECK_DIR_TM # next check
+      if tm > next_weather_tm: # refresh weather info
         weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
         for i in range( min(len(weather_info), w_item_cnt) ):
           weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
           weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
           w_tex = pi3d.Texture('weather_icons/' + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
           weathericons[i].set_textures( [w_tex] )
-        next_weather_tm = tm + config.W_REFRESH_DELAY
+        next_weather_tm = tm + config.W_REFRESH_DELAY # next check
+      if tm > next_monitor_check_tm: # Check if it's time to switch monitor status
+        scheduled_status = check_monitor_status(tm)
+        if monitor_status != scheduled_status and not monitor_status.endswith("-MANUAL"):
+          switch_HDMI(scheduled_status)
+          monitor_status = scheduled_status
+        next_monitor_check_tm = tm + 60 # check every minute
 
     slide.draw()
 
@@ -532,7 +541,7 @@ def on_mqtt_message(mqttclient, userdata, message):
   try:
     # TODO not ideal to have global but probably only reasonable way to do it
     global next_pic_num, iFiles, nFi, date_from, date_to 
-    global quit, paused, nexttm, show_camera, camera_end_tm
+    global quit, paused, nexttm, show_camera, camera_end_tm, monitor_status
     msg = message.payload.decode("utf-8")
     reselect = False
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
@@ -584,6 +593,13 @@ def on_mqtt_message(mqttclient, userdata, message):
     elif message.topic == "screen/camera":
       show_camera = True
       camera_end_tm = time.time() + config.CAMERA_THRESHOLD
+    elif message.topic == "screen/monitor":
+      if msg == "ON":
+        monitor_status = "ON-MANUAL"
+        switch_HDMI( monitor_status )
+      elif msg == "OFF":
+        monitor_status = "OFF-MANUAL"
+        switch_HDMI( monitor_status )
     else:
       logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
@@ -629,11 +645,39 @@ def cam_viewer_stop(player):
   player.release()
 
 def cam_show():
-  global camera_end_tm
+  global camera_end_tm, monitor_status
+  if monitor_status.startswith("OFF"):
+    switch_HDMI("ON") # switch monitor temporarily ON
   player = cam_viewer_start()
   while camera_end_tm > time.time():
     time.sleep(5) # wake up regularly to check if camera_end_tm changed async via MQTT   
   cam_viewer_stop(player)
+  if monitor_status.startswith("OFF"):
+    switch_HDMI("OFF") # switch monitor OFF again 
+
+def check_monitor_status( tm=time.time() ):
+  tm_now = datetime.datetime.fromtimestamp(tm)
+  status = "OFF" 
+  schedules = config.MONITOR_SCHEDULE[tm_now.weekday]
+  for item in schedules:
+    start_t = datetime.time( item[0][0], item[0][1] )
+    stop_t = datetime.time( item[1][0], item[1][1] )
+    tm_start = datetime.datetime.combine( tm_now.date(), start_t )
+    tm_stop = datetime.datetime.combine( tm_now.date(), stop_t )
+    if tm_now > tm_start and tm_now < tm_stop:
+      status = "ON"
+      break
+  logging.info( "Scheduled monitor status: " + status )    
+  return status
+
+def switch_HDMI( status ):
+  if status.startswith("ON"):
+    logging.info( "Switching HDMI to: ON" )    
+    cmd = ["vcgencmd", "display_power", "1"]
+  elif status.startswith("OFF"):
+    logging.info( "Switching HDMI to: OFF" )    
+    cmd = ["vcgencmd", "display_power", "0"]
+  subprocess.call(cmd)
 
 #-------------------------------------------
 def main():
