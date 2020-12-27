@@ -103,7 +103,7 @@ def tex_load(pic_num, iFiles, size=None):
         im_b = im_b.filter(ImageFilter.GaussianBlur(config.BLUR_AMOUNT))
         im_b = im_b.resize(size, resample=Image.BICUBIC)
         im_b.putalpha(round(255 * config.EDGE_ALPHA))  # to apply the same EDGE_ALPHA as the no blur method.
-        im = im.resize((int(x * sc_f) for x in im.size), resample=Image.BICUBIC)
+        im = im.resize((int(x * sc_f) for x in im.size), resample=Image.LANCZOS)
         """resize can use Image.LANCZOS (alias for Image.ANTIALIAS) for resampling
         for better rendering of high-contranst diagonal lines. NB downscaled large
         images are rescaled near the start of this try block if w or h > max_dimension
@@ -224,8 +224,8 @@ def get_files(dt_from=None, dt_to=None):
     create_tm = os.stat(root).st_ctime # directory creation time
     if mtime < dt_from or create_tm > dt_to:
       if config.OUTDATED_DIR_PROP==0 or random.randint(1,config.OUTDATED_DIR_PROP) != 1:
-        logging.info(' - {}: Ignored - Time not matching'.format(root))  
-      continue
+        logging.info(' - {}: Ignored - Time out of range'.format(root))  
+        continue
     if ".INFOTAINMENT_IGNORE.txt" in filenames:
       logging.info(' - {}: Ignored - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
       continue
@@ -329,7 +329,7 @@ def start_picframe():
 
   # PointText and TextBlock. If INFO_TXT_TIME <= 0 then this is just used for no images message
   grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-  font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=4.0,
+  font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=5.0,
                   shadow=(0,0,0,128))
   text = pi3d.PointText(font, CAMERA, max_chars=400, point_size=config.TEXT_POINT_SIZE)
   textlines = []
@@ -659,18 +659,21 @@ def cam_show():
     switch_HDMI("OFF") # switch monitor OFF again 
 
 def check_monitor_status( tm=time.time() ):
+  if len(config.MONITOR_SCHEDULE) == 0:
+    return "ON" # No schedule defined: Always ON
   tm_now = datetime.datetime.fromtimestamp(tm)
+  schedules = config.MONITOR_SCHEDULE.get(tm_now.weekday())
+  if schedules == None:
+    return "OFF" # No schedule for this weekday: OFF for the whole day
   status = "OFF" 
-  schedules = config.MONITOR_SCHEDULE[tm_now.weekday]
   for item in schedules:
     start_t = datetime.time( item[0][0], item[0][1] )
     stop_t = datetime.time( item[1][0], item[1][1] )
     tm_start = datetime.datetime.combine( tm_now.date(), start_t )
     tm_stop = datetime.datetime.combine( tm_now.date(), stop_t )
-    if tm_now > tm_start and tm_now < tm_stop:
+    if tm_now >= tm_start and tm_now <= tm_stop:
       status = "ON"
       break
-  logging.info( "Scheduled monitor status: " + status )    
   return status
 
 def switch_HDMI( status ):
