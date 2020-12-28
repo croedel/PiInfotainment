@@ -16,6 +16,7 @@ import pi3d
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ImageFilter # these are needed for getting exif data from images
 import config
+import dircache
 import weather
 import GPSlookup
 
@@ -194,14 +195,6 @@ def format_text(iFiles, pic_num):
     logging.warning('Exception in format_text: ', e)
   return (txt1, txt2, txt3, txt4)
 
-def get_picdir_change_date():
-  change_date = 0.0
-  for root, subdirs, filenames in os.walk(config.PIC_DIR, topdown=True):
-    subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
-    mtime = os.stat(root).st_mtime
-    if mtime > change_date:
-      change_date = mtime
-  return change_date
 
 def get_files(dt_from=None, dt_to=None):
   logging.info('Refreshing file list')
@@ -307,7 +300,7 @@ def start_picframe():
   if config.BLUR_ZOOM < 1.0:
     config.BLUR_ZOOM = 1.0
 
-  picdir_change_date = get_picdir_change_date()
+  picdir_change_date = directorytree.get_picdir_change_date()
   sfg = None # slide for background
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
@@ -469,7 +462,7 @@ def start_picframe():
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
       if tm > next_check_tm: # refresh image directory
-        mtime = get_picdir_change_date()
+        mtime = directorytree.get_picdir_change_date()
         if mtime > picdir_change_date:
           num_run_through = 0
           next_pic_num = 0
@@ -697,7 +690,11 @@ def main():
     date_from = (dfrom.year, dfrom.month, dfrom.day)
  
   logging.info('Initial scan of image directory...')
-  iFiles, nFi = get_files(date_from, date_to)
+ 
+  iFiles, nFi = dircache.get_file_list()
+  sys.exit(ret)
+
+#  iFiles, nFi = get_files(date_from, date_to)
     
   while not quit:
     logging.info('Starting picture frame')

@@ -6,3 +6,4 @@ __pycache__/
 # Private config file
 config.py
 libvlc.dll
+.dir_cache.p

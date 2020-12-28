@@ -88,7 +88,8 @@ Some prerequisites:
 apt-get install vlc
 apt-get install mosquitto mosquitto-clients
 pip3 install exifread
-pip3 install Pillow
+pip3 install --upgrade pil
+pip3 install --upgrade Pillow
 pip3 install python-vlc 
 pip3 install paho-mqtt
 pip3 install pyheif
@@ -224,7 +225,7 @@ http://<IP Address of you RasperryPi>/index.html?topic=camera
 ```
 
 ## Home-Automation integration
-It's very easy to integrate the Infotainment system into any existing Home-Automation environment which support web hooks (e.g. Alexa, Google Home, ...).
+It's very easy to integrate the Infotainment system into any existing Home-Automation environment which supports web hooks (e.g. Alexa, Google Home, ...).
 
 You can easily use any command which is provided by the Webserver:
 
