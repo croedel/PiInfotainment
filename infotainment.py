@@ -50,20 +50,21 @@ monitor_status = "ON"
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
   if type(pic_num) is int:
-    fname = iFiles[pic_num][0]
+    fname =       iFiles[pic_num][0]
     orientation = iFiles[pic_num][1]
+    dt =          iFiles[pic_num][3]
+    exif_info =   iFiles[pic_num][4] 
   else: # allow file name to be passed to this function ie for missing file image
     fname = pic_num
     orientation = 1
   try:
     ext = os.path.splitext(fname)[1].lower()
-    dt = None
     if ext in ('.heif','.heic'):
       im = convert_heif(fname)
     else:
-      im = Image.open(fname)
+      im = Image.open(fname)      
     if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
-      if iFiles[pic_num][3] is None: # dt set to None before exif read
+      if dt is None: # exif info ot yet available
         (orientation, dt, exif_info) = get_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
@@ -195,8 +196,22 @@ def format_text(iFiles, pic_num):
     logging.warning('Exception in format_text: ', e)
   return (txt1, txt2, txt3, txt4)
 
-
 def get_files(dt_from=None, dt_to=None):
+  file_list = dircache.get_file_list( dt_from, dt_to )
+  if config.SHUFFLE:
+    file_list.sort(key=lambda x: x[2]) # will be later files last
+    temp_list_first = file_list[-config.RECENT_N:]
+    temp_list_last = file_list[:-config.RECENT_N]
+    random.shuffle(temp_list_first)
+    random.shuffle(temp_list_last)
+    file_list = temp_list_first + temp_list_last
+  else:
+    file_list.sort() # if not config.SHUFFLEd; sort by name
+  logging.info('File list refreshed: {} images found'.format(len(file_list)) )
+  return file_list, len(file_list) # tuple of file list, number of pictures
+
+
+def get_files_old(dt_from=None, dt_to=None):
   logging.info('Refreshing file list')
   # dt_from and dt_to are either None or tuples (2016,12,25)
   if dt_from is None:
@@ -271,6 +286,7 @@ def get_exif_info(file_path_name, im=None):
       data = exif_data.get(val)
       if data:
         exif_info[tag] = data
+    dircache.set_exif_info( file_path_name, orientation, dt, exif_info ) # write back to cache
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     logging.debug('Exception while trying to read EXIF: ', e)
     if dt == None:
@@ -691,10 +707,8 @@ def main():
  
   logging.info('Initial scan of image directory...')
  
-  iFiles, nFi = dircache.get_file_list()
+  iFiles, nFi = get_files(date_from, date_to)
   sys.exit(ret)
-
-#  iFiles, nFi = get_files(date_from, date_to)
     
   while not quit:
     logging.info('Starting picture frame')
