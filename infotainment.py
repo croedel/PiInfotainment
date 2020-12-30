@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 ''' RaspiInfotainment: Infotainment display for the Raspberry Pi. 
 It combines an advanced digital picture frame, a weather forecast and a surveillance camera viewer.  
+This project heavily inherited from PictureFrame2020.py, which is part of https://github.com/pi3d/pi3d_demos
 '''
 import os
 import sys
@@ -316,7 +317,6 @@ def start_picframe():
   if config.BLUR_ZOOM < 1.0:
     config.BLUR_ZOOM = 1.0
 
-  picdir_change_date = directorytree.get_picdir_change_date()
   sfg = None # slide for background
   sbg = None # slide for foreground
   next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
@@ -418,10 +418,6 @@ def start_picframe():
             next_pic_num += 1
             if next_pic_num >= nFi:
               num_run_through += 1
-              if config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM:
-                num_run_through = 0
-                picdir_change_date = 0.0
-#                random.shuffle(iFiles)
               next_pic_num = 0
             if next_pic_num == start_pic_num:
               nFi = 0
@@ -477,16 +473,14 @@ def start_picframe():
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
-      if tm > next_check_tm: # refresh image directory
-        mtime = directorytree.get_picdir_change_date()
-        if mtime > picdir_change_date:
-          num_run_through = 0
-          next_pic_num = 0
-          picdir_change_date = mtime
+      if tm > next_check_tm: # time to check 
+        if dircache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
           if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
             date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
           iFiles, nFi = get_files(date_from, date_to)
+          num_run_through = 0
+          next_pic_num = 0
         next_check_tm = tm + config.CHECK_DIR_TM # next check
       if tm > next_weather_tm: # refresh weather info
         weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
@@ -703,12 +697,9 @@ def main():
     mqttclient = mqtt_start()
   if config.RECENT_DAYS > 0:
     dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
-    date_from = (dfrom.year, dfrom.month, dfrom.day)
- 
+    date_from = (dfrom.year, dfrom.month, dfrom.day) 
   logging.info('Initial scan of image directory...')
- 
   iFiles, nFi = get_files(date_from, date_to)
-  sys.exit(ret)
     
   while not quit:
     logging.info('Starting picture frame')

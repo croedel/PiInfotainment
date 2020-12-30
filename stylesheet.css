@@ -1,46 +1,70 @@
 body {
   background-color: lightgray;
   font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  font-size: 12pt;
+  font-size: 11pt;
 }
 
-h1 {
-  color: darkblue;
-  text-align: center;
-  font-size: 18pt;
+form.picontrol {
+  margin: 0.3em;   
+ }
+
+div.group-box {
+  border-width:2px;
+  border-style:solid;
+  border-color:blue;
+  border-radius: 0.5em;
+  padding: 0.5em;
+  background-color: lightblue;
+  float: left;
+  width: calc(50% - 1em);;
+  height: 10em;
+  margin: 0.5em;
+  box-sizing: border-box;  
 }
 
-p {
-  font-size: 12pt;
-}
-
-select {
-  font-size: 12pt;
-}
-
-input {
-  font-size: 12pt;
-}
+@media all and (max-width:50em){
+  div.group-box {
+    width: 100%
+  }    
+} 
 
 button{
-  font-size: 12pt;
-  display:inline-block;
-  padding:0.5em 1.5em;
-  margin:0 0.3em 0.3em 0;
-  border-radius:1em;
+  font-size: 11pt;
+  display: inline-block;
+  padding: 0.5em 1em;
+  margin: 0 0.8em 0.2em 0;
+  border-radius: 0.5em;
   box-sizing: border-box;
-  text-decoration:none;
+  text-decoration: none;
   color:#FFFFFF;
   background-color:blue;
-  text-align:center;
+  text-align: center;
   transition: all 0.2s;
+  width: 8em;
 }
 button:hover{
   background-color:#3c1ec0;
 }
-@media all and (max-width:30em){
-  button{
-    display:block;
-    margin:0.2em auto;
-  }
-} 
+
+div.header{
+  color: darkblue;
+  margin: 0.5em;
+  float: left;
+  width: 100%;
+  font-size: 22pt;
+  text-align: center;
+}
+
+.header img{
+  width: 1.5em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+}
+
+
+div.footer{
+  font-size: 9pt;
+  margin: 2em 1em;
+  text-align: left;
+  float: left;
+}

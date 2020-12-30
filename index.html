@@ -6,28 +6,85 @@
     <title>Infotainment System</title>
   </head>
   <body>
-    <h1>PiInfotainment Admin</h1>
+    <div class="header" id="header"> 
+      <img src="icon.png" alt="icon">
+      Pi Infotainment Admin
+    </div>  
+
+    <div class="group-box" id="time-range"> 
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Start date</button>
+        <input type="hidden" name="topic" value="date_from">
+        <input type="text" placeholder="YYYY/MM/DD" name="data">
+      </form>
+
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >End date</button>
+        <input type="hidden" name="topic" value="date_to">
+        <input type="text" placeholder="YYYY/MM/DD" name="data">
+      </form>
+
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Recent days</button>
+        <input type="hidden" name="topic" value="recent_days">
+        <input type="text" placeholder="n days" name="data">
+      </form>
+
+    </div>
+
+    <div class="group-box" id="image-selection"> 
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Subdirectory</button>
+        <input type="hidden" name="topic" value="subdirectory">
+        <input type="text" placeholder="path" name="data">
+      </form>
+
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Delay</button>
+        <input type="hidden" name="topic" value="delay">
+        <input type="text" placeholder="n seconds" name="data">
+      </form>
+    </div>  
+
+    <div class="group-box" id="display-ctrl"> 
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Back</button>
+        <input type="hidden" name="topic" value="back">
+      </form>
+
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Pause</button>
+        <input type="hidden" name="topic" value="pause">
+      </form>
+    </div>
+
     
-    <form action="index.html" method="get" autocomplete="off">  
-      <label for="topic">Command</label>
-      <select name="topic" id="topic">
-        <option value="back">Back</option>
-        <option value="subdirectory">Subdirectory</option>
-        <option value="date_from">Start date</option>
-        <option value="date_to">End date</option>
-        <option value="recent_days">Recent days</option>
-        <option value="time_delay">Time delay</option>
-        <option value="pause">Pause</option>
-        <option value="camera">Camera</option>
-        <option value="monitor">Monitor</option>
-        <option value="quit">Quit</option>
-      </select>
-      <label for="data">Data</label>
-      <input id="data" name="data">
-      <button type="submit">Send</button>
-    </form>
+    <div class="group-box" id="admin"> 
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Camera</button>
+        <input type="hidden" name="topic" value="camera">
+      </form>
+
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Quit</button>
+        <input type="hidden" name="topic" value="quit">
+      </form>
+
+      <form class="picontrol" action="index.html" method="get" autocomplete="off">
+        <button class="button1" type="submit" >Monitor</button>
+        <input type="hidden" name="topic" value="monitor">
+        <select name="data" id="data">
+          <option value="ON">ON</option>
+          <option value="OFF">OFF</option>
+          <option value="AUTO">AUTO</option>
+        </select>
+      </form>
+    </div>
+    
     <br>
-    date_from  / date_to: Date YYYY/MM/DD <br>
-    monitor: Status ON | OFF | AUTO
+    <div class="footer" id="footer"> 
+      <a href="https://github.com/croedel/PiInfotainment/" target="_blank">PI Infotainment Server</a>   
+    </div>
+
   </body>
 </html>
