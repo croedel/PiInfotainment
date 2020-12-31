@@ -20,6 +20,7 @@ import config
 import dircache
 import weather
 import GPSlookup
+import display
 
 logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
@@ -124,79 +125,6 @@ def tex_load(pic_num, iFiles, size=None):
     tex = None
   return tex
 
-def item2str(item):
-  if item == None:
-    val = '-' 
-  elif isinstance(item, tuple):
-    val = int(item[0]) / int(item[1])
-    if val > 1:
-      if val == int(val):
-        val = str(int(val)) # display as integer 
-      else:
-        val = str(val)  # display as decimal number
-    else:
-      val = '1/' + str(int(item[1] / item[0])) # display as fracture    
-  else:
-    val = str(item)  
-  return val      
-
-def clean_string(fmt_str):
-  fmt_str = ''.join([c for c in fmt_str if c in config.CODEPOINTS]) # clean string 
-  fmt_str = fmt_str[:99]  # limit length to 99 characters
-  return fmt_str
-
-def format_text(iFiles, pic_num):
-  try:
-    filename = os.path.basename(iFiles[pic_num][0])
-    pathname = os.path.dirname(os.path.relpath(iFiles[pic_num][0], config.PIC_DIR))
-    dt = datetime.datetime.fromtimestamp(iFiles[pic_num][3])
-    exif_info = iFiles[pic_num][4] 
-    if config.RESOLVE_GPS: # GPS reverse lookup is quite expensive - so we check if it is required, before executing
-      gps_str = GPSlookup.lookup( exif_info.get('GPSInfo') )
-    else:
-      gps_str = '' 
-
-    rep = { 
-      '<file>':   filename[:40],    # filename of image
-      '<path>':   pathname[:40],    # pathname of image
-      '<date>':   dt.strftime("%d.%m.%Y"),  # image creation date (dd.mm.yyyy)
-      '<num>':    str(pic_num+1),        # number of current picuture in current file list
-      '<total>':  str(len(iFiles)),      # total number of picutures in current file list  
-      '<rating>': '*' * int(exif_info.get('Rating', 0)),
-      '<make>':   exif_info.get('Make', ''),
-      '<model>':  exif_info.get('Model', ''),
-      '<artist>': exif_info.get('Artist', ''),
-      '<copy>':   exif_info.get('Copyright', ''),
-      '<desc>':   exif_info.get('ImageDescription', ''),
-      '<exp>':    item2str(exif_info.get('ExposureTime')) + 's',
-      '<fnum>':   'f/' + item2str(exif_info.get('FNumber')),
-      '<iso>':    'ISO ' + item2str(exif_info.get('ISOSpeedRatings')),
-      '<flen>':   item2str(exif_info.get('FocalLength')) + 'mm',
-      '<flen35>': item2str(exif_info.get('FocalLengthIn35mmFilm')) + 'mm',
-      '<res>':    item2str(exif_info.get('ExifImageWidth')) + 'x' + item2str(exif_info.get('ExifImageHeight')),
-      '<gps>':    gps_str 
-    }
-
-    txt1 = config.TEXT1_FORMAT
-    txt2 = config.TEXT2_FORMAT
-    txt3 = config.TEXT3_FORMAT
-    txt4 = config.TEXT4_FORMAT
-
-    for i, j in rep.items():
-      txt1 = txt1.replace(i, j)
-      txt2 = txt2.replace(i, j)
-      txt3 = txt3.replace(i, j)
-      txt4 = txt4.replace(i, j)
-
-    txt1 = clean_string(txt1)
-    txt2 = clean_string(txt2)
-    txt3 = clean_string(txt3)
-    txt4 = clean_string(txt4)
-  except Exception as e: # something went wrong when formatting
-    txt1 = txt2 = txt3 = txt4 = ' '
-    logging.warning('Exception in format_text: ', e)
-  return (txt1, txt2, txt3, txt4)
-
 def get_files(dt_from=None, dt_to=None):
   file_list = dircache.get_file_list( dt_from, dt_to )
   if config.SHUFFLE:
@@ -211,65 +139,6 @@ def get_files(dt_from=None, dt_to=None):
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
-
-def get_files_old(dt_from=None, dt_to=None):
-  logging.info('Refreshing file list')
-  # dt_from and dt_to are either None or tuples (2016,12,25)
-  if dt_from is None:
-    dt_from = 0.0
-  else:  
-    dt_from = time.mktime(dt_from + (0, 0, 0, 0, 0, 0))
-  if dt_to is None:
-    dt_to = float(pow(2,32))
-  else:  
-    dt_to = time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
-
-  file_list = []
-  extensions = ['.png','.jpg','.jpeg','.heif','.heic'] # can add to these
-  picture_dir = os.path.join(config.PIC_DIR, config.SUBDIRECTORY)
-  for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
-    subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
-    mtime = os.stat(root).st_mtime # directory modification time
-    create_tm = os.stat(root).st_ctime # directory creation time
-    if mtime < dt_from or create_tm > dt_to:
-      if config.OUTDATED_DIR_PROP==0 or random.randint(1,config.OUTDATED_DIR_PROP) != 1:
-        logging.info(' - {}: Ignored - Time out of range'.format(root))  
-        continue
-    if ".INFOTAINMENT_IGNORE.txt" in filenames:
-      logging.info(' - {}: Ignored - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
-      continue
-    logging.info(' - {}: Reading files'.format(root) )  
-    for filename in filenames:
-      ext = os.path.splitext(filename)[1].lower()
-      if ext in extensions and not filename.startswith('.'):
-        file_path_name = os.path.join(root, filename)
-        include_flag = True
-        orientation = 1 # this is default - unrotated
-        dt = None # if exif data not read - used for checking in tex_load
-        exif_info = {}
-        mtime = os.path.getmtime(file_path_name)
-        if config.DELAY_EXIF:
-          if dt_from is not None and mtime < dt_from: 
-            if config.OUTDATED_FILE_PROP==0 or random.randint(1,config.OUTDATED_FILE_PROP) != 1:
-              include_flag = False # file is older then dt_from --> ignore
-        else:    
-          (orientation, dt, exif_info) = get_exif_info(file_path_name)
-          if (dt_from is not None and dt < dt_from) or (dt_to is not None and dt > dt_to):
-            include_flag = False
-        if include_flag:
-          # append [file_name, orientation, file_changed_date, exif_date, exif_info] 
-          file_list.append([file_path_name, orientation, mtime, dt, exif_info])
-  if config.SHUFFLE:
-    file_list.sort(key=lambda x: x[2]) # will be later files last
-    temp_list_first = file_list[-config.RECENT_N:]
-    temp_list_last = file_list[:-config.RECENT_N]
-    random.shuffle(temp_list_first)
-    random.shuffle(temp_list_last)
-    file_list = temp_list_first + temp_list_last
-  else:
-    file_list.sort() # if not config.SHUFFLEd; sort by name
-  logging.info('File list refreshed: {} images found'.format(len(file_list)) )
-  return file_list, len(file_list) # tuple of file list, number of pictures
 
 def get_exif_info(file_path_name, im=None):
   exif_info = {}
@@ -424,7 +293,7 @@ def start_picframe():
               break
           # set description
           if config.INFO_TXT_TIME > 0.0:
-            texts = format_text(iFiles, pic_num)
+            texts = display.format_text(iFiles, pic_num)
             i=0
             for item in textlines:
               item.set_text(text_format=texts[i])
@@ -494,6 +363,7 @@ def start_picframe():
         scheduled_status = check_monitor_status(tm)
         if monitor_status != scheduled_status and not monitor_status.endswith("-MANUAL"):
           switch_HDMI(scheduled_status)
+          paused = True if scheduled_status.startswith("OFF") else False
           monitor_status = scheduled_status
         next_monitor_check_tm = tm + 60 # check every minute
 
