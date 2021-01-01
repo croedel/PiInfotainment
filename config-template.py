@@ -50,7 +50,6 @@ DELAY_EXIF = True    # set this to false if there are problems with date filteri
 CODEPOINTS = '1234567890AÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ.,!* _-/:;@()°%abcdefghijklmnñopqrstuvwxyzäöüß' # valid text characters 
 
 # MQTT
-USE_MQTT = True
 MQTT_SERVER = "localhost"   # Just change if you want to use a different MQTT server
 MQTT_PORT = 1883            # Just change if you want to use a different MQTT server
 MQTT_LOGIN  = " "           # Just change if you want to use a different MQTT server
