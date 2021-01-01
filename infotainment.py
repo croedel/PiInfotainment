@@ -127,7 +127,7 @@ def tex_load(pic_num, iFiles, size=None):
   return tex
 
 def get_files(dt_from=None, dt_to=None):
-  mqtt_publish_status( "updating file_list" )
+  mqtt_publish_status( fields="status", status="updating file_list" )
   file_list = dircache.get_file_list( dt_from, dt_to )
   if config.SHUFFLE:
     file_list.sort(key=lambda x: x[2]) # will be later files last
@@ -138,7 +138,7 @@ def get_files(dt_from=None, dt_to=None):
     file_list = temp_list_first + temp_list_last
   else:
     file_list.sort() # if not config.SHUFFLEd; sort by name
-  mqtt_publish_status( "running" )
+  mqtt_publish_status( fields="status", status="running" )
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
@@ -345,7 +345,7 @@ def start_picframe():
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
-      mqtt_publish_status( "running", pic_num )
+      mqtt_publish_status( status="running", pic_num=pic_num )
       if tm > next_check_tm: # time to check 
         if dircache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
           if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
@@ -422,7 +422,8 @@ def on_mqtt_message(mqttclient, userdata, message):
     msg = message.payload.decode("utf-8")
     reselect = False
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
-
+    mqtt_publish_status( fields="status", status="MQTT command received: {} -> {}".format(message.topic, msg) )
+    
     if message.topic == "screen/date_from": # NB entered as mqtt string "2016:12:25"
       try:
         msg = msg.replace(".",":").replace("/",":").replace("-",":")
@@ -489,32 +490,6 @@ def on_mqtt_message(mqttclient, userdata, message):
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
 
-
-def mqtt_publish_status( status, pic_num=0 ):
-  status_info = {
-    "status": status,
-    "pic_dir": config.PIC_DIR,
-    "subdirectory": config.SUBDIRECTORY,
-    "recent_days": config.RECENT_DAYS,
-    "date_from": date_from,
-    "date_to": date_to,
-    "paused": paused, 
-    "pic_num": pic_num,
-    "nFi": nFi,
-    "monitor_status": monitor_status,
-    "status_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    "pid": os.getpid(),
-    "uname": str(platform.uname()), 
-  }  
-  if hasattr(os, "getloadavg"):
-    status_info["load"] =str(os.getloadavg())
-  auth = { "username": config.MQTT_LOGIN, "password": config.MQTT_PASSWORD }
-  try:
-    mqttpub.single("screenstat/status", status_info, client_id="infotainment-server",
-        hostname=config.MQTT_SERVER, port=config.MQTT_PORT, auth=auth)
-  except Exception as e:
-    logging.warning("Error while sending MQTT status: {}".format(e))
-
 #-------------------------------------------
 def mqtt_start(): 
   try: 
@@ -536,6 +511,38 @@ def mqtt_stop(client):
     logging.info('MQTT client stopped')
   except Exception as e:
     logging.warning("Couldn't stop MQTT: {}".format(e))
+
+def mqtt_publish_status( fields=[], status="-", pic_num=0 ):
+  if isinstance( fields, str):
+    fields = [fields]
+  global nFi, date_from, date_to, paused, monitor_status
+  info_data = {
+    "status": status,
+    "pic_dir": config.PIC_DIR,
+    "subdirectory": config.SUBDIRECTORY,
+    "recent_days": config.RECENT_DAYS,
+    "date_from": date_from,
+    "date_to": date_to,
+    "paused": paused, 
+    "pic_num": pic_num,
+    "nFi": nFi,
+    "monitor_status": monitor_status,
+    "status_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "pid": os.getpid(),
+    "uname": str(platform.uname()) 
+  }
+  if hasattr(os, "getloadavg"):
+    info_data["load"] = str(os.getloadavg())
+
+  messages = []
+  for key, val in info_data.items():
+    if len(fields)==0 or key in fields:
+      messages.append( { "topic": "screenstat/" + key, "payload": val } )  
+  auth = { "username": config.MQTT_LOGIN, "password": config.MQTT_PASSWORD }
+  try:
+    mqttpub.multiple( messages, client_id="infotainment-server", hostname=config.MQTT_SERVER, port=config.MQTT_PORT, auth=auth)
+  except Exception as e:
+    logging.warning("Error while sending MQTT status: {}".format(e))
 
 #-------------------------------------------
 def cam_viewer_start():
@@ -594,7 +601,7 @@ def main():
   global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera
   logging.info('Starting infotainment system...')
   mqttclient = mqtt_start()
-  mqtt_publish_status( "initializing" )
+  mqtt_publish_status( status="initializing" )
 
   if config.RECENT_DAYS > 0:
     dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
@@ -603,12 +610,12 @@ def main():
   iFiles, nFi = get_files(date_from, date_to)
     
   while not quit:
-    mqtt_publish_status( "started" )
+    mqtt_publish_status( fields="status", status="started" )
     logging.info('Starting picture frame')
     nexttm = 0.0
     start_picframe()
     if show_camera:
-      mqtt_publish_status( "camera view started" )
+      mqtt_publish_status( fields="status", status="camera view started" )
       logging.info('Starting camera viewer')
       cam_show()
       show_camera = False
@@ -617,9 +624,9 @@ def main():
     
   mqtt_stop(mqttclient)
   if ret==10:
-    mqtt_publish_status( "stopped - awaiting restart" )
+    mqtt_publish_status( fields="status", status="stopped - awaiting restart" )
   else:  
-    mqtt_publish_status( "stopped" )
+    mqtt_publish_status( fields="status", status="stopped" )
   logging.info('Infotainment system stopped')
   sys.exit(ret)
 

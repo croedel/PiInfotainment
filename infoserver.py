@@ -11,19 +11,60 @@ import config
 logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
 try:
+  import paho.mqtt.client as mqttcl
   import paho.mqtt.publish as publish
 except Exception as e:
   logging.warning("MQTT not set up because of: {}".format(e))
 
+srvstat = {}
+
+# --------- MQTT -------------
+def on_mqtt_connect(mqttclient, userdata, flags, rc):
+  logging.info("Connected to MQTT broker")
+
+def on_mqtt_message(mqttclient, userdata, message):
+  global srvstat
+  try:
+    msg = message.payload.decode("utf-8")
+    logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
+    topic = message.topic.split("/")
+    srvstat[topic[1]] = msg
+  except Exception as e:
+    logging.warning("Error while handling MQTT message: {}".format(e))
+
+def mqtt_start(): 
+  try: 
+    client = mqttcl.Client()
+    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
+    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
+    client.subscribe("screenstat/+", qos=0)
+    client.on_connect = on_mqtt_connect
+    client.on_message = on_mqtt_message
+    client.loop_start()
+    logging.info('MQTT client started')
+    return client
+  except Exception as e:
+    logging.warning("Couldn't start MQTT: {}".format(e))
+
+def mqtt_stop(client):
+  try: 
+    client.loop_stop()
+    logging.info('MQTT client stopped')
+  except Exception as e:
+    logging.warning("Couldn't stop MQTT: {}".format(e))
+
 def mqtt_publish( topic, payload ):  
-  auth = {}
-  auth['username'] = config.MQTT_LOGIN
-  auth['password'] = config.MQTT_PASSWORD 
+  auth = {
+    'username': config.MQTT_LOGIN,
+    'password': config.MQTT_PASSWORD 
+  }  
   logging.info("Publish MQTT command {}: {} {}".format(topic, payload, str(auth)))
   try:
     publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
   except Exception as e:
     logging.warning("Could't send MQTT command: {}".format(e))
+
+# actual webserver -------------------------------------------
 
 class Handler(BaseHTTPRequestHandler):
   def _set_header(self, status=200):
@@ -34,6 +75,47 @@ class Handler(BaseHTTPRequestHandler):
     else:
       self.send_error(status)
     self.end_headers()
+
+  def _publishMQTT( self, params ):
+    # publish command to MQTT
+    if 'topic' in params:
+      topic = 'screen/' + params['topic'][0]   
+      if 'data' in params:
+        data = params['data'][0]
+      else:
+        data = ''
+      mqtt_publish( topic, data )
+
+  def _getSrvStatus(self):
+    global srvstat
+    status_info = { 
+      "Status date": srvstat.get("status_date", "-"),
+      "Status": srvstat.get("status", "-"),
+      "Picture directory": srvstat.get("pic_dir", "-"),
+      "Subdirectory": srvstat.get("subdirectory", "-"),
+      "Show pictures of last N days": srvstat.get("recent_days", "-"),
+      "Start Date": srvstat.get("date_from", "-"),
+      "End Date": srvstat.get("date_to", "-"),
+      "Paused": srvstat.get("paused", "-"), 
+      "Current Picture": srvstat.get("pic_num", "-"),
+      "Total no. of pictures": srvstat.get("nFi", "-"),
+      "Monitor status": srvstat.get("monitor_status", "-"),
+      "pid": srvstat.get("pid", "-"),
+      "System info": srvstat.get("uname", "-"),
+      "System load": srvstat.get("load", "-")
+    }
+
+    status_table = ""
+    for i, j in status_info.items():
+      status_table += "<tr>\n"
+      status_table += "  <td>\n"
+      status_table += "    " + i + "\n"
+      status_table += "  </td>\n"
+      status_table += "  <td>\n"
+      status_table += "    " + j + "\n"
+      status_table += "  </td>\n"
+      status_table += "</tr>\n"
+    return status_table
 
   def do_GET(self):
     parts = self.path.strip('/').split('?')
@@ -47,19 +129,19 @@ class Handler(BaseHTTPRequestHandler):
     fname = os.path.join(os.path.dirname(__file__), path)
     logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )
     
-    # publish command to MQTT
-    if 'topic' in params:
-      topic = 'screen/' + params['topic'][0]   
-      if 'data' in params:
-        data = params['data'][0]
-      else:
-        data = ''
-      mqtt_publish( topic, data )
-    
+    if path == "index.html":
+      self._publishMQTT( params )
+      status_table = self._getSrvStatus()
     try:
-      with open(fname, 'rb') as file: 
-        self._set_header(200)
-        self.wfile.write(file.read()) # Read the file and send the contents 
+      with open(fname, 'rb') as file:
+        if path == "index.html":
+          content = file.read().decode("utf-8")
+          content = content.replace( "%server_status%", status_table )
+          self._set_header(200)
+          self.wfile.write(content.encode("utf-8")) # Read the file and send the contents 
+        else:
+          self._set_header(200)
+          self.wfile.write(file.read()) # Read the file and send the contents 
     except IOError as e:
       logging.warning("Couldn't open {}".format(e))
       self._set_header(404)
@@ -72,8 +154,10 @@ class Handler(BaseHTTPRequestHandler):
     self._set_header()
     self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
-#########################
+#----------------------
+
 def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8080):
+  mqttclient = mqtt_start()
   server_address = (addr, port)
   httpd = server_class(server_address, handler_class)
   logging.info('Starting httpd on {}:{}'.format(addr, port))
@@ -82,7 +166,8 @@ def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8
   except KeyboardInterrupt:
     pass
   httpd.server_close()
-  logging.info('Stopping httpd...')
+  mqtt_stop(mqttclient)
+  logging.info('httpd stopped')
 
 
 if __name__ == '__main__':

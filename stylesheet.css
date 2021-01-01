@@ -46,6 +46,22 @@ button:hover{
   background-color: darkblue;
 }
 
+div.srvstatus {
+  font-size: 14pt;
+  float: left;
+  margin: 1em 0.5em;
+}
+
+div.srvstatus table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  margin: 0.5em 0em;
+  padding: 0.2em 0.5em;
+  text-align: left;
+  background-color: lightcoral;
+  font-size: 10pt;
+}
+
 div.header{
   color: darkblue;
   margin: 0.5em;
@@ -69,7 +85,7 @@ div.header{
 
 div.footer{
   font-size: 9pt;
-  margin: 2em 1em;
+  margin: 1em 1em;
   text-align: left;
-  float: left;
+  float: right;
 }
