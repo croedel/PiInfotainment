@@ -76,7 +76,7 @@ class Handler(BaseHTTPRequestHandler):
       self.send_error(status)
     self.end_headers()
 
-  def _publishMQTT( self, params ):
+  def _publish_MQTT( self, params ):
     # publish command to MQTT
     if 'topic' in params:
       topic = 'screen/' + params['topic'][0]   
@@ -86,7 +86,7 @@ class Handler(BaseHTTPRequestHandler):
         data = ''
       mqtt_publish( topic, data )
 
-  def _getSrvStatus(self):
+  def _get_srv_status_info(self):
     global srvstat
     status_info = { 
       "Status date": srvstat.get("status_date", "-"),
@@ -106,14 +106,10 @@ class Handler(BaseHTTPRequestHandler):
     }
 
     status_table = ""
-    for i, j in status_info.items():
+    for key, val in status_info.items():
       status_table += "<tr>\n"
-      status_table += "  <td>\n"
-      status_table += "    " + i + "\n"
-      status_table += "  </td>\n"
-      status_table += "  <td>\n"
-      status_table += "    " + j + "\n"
-      status_table += "  </td>\n"
+      status_table += "  <td> " + key + " </td>\n"
+      status_table += "  <td> " + val + " </td>\n"
       status_table += "</tr>\n"
     return status_table
 
@@ -130,8 +126,8 @@ class Handler(BaseHTTPRequestHandler):
     logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )
     
     if path == "index.html":
-      self._publishMQTT( params )
-      status_table = self._getSrvStatus()
+      self._publish_MQTT( params )
+      status_table = self._get_srv_status_info()
     try:
       with open(fname, 'rb') as file:
         if path == "index.html":
