@@ -49,6 +49,7 @@ nFi = 0
 show_camera = False
 camera_end_tm = 0.0
 monitor_status = "ON"
+pcache = dircache.DirCache()  
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -128,7 +129,7 @@ def tex_load(pic_num, iFiles, size=None):
 
 def get_files(dt_from=None, dt_to=None):
   mqtt_publish_status( fields="status", status="updating file_list" )
-  file_list = dircache.get_file_list( dt_from, dt_to )
+  file_list = pcache.get_file_list( dt_from, dt_to )
   if config.SHUFFLE:
     file_list.sort(key=lambda x: x[2]) # will be later files last
     temp_list_first = file_list[-config.RECENT_N:]

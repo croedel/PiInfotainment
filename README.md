@@ -156,10 +156,9 @@ I personally like that the Infotainment system should display the most recent ph
 RECENT_DAYS   # If set to > 0, only images which were created within the last N days are shown```
 ```
 
-It's nice to randomly add some older pictures. You can set the propabitily the Infotainemt systems selects an outdated directory or file by using the following options:
+It's nice to randomly add some older pictures. You can set the propabitily the Infotainemt systems selects an outdated file by using the following options:
 
 ```
-OUTDATED_DIR_PROP   # Include outdated directories with a propability of 1/x (0=disable) 
 OUTDATED_FILE_PROP  # Include outdated images with a propability of 1/x (0=disable)
 ```
 
