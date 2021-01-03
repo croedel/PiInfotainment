@@ -116,7 +116,7 @@ In order to start the PiInfotainment system automatically, you can use the syste
 | infoserver.service    | Start the Webserver to remote control the PiInfotainment system
 | mnt-photo.mnt         | You can optionally use this to auto-mount a NFS share e.g. from your NAS 
 
-You just might need to replace some minor things like IP addresses etc.
+You just might need to replace some minor things like hostname/IP addresses etc.
 
 _Hint:_ In order to install them, you need to be root (or use sudo):
 

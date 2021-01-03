@@ -6,7 +6,7 @@ After=multi-user.target
 Type=idle
 
 User=root
-ExecStart=/usr/bin/python3 /home/pi/infotainment/infoserver.py -a <IP Address> -p 80
+ExecStart=/usr/bin/python3 /home/pi/infotainment/infoserver.py -a <hostname> -p 80
 
 Restart=always
 
