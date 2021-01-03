@@ -32,7 +32,7 @@ RESHUFFLE_NUM = 1     # no of loops before reshuffling
 RECENT_N = 5          # when shuffling the keep n most recent ones to play before the rest
 TIME_DELAY = 30.0     # Defines how long a single slide is shown - can be changed by MQTT
 FADE_TIME = 3         # change time during which slides overlap 
-INFO_TXT_TIME = 10.0   # duration for showing text overlay over image 
+INFO_TXT_TIME = (TIME_DELAY-FADE_TIME) * 0.7   # duration for showing text overlay over image (you can also use a static value) 
 
 # Text overlay
 TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
