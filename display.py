@@ -5,9 +5,8 @@ import logging
 import time
 import datetime
 import os
+import GPSlookup
 import config
-
-logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
 def item2str(item):
   if item == None:
@@ -27,7 +26,7 @@ def item2str(item):
 
 def clean_string(fmt_str):
   fmt_str = ''.join([c for c in fmt_str if c in config.CODEPOINTS]) # clean string 
-  fmt_str = fmt_str[:99]  # limit length to 99 characters
+  fmt_str = fmt_str[:75]  # limit length to 99 characters
   return fmt_str
 
 def format_text(iFiles, pic_num):
@@ -79,7 +78,7 @@ def format_text(iFiles, pic_num):
     txt4 = clean_string(txt4)
   except Exception as e: # something went wrong when formatting
     txt1 = txt2 = txt3 = txt4 = ' '
-    logging.warning('Exception in format_text: {}', e)
+    logging.warning('Exception in format_text: {}', str(e))
   return (txt1, txt2, txt3, txt4)
 
 #---------------------------

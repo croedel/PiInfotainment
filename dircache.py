@@ -10,8 +10,6 @@ import logging
 import pickle  
 import config
   
-logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
-
 class DirCache:
   dir_cache = {}
 
@@ -51,7 +49,9 @@ class DirCache:
           logging.info(' - {}: unchanged'.format(root) )
           continue
         else: # dir changed
-          self.dir_cache['dir'][root]['files'].clear()  
+          logging.info(' - {}: directory changed ({} - {})'.format(root, self.dir_cache['dir'][root]['meta'][1], mtime ) )  
+          self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, True ]   
+          self.dir_cache['dir'][root]['files'].clear()
       else: 
         self.dir_cache['dir'][root] = {}
         self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, True ]   

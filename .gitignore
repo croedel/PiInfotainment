@@ -7,3 +7,4 @@ __pycache__/
 config.py
 libvlc.dll
 .dir_cache.p
+commands.txt

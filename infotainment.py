@@ -20,10 +20,7 @@ from PIL import Image, ImageFilter # these are needed for getting exif data from
 import config
 import dircache
 import weather
-import GPSlookup
 import display
-
-logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
 try:
   import paho.mqtt.client as mqttcl
@@ -160,7 +157,7 @@ def get_exif_info(file_path_name, im=None):
       data = exif_data.get(val)
       if data:
         exif_info[tag] = data
-    dircache.set_exif_info( file_path_name, orientation, dt, exif_info ) # write back to cache
+    pcache.set_exif_info( file_path_name, orientation, dt, exif_info ) # write back to cache
   except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
     logging.debug('Exception while trying to read EXIF: ', e)
     if dt == None:
@@ -250,6 +247,8 @@ def start_picframe():
 
   for item in weathertexts:
     weatherinfo.add_text_block( item )
+  for item in weathericons:
+    item.set_alpha(0.0)
   
   weather_interstitial_active = True
   next_weather_tm = 0.0
@@ -265,7 +264,7 @@ def start_picframe():
         sbg = sfg
         sfg = None
 
-        if (config.W_SKIP_CNT > 0) and (next_pic_num % config.W_SKIP_CNT == 1) and not weather_interstitial_active: 
+        if (config.W_SKIP_CNT > 0) and (next_pic_num % config.W_SKIP_CNT == 0) and not weather_interstitial_active: 
           # show weather interstitial
           weather_interstitial_active = True
           sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
@@ -305,10 +304,12 @@ def start_picframe():
           else: # could have a NO IMAGES selected and being drawn
             for item in textlines:
               item.colouring.set_colour(alpha=0.0)
+          mqtt_publish_status( status="running", pic_num=pic_num )
 
       if sfg is None:
         sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
         sbg = sfg
+        mqtt_publish_status( status="no pictures found", pic_num=pic_num )
 
       a = 0.0 # alpha - proportion front image to back
       name_tm = time.time() + config.INFO_TXT_TIME
@@ -346,9 +347,8 @@ def start_picframe():
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
-      mqtt_publish_status( status="running", pic_num=pic_num )
       if tm > next_check_tm: # time to check 
-        if dircache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
+        if pcache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
           if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
             date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
             date_from = (date_from.year, date_from.month, date_from.day)
@@ -423,8 +423,6 @@ def on_mqtt_message(mqttclient, userdata, message):
     msg = message.payload.decode("utf-8")
     reselect = False
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
-    mqtt_publish_status( fields="status", status="MQTT command received: {} -> {}".format(message.topic, msg) )
-    
     if message.topic == "screen/date_from": # NB entered as mqtt string "2016:12:25"
       try:
         msg = msg.replace(".",":").replace("/",":").replace("-",":")
@@ -488,6 +486,7 @@ def on_mqtt_message(mqttclient, userdata, message):
     if reselect:
       iFiles, nFi = get_files(date_from, date_to)
       next_pic_num = 0
+    mqtt_publish_status( status="MQTT command received: {} -> {}".format(message.topic, msg) )
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
 
@@ -517,20 +516,25 @@ def mqtt_publish_status( fields=[], status="-", pic_num=0 ):
   if isinstance( fields, str):
     fields = [fields]
   global nFi, date_from, date_to, paused, monitor_status
+  uname = ""
+  for _, value in platform.uname()._asdict().items():
+    uname += value + "; "
+  dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
+  dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None" 
   info_data = {
     "status": status,
     "pic_dir": config.PIC_DIR,
     "subdirectory": config.SUBDIRECTORY,
     "recent_days": config.RECENT_DAYS,
-    "date_from": date_from,
-    "date_to": date_to,
-    "paused": paused, 
-    "pic_num": pic_num,
+    "date_from": dfrom,
+    "date_to": dto,
+    "paused": str(paused), 
+    "pic_num": pic_num +1,
     "nFi": nFi,
     "monitor_status": monitor_status,
-    "status_date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
     "pid": os.getpid(),
-    "uname": str(platform.uname()) 
+    "uname": uname 
   }
   if hasattr(os, "getloadavg"):
     info_data["load"] = str(os.getloadavg())

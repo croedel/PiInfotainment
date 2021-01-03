@@ -8,7 +8,6 @@ import argparse
 import urllib
 import os
 import config
-logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(message)s" )
 
 try:
   import paho.mqtt.client as mqttcl
@@ -26,7 +25,6 @@ def on_mqtt_message(mqttclient, userdata, message):
   global srvstat
   try:
     msg = message.payload.decode("utf-8")
-    logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
     topic = message.topic.split("/")
     srvstat[topic[1]] = msg
   except Exception as e:
@@ -62,7 +60,7 @@ def mqtt_publish( topic, payload ):
   try:
     publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
   except Exception as e:
-    logging.warning("Could't send MQTT command: {}".format(e))
+    logging.error("Could't send MQTT command: {}".format(e))
 
 # actual webserver -------------------------------------------
 
@@ -132,6 +130,14 @@ class Handler(BaseHTTPRequestHandler):
       with open(fname, 'rb') as file:
         if path == "index.html":
           content = file.read().decode("utf-8")
+          if len(parts) > 1: # URL with parameters
+            destination = "http://" + self.server.server_address[0]
+            if self.server.server_port != 80:
+              destination += ":" + str(self.server.server_port)
+            destination += "/"
+            content = content.replace( "%redirect%", '<meta http-equiv="refresh" content="0; url=' + destination + '" />' )
+          else:
+            content = content.replace( "%redirect%", "")  
           content = content.replace( "%server_status%", status_table )
           self._set_header(200)
           self.wfile.write(content.encode("utf-8")) # Read the file and send the contents 

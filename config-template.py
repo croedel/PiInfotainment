@@ -94,6 +94,8 @@ MONITOR_SCHEDULE = {
 #############################################################################
 ######### Usually you don't ned to change anything below this line ##########
 
+logging.basicConfig( level=logging.INFO, format="[%(levelname)s] %(filename)s: %(message)s" )
+
 EXIF_DICT = {}
 
 from PIL import ExifTags
