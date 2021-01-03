@@ -16,6 +16,7 @@ except Exception as e:
   logging.warning("MQTT not set up because of: {}".format(e))
 
 srvstat = {}
+server_address = ()
 
 # --------- MQTT -------------
 def on_mqtt_connect(mqttclient, userdata, flags, rc):
@@ -112,6 +113,7 @@ class Handler(BaseHTTPRequestHandler):
     return status_table
 
   def do_GET(self):
+    global server_address
     parts = self.path.strip('/').split('?')
     path = parts[0]
     if path == '':
@@ -131,9 +133,9 @@ class Handler(BaseHTTPRequestHandler):
         if path == "index.html":
           content = file.read().decode("utf-8")
           if len(parts) > 1: # URL with parameters
-            destination = "http://" + self.server.server_address[0]
-            if self.server.server_port != 80:
-              destination += ":" + str(self.server.server_port)
+            destination = "http://" + server_address[0]
+            if server_address[1] != 80:
+              destination += ":" + str(server_address[1])
             destination += "/"
             content = content.replace( "%redirect%", '<meta http-equiv="refresh" content="0; url=' + destination + '" />' )
           else:
@@ -160,6 +162,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8080):
   mqttclient = mqtt_start()
+  global server_address
   server_address = (addr, port)
   httpd = server_class(server_address, handler_class)
   logging.info('Starting httpd on {}:{}'.format(addr, port))
@@ -174,7 +177,7 @@ def run(server_class=HTTPServer, handler_class=Handler, addr='localhost', port=8
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser(description="Infotainment HTTP server")
-  parser.add_argument( "-a", "--address", default="localhost", help="Specify the IP address on which the server listens" )
+  parser.add_argument( "-a", "--address", default="localhost", help="Host name or IP address on which the server listens" )
   parser.add_argument( "-p", "--port", type=int, default=8080, help="Specify the port on which the server listens" )
   args = parser.parse_args()
   run( addr=args.address, port=args.port )
