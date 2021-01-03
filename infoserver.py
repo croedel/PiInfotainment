@@ -136,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
             destination = "http://" + server_address[0]
             if server_address[1] != 80:
               destination += ":" + str(server_address[1])
-            destination += "/"
+            destination += "/index.html"
             content = content.replace( "%redirect%", '<meta http-equiv="refresh" content="0; url=' + destination + '" />' )
           else:
             content = content.replace( "%redirect%", "")  
