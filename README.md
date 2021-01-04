@@ -153,13 +153,13 @@ IGNORE_DIRS   # Ignore images if they are in one of those directories
 I personally like that the Infotainment system should display the most recent photos:
 
 ```
-RECENT_DAYS   # If set to > 0, only images which were created within the last N days are shown```
+RECENT_DAYS   # If set to > 0, show images which were created within the last N days```
 ```
 
 It's nice to randomly add some older pictures. You can set the propabitily the Infotainemt systems selects an outdated file by using the following options:
 
 ```
-OUTDATED_FILE_PROP  # Include outdated images with a propability of 1/x (0=disable)
+OUTDATED_FILE_PROP  # Include outdated images with this propability (0.0=disable) 
 ```
 
 Some config options which define the timing

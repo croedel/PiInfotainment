@@ -96,11 +96,8 @@ class Handler(BaseHTTPRequestHandler):
       "Start Date": srvstat.get("date_from", "-"),
       "End Date": srvstat.get("date_to", "-"),
       "Paused": srvstat.get("paused", "-"), 
-      "Current Picture": srvstat.get("pic_num", "-"),
-      "Total no. of pictures": srvstat.get("nFi", "-"),
+      "Picture": srvstat.get("pic_num", "-"),
       "Monitor status": srvstat.get("monitor_status", "-"),
-      "pid": srvstat.get("pid", "-"),
-      "System info": srvstat.get("uname", "-"),
       "System load": srvstat.get("load", "-")
     }
 
@@ -112,8 +109,29 @@ class Handler(BaseHTTPRequestHandler):
       status_table += "</tr>\n"
     return status_table
 
-  def do_GET(self):
+  def _get_dynamic_content( self, content ):
     global server_address
+    content = content.decode("utf-8")
+    parts = self.path.strip('/').split('?')
+    status_table = self._get_srv_status_info()
+    if len(parts) > 1: # URL with parameters -> redirect
+      destination = "http://" + server_address[0]
+      if server_address[1] != 80:
+        destination += ":" + str(server_address[1])
+      destination += "/index.html"
+      content = content.replace( "%redirect%", '<meta http-equiv="refresh" content="0; url=' + destination + '" />' )
+    else:
+      content = content.replace( "%redirect%", "")  
+    # replace dynamic content  
+    content = content.replace( "%server_status%", status_table )
+    current_pic = srvstat.get("current_pic", "-")
+    if current_pic != "-":
+      content = content.replace( "%current_picture%", current_pic )
+    else:   
+      content = content.replace( "%current_picture%", "no-pictures.jpg")  
+    return content.encode("utf-8")
+
+  def do_GET(self):
     parts = self.path.strip('/').split('?')
     path = parts[0]
     if path == '':
@@ -123,29 +141,16 @@ class Handler(BaseHTTPRequestHandler):
     else:
       params = ''
     fname = os.path.join(os.path.dirname(__file__), path)
-    logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )
-    
+    logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )  
     if path == "index.html":
       self._publish_MQTT( params )
-      status_table = self._get_srv_status_info()
     try:
       with open(fname, 'rb') as file:
+        content = file.read()
         if path == "index.html":
-          content = file.read().decode("utf-8")
-          if len(parts) > 1: # URL with parameters
-            destination = "http://" + server_address[0]
-            if server_address[1] != 80:
-              destination += ":" + str(server_address[1])
-            destination += "/index.html"
-            content = content.replace( "%redirect%", '<meta http-equiv="refresh" content="0; url=' + destination + '" />' )
-          else:
-            content = content.replace( "%redirect%", "")  
-          content = content.replace( "%server_status%", status_table )
-          self._set_header(200)
-          self.wfile.write(content.encode("utf-8")) # Read the file and send the contents 
-        else:
-          self._set_header(200)
-          self.wfile.write(file.read()) # Read the file and send the contents 
+          content = self._get_dynamic_content(content)
+        self._set_header(200)
+        self.wfile.write(content)  
     except IOError as e:
       logging.warning("Couldn't open {}".format(e))
       self._set_header(404)

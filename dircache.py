@@ -35,7 +35,7 @@ class DirCache:
       val['meta'][2] = False    
 
     updated = False
-    picture_dir = os.path.normpath( os.path.join(config.PIC_DIR, config.SUBDIRECTORY) )
+    picture_dir = os.path.normpath( config.PIC_DIR )
     for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
       subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
       mtime = os.stat(root).st_mtime 
@@ -109,8 +109,9 @@ class DirCache:
       self.dir_cache['dir'][path]['files'][fname][0] = orientation
       self.dir_cache['dir'][path]['files'][fname][2] = dt
       self.dir_cache['dir'][path]['files'][fname][3] = exif_info
+      logging.info("EXIF info set for: {} - {}, {}, {}".format(file_path_name, orientation, dt, str(exif_info) ))
     except Exception as err:
-      logging.warning("Couldn't update EXIF info for: {}".format(file_path_name))
+      logging.error("Couldn't update EXIF info for: {} - {}".format(file_path_name, str(err)))
 
   # refreshes the cache, if needed
   def refresh_cache(self):
@@ -123,28 +124,39 @@ class DirCache:
   def get_file_list( self, dt_from=None, dt_to=None ):
     updated = self.refresh_cache()
     # dt_from and dt_to are either None or tuples (2016,12,25)
-    dt_from = 0.0 if dt_from is None else time.mktime(dt_from + (0, 0, 0, 0, 0, 0))
-    dt_to = float(pow(2,32)) if dt_to is None else time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
+    if isinstance(dt_from, tuple):  
+      dt_from = time.mktime(dt_from + (0, 0, 0, 0, 0, 0))
+    if isinstance(dt_to, tuple):  
+      dt_to = time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
+    path_restrict = False  
+    if config.SUBDIRECTORY and config.SUBDIRECTORY != "": 
+      path_restrict = os.path.normpath( os.path.join( config.PIC_DIR, config.SUBDIRECTORY ) )
+ 
     # create file_list
     file_list=[]
     for path, val in self.dir_cache['dir'].items():
-      for item, attr in val['files'].items():
-        add_to_filelist = False 
-        ftime = attr[2] if attr[2] != None else attr[1] # preferably use EXIF date, fallback is mdate 
-        if ftime > dt_from and ftime < dt_to:
-          add_to_filelist = True 
-        if random.randint(0,config.OUTDATED_FILE_PROP) == 1:
-          add_to_filelist = True   
-        if add_to_filelist:
-          fpath = os.path.join(path, item)
-          file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
+      if not path_restrict or path.startswith( path_restrict ): # if either no restriction or path matches restriction 
+        for item, attr in val['files'].items():
+          ftime = attr[2] if attr[2] != None else attr[1] # preferably use EXIF date, fallback is mdate 
+          distance_from = max(0, dt_from-ftime) if dt_from is not None else 0
+          distance_to = max(0, ftime-dt_to) if dt_to is not None else 0
+          distance = max(distance_from, distance_to) / (3600*24) # days 
+          propability = 1 - (distance * 1/config.RECENT_DAYS)   
+          propability = max( config.OUTDATED_FILE_PROP, propability ) # set minimum to config value 
+          if random.random() <= propability:
+            fpath = os.path.join(path, item)
+            file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
     return file_list
 
 if __name__ == '__main__':
+  # some test / demo code
   pcache = DirCache()  
   file_list = pcache.get_file_list()
   logging.info("File list: {} items".format(len(file_list)))
-  file_list = pcache.get_file_list()
+
+  dfrom = datetime.datetime.now() - datetime.timedelta(30)
+  date_from = (dfrom.year, dfrom.month, dfrom.day) 
+  file_list = pcache.get_file_list(dt_from=date_from)
   logging.info("File list: {} items".format(len(file_list)))
 
   pcache.set_exif_info( "//SYNOLOGYDS216/photo/2020\\DCR_9547.JPG", 1, 1583668078.1234, {} )     

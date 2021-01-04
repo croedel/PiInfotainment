@@ -22,12 +22,6 @@ div.group-box {
   box-sizing: border-box;  
 }
 
-@media all and (max-width:50em){
-  div.group-box {
-    width: 100%
-  }    
-} 
-
 button{
   font-size: 11pt;
   display: inline-block;
@@ -42,8 +36,15 @@ button{
   transition: all 0.2s;
   width: 8em;
 }
+
 button:hover{
   background-color: darkblue;
+}
+
+div.picture img {
+  margin: 1em 0.5em;
+  width: calc(50% - 1em);
+  float: left
 }
 
 div.srvstatus {
@@ -82,10 +83,18 @@ div.header{
   text-decoration: none;
 }
 
-
 div.footer{
   font-size: 9pt;
   margin: 1em 1em;
   text-align: left;
   float: right;
 }
+
+@media all and (max-width:50em){
+  div.group-box {
+    width: 100%
+  }    
+  div.picture img {
+    width: 100%
+  }  
+} 

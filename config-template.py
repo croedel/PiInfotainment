@@ -7,9 +7,8 @@ PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 CHECK_DIR_TM = 300.0  # time in seconds between checking if the image directory has changed
-RECENT_DAYS = 30      # If set to > 0, only images which were created within the last N days are shown.
-OUTDATED_DIR_PROP = 10    # Include outdated directories with a propability of 1/x (0=disable)  
-OUTDATED_FILE_PROP = 50  # Include outdated images with a propability of 1/x (0=disable) 
+RECENT_DAYS = 60      # If set to > 0, only images which were created within the last N days are shown.
+OUTDATED_FILE_PROP = 0.01  # Include outdated images with this propability (0.0=disable) 
 NO_FILES_IMG = "/home/pi/infotainment/no-pictures.jpg"  # image to show if none selected
 
 # Shader 

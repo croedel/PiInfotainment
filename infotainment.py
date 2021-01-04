@@ -441,7 +441,7 @@ def on_mqtt_message(mqttclient, userdata, message):
         if len(date_to) != 3:
           raise Exception("invalid date format")
       except:
-        date_from = None
+        date_to = None
       reselect = True
     elif message.topic == "screen/recent_days":
       config.RECENT_DAYS = int(msg)  
@@ -466,6 +466,7 @@ def on_mqtt_message(mqttclient, userdata, message):
       nexttm = time.time() - 86400.0
     elif message.topic == "screen/subdirectory":
       config.SUBDIRECTORY = msg
+      date_from = date_to = None
       reselect = True
     elif message.topic == "screen/camera":
       show_camera = True
@@ -512,15 +513,13 @@ def mqtt_stop(client):
   except Exception as e:
     logging.warning("Couldn't stop MQTT: {}".format(e))
 
-def mqtt_publish_status( fields=[], status="-", pic_num=0 ):
+def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   if isinstance( fields, str):
     fields = [fields]
-  global nFi, date_from, date_to, paused, monitor_status
-  uname = ""
-  for _, value in platform.uname()._asdict().items():
-    uname += value + "; "
+  global iFiles, nFi, date_from, date_to, paused, monitor_status
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
-  dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None" 
+  dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
+  current_pic = iFiles[pic_num][0] if pic_num>=0 else "None" 
   info_data = {
     "status": status,
     "pic_dir": config.PIC_DIR,
@@ -529,12 +528,10 @@ def mqtt_publish_status( fields=[], status="-", pic_num=0 ):
     "date_from": dfrom,
     "date_to": dto,
     "paused": str(paused), 
-    "pic_num": pic_num +1,
-    "nFi": nFi,
+    "pic_num": str(pic_num+1) + " / " + str(nFi),
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-    "pid": os.getpid(),
-    "uname": uname 
+    "current_pic": current_pic 
   }
   if hasattr(os, "getloadavg"):
     info_data["load"] = str(os.getloadavg())
