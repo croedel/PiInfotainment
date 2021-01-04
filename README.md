@@ -151,17 +151,20 @@ Depending of the directory structure you're using for your pictures, you might h
 IGNORE_DIRS   # Ignore images if they are in one of those directories
 ```
 
-__Hint:__ Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
-(Please see section below for more details) 
-
-
-I personally like that the Infotainment system should display the most recent photos:
+If you have a huge ohoto archive, you might want to limit the timerange for the fotos you want to show.
 
 ```
-RECENT_DAYS   # If set to > 0, show images which were created within the last N days```
+DATE_FROM    # Sets start date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
+DATE_TO      # Sets end date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
 ```
 
-It's nice to randomly add some older pictures. You can set the propabitily the Infotainemt systems selects an outdated file by using the following options:
+Static dates can be good, but I personally like that the Infotainment system should display the most recent photos:
+
+```
+RECENT_DAYS   # If set to > 0, show images which were created within the last N days (supercedes DATE_FROM)
+```
+
+Selecting by timerange is the foundation. But wouldn't it be nice to randomly add some older pictures? You can set the propabitily the Infotainemt systems selects an outdated file by using the following options:
 
 ```
 OUTDATED_FILE_PROP  # Include outdated images with this propability (0.0=disable) 
@@ -172,8 +175,11 @@ To avoid a "hard cut" between the files which are included because they are with
 Example: If you defined `RECENT_DAYS=60` you would miss fotos take 61 days ago. If you define `PROP_SLOPE=10` fotos taken 61 days ago would get included with 90% propability, tose taken 62 days ago with 80% propability, etc. 
 
 ```
-PROP_SLOPE = 10       # Propability to select files outside [date_from, date_to] slowly decreases to from 1 to OUTDATED_FILE_PROP within this number of days
+PROP_SLOPE   # Timespan for smoothly decreasing propability to select files outside timerange 
 ```
+
+__Hint:__ Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
+Please see section below for more details. 
 
 Some config options which define the timing
 
@@ -214,18 +220,16 @@ Some examples:
 ```
 # exlude all files within this directory
 ---
-  exclude:
+exclude:
   - "*"
----  
 include:
 ```
 
 ```
 # exlude all files, except those named "IMG_*.jpg"
 ---
-  exclude:
+exclude:
   - "*"
----  
 include:
   - "IMG_*.jpg"
 ```
@@ -233,14 +237,12 @@ include:
 ```
 # exlude all named "DCP_*.jpg" except those named "DCP_000*.jpg" or "DCP_001*.jpg" 
 ---
-  exclude:
+exclude:
   - "DCP_*.jpg"
----  
 include:
   - "DCP_000*.jpg"
   - "DCP_001*.jpg"
 ```
-
 
 ### Weather forecast
 For the weather forecast feature you need to create a free account on https://openweathermap.org/

@@ -8,9 +8,11 @@ PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 CHECK_DIR_TM = 300.0  # time in seconds between checking if the image directory has changed
-RECENT_DAYS = 60      # If set to > 0, only images which were created within the last N days are shown.
+DATE_FROM = (2020,3,3)    # Sets start date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
+DATE_TO = None            # Sets end date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
+RECENT_DAYS = 60      # If set to > 0, only images which were created within the last N days are shown. (supersedes DATE_FROM)
 OUTDATED_FILE_PROP = 0.01  # Include outdated images with this propability (0.0=disable) 
-PROP_SLOPE = 30       # Propability to select files outside [date_from, date_to] slowly decreases to from 1 to OUTDATED_FILE_PROP within this number of days
+PROP_SLOPE = 30       # Timespan for smoothly decreasing propability to select files outside timerange
 NO_FILES_IMG = BASE_DIR + "no-pictures.jpg"  # image to show if none selected
 PIC_EXT = ['.png','.jpg','.jpeg','.heif','.heic'] # Include files with these file extensions
 DIR_CACHE_FILE = BASE_DIR + ".dir_cache.p" # Directory cache file 

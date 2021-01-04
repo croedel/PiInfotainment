@@ -605,9 +605,17 @@ def main():
   mqttclient = mqtt_start()
   mqtt_publish_status( status="initializing" )
 
+  date_from = None
+  date_to = None  
+  if config.DATE_FROM and len(config.DATE_FROM) == 3:
+    date_from = config.DATE_FROM
+  if config.DATE_TO and len(config.DATE_TO) == 3:
+    date_to = config.DATE_TO
+  
   if config.RECENT_DAYS > 0:
     dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
-    date_from = (dfrom.year, dfrom.month, dfrom.day) 
+    date_from = (dfrom.year, dfrom.month, dfrom.day)
+
   logging.info('Initial scan of image directory...')
   iFiles, nFi = get_files(date_from, date_to)
     
