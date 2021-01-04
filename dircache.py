@@ -3,11 +3,13 @@
 '''  
 
 import os
+import fnmatch
 import datetime
 import time
 import random
 import logging
 import pickle  
+import yaml
 import config
   
 class DirCache:
@@ -15,6 +17,32 @@ class DirCache:
 
   def __init__(self):
     self._read_dir_cache()
+
+  def _parse_yaml_file(self, filepath):
+    try:
+      with open(filepath, 'r') as myfile:
+        cfg = yaml.safe_load(myfile)
+        return cfg
+    except Error as err:
+      logging.error("Couldn't read .INFOTAINMENT yaml file: {} - {}".format(filepath, err) )
+      return None
+
+  def _yaml_permits(self, yaml_cfg, filename):
+    permitted = True 
+    if yaml_cfg:
+      exclude = yaml_cfg.get("exclude")
+      include = yaml_cfg.get("include")
+      if exclude:
+        for ex_pattern in exclude:
+          if fnmatch.fnmatch( filename, ex_pattern ):
+            permitted = False 
+            if include:
+              for in_pattern in include:
+                if fnmatch.fnmatch( filename, in_pattern ):
+                  permitted = True    
+                  break
+            break
+    return permitted
 
   def _update_dir_cache(self):
     tm = datetime.datetime.now()
@@ -40,9 +68,6 @@ class DirCache:
       subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
       mtime = os.stat(root).st_mtime 
       ctime = os.stat(root).st_ctime
-      if ".INFOTAINMENT_IGNORE.txt" in filenames:
-        logging.info(' - {}: skipped - ".INFOTAINMENT_IGNORE.txt" found '.format(root))  
-        continue
       if root in self.dir_cache['dir']: # directory is already known
         self.dir_cache['dir'][root]['meta'][2] = True # mark directory as existing  
         if self.dir_cache['dir'][root]['meta'][1] == mtime:     # check if directory changed since last scan
@@ -59,9 +84,12 @@ class DirCache:
 
       logging.info(' - {}: Scanning files'.format(root) )
       updated = True
+      yaml_cfg = None
+      if ".INFOTAINMENT.yaml" in filenames:
+        yaml_cfg = self._parse_yaml_file( os.path.join(root, ".INFOTAINMENT.yaml") )
       for filename in filenames:
         ext = os.path.splitext(filename)[1].lower()
-        if ext in config.PIC_EXT and not filename.startswith('.'):
+        if ext in config.PIC_EXT and not filename.startswith('.') and self._yaml_permits(yaml_cfg, filename):
           file_path_name = os.path.join(root, filename)
           mtime = os.path.getmtime(file_path_name)        
           orientation = 1 # this is default - unrotated
