@@ -82,7 +82,7 @@ To install, you might want to follow this instruction:
 
 _Hint:_ You need to be root (or use sudo).
 
-Some prerequisites:
+Some prerequisites we need to install:
 
 ```
 apt-get install vlc
@@ -92,6 +92,7 @@ pip3 install --upgrade pil
 pip3 install --upgrade Pillow
 pip3 install python-vlc 
 pip3 install paho-mqtt
+pip3 install pyyaml
 pip3 install pyheif
 ```
 
@@ -144,11 +145,15 @@ Quite obviously, you need to configure where to find your photos. This can be a 
 PIC_DIR     # directory where to find the pictures
 ```
 
-Depending of the directory structure you're using for your pictures, you might have some naming convention for directories which shouldn't be used for the Infotainment system. (e.g. Backup, Archive, ...)
+Depending of the directory structure you're using for your pictures, you might have some naming convention for directories which shouldn't be used for the Infotainment system. (e.g. Backup, Archive, ...) This option is working recursively, i.e. it prunes the directory. Neither files in the directory itself nor in its children get included.
 
 ```
 IGNORE_DIRS   # Ignore images if they are in one of those directories
 ```
+
+__Hint:__ Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
+(Please see section below for more details) 
+
 
 I personally like that the Infotainment system should display the most recent photos:
 
@@ -162,6 +167,14 @@ It's nice to randomly add some older pictures. You can set the propabitily the I
 OUTDATED_FILE_PROP  # Include outdated images with this propability (0.0=disable) 
 ```
 
+To avoid a "hard cut" between the files which are included because they are within RECENT_DAYS, and those outside, you can set `PROP_SLOPE`. This defines a time span in days, which smoothly decreases the propability depending on the "distance" from the desired time span. 
+
+Example: If you defined `RECENT_DAYS=60` you would miss fotos take 61 days ago. If you define `PROP_SLOPE=10` fotos taken 61 days ago would get included with 90% propability, tose taken 62 days ago with 80% propability, etc. 
+
+```
+PROP_SLOPE = 10       # Propability to select files outside [date_from, date_to] slowly decreases to from 1 to OUTDATED_FILE_PROP within this number of days
+```
+
 Some config options which define the timing
 
 ```
@@ -169,8 +182,6 @@ TIME_DELAY      # Defines how long a single slide is shown
 FADE_TIME       # change time during which slides overlap 
 INFO_TXT_TIME   # duration for showing text overlay over image 
 ```
-
-__Tipp:__ If you have certain sub-directories within your `PIC_DIR` which you don't want to be displayed, just create or touch) a "magic file" named `.INFOTAINMENT_IGNORE.txt` within them. RaspiInfotainment will ignore all images within these directories. 
 
 For convenience and energy saving purposes you can schedule to switch you PI's monitor ON and OFF at certain times. You can schedule this very fine grain an a weekday basis. If you switch the monitor manually (e.g. by using the Webserver), the manually set status has precedence and "wins" over the automated scheduling.
 
@@ -188,6 +199,48 @@ MONITOR_SCHEDULE = {
   6: [ [(8,0), (23,30)] ] 
 }
 ```
+### YAML file
+Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
+
+This YAML formatted file contains an `exclude` and and `include` section. Both can contain list of filenames or wildcard patterns (see https://docs.python.org/3/library/fnmatch.html). 
+
+Using this, you can e.g. 
+- exclude all images in a certain directory
+- exclude all images except the listed ones
+- exclude images with a certain name pattern
+- ...
+
+Some examples:
+```
+# exlude all files within this directory
+---
+  exclude:
+  - "*"
+---  
+include:
+```
+
+```
+# exlude all files, except those named "IMG_*.jpg"
+---
+  exclude:
+  - "*"
+---  
+include:
+  - "IMG_*.jpg"
+```
+
+```
+# exlude all named "DCP_*.jpg" except those named "DCP_000*.jpg" or "DCP_001*.jpg" 
+---
+  exclude:
+  - "DCP_*.jpg"
+---  
+include:
+  - "DCP_000*.jpg"
+  - "DCP_001*.jpg"
+```
+
 
 ### Weather forecast
 For the weather forecast feature you need to create a free account on https://openweathermap.org/

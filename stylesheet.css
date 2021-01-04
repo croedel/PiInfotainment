@@ -41,12 +41,6 @@ button:hover{
   background-color: darkblue;
 }
 
-div.picture img {
-  margin: 1em 0.5em;
-  width: calc(50% - 1em);
-  float: left
-}
-
 div.srvstatus {
   font-size: 14pt;
   float: left;
@@ -94,7 +88,4 @@ div.footer{
   div.group-box {
     width: 100%
   }    
-  div.picture img {
-    width: 100%
-  }  
 } 

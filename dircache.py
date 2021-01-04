@@ -20,10 +20,10 @@ class DirCache:
 
   def _parse_yaml_file(self, filepath):
     try:
-      with open(filepath, 'r') as myfile:
+      with open(filepath, 'r', encoding='utf-8') as myfile:
         cfg = yaml.safe_load(myfile)
         return cfg
-    except Error as err:
+    except yaml.YAMLError as err:
       logging.error("Couldn't read .INFOTAINMENT yaml file: {} - {}".format(filepath, err) )
       return None
 
@@ -60,7 +60,7 @@ class DirCache:
 
     # mark all directories in cache
     for dir_item, val in self.dir_cache['dir'].items():
-      val['meta'][2] = False    
+      val['meta'][3] = False    
 
     updated = False
     picture_dir = os.path.normpath( config.PIC_DIR )
@@ -68,25 +68,29 @@ class DirCache:
       subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
       mtime = os.stat(root).st_mtime 
       ctime = os.stat(root).st_ctime
+      yaml_fname = os.path.join(root, ".INFOTAINMENT.yaml")
+      ytime = 0.0
+      if os.path.isfile( yaml_fname ):
+        ytime = os.stat(yaml_fname).st_mtime           
       if root in self.dir_cache['dir']: # directory is already known
-        self.dir_cache['dir'][root]['meta'][2] = True # mark directory as existing  
-        if self.dir_cache['dir'][root]['meta'][1] == mtime:     # check if directory changed since last scan
+        self.dir_cache['dir'][root]['meta'][3] = True # mark directory as existing  
+        if self.dir_cache['dir'][root]['meta'][1] == mtime and self.dir_cache['dir'][root]['meta'][2] == ytime: # check if directory changed since last scan
           logging.info(' - {}: unchanged'.format(root) )
           continue
         else: # dir changed
           logging.info(' - {}: directory changed ({} - {})'.format(root, self.dir_cache['dir'][root]['meta'][1], mtime ) )  
-          self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, True ]   
+          self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, ytime, True ]   
           self.dir_cache['dir'][root]['files'].clear()
       else: 
         self.dir_cache['dir'][root] = {}
-        self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, True ]   
+        self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, ytime, True ]   
         self.dir_cache['dir'][root]['files'] = {} 
 
       logging.info(' - {}: Scanning files'.format(root) )
       updated = True
       yaml_cfg = None
-      if ".INFOTAINMENT.yaml" in filenames:
-        yaml_cfg = self._parse_yaml_file( os.path.join(root, ".INFOTAINMENT.yaml") )
+      if ytime > 0:
+        yaml_cfg = self._parse_yaml_file( os.path.join(root, yaml_fname) )
       for filename in filenames:
         ext = os.path.splitext(filename)[1].lower()
         if ext in config.PIC_EXT and not filename.startswith('.') and self._yaml_permits(yaml_cfg, filename):
@@ -101,7 +105,7 @@ class DirCache:
     # cleanup cache
     delete_list = []
     for dir_item, val in self.dir_cache['dir'].items():
-      if val['meta'][2] == False: # directory not existing any more     
+      if val['meta'][3] == False: # directory not existing any more     
         delete_list.append(dir_item)    
     if len(delete_list) > 0:
       for i in delete_list:
@@ -119,20 +123,19 @@ class DirCache:
     return updated
 
   def _save_dir_cache(self):
-    logging.info('Saving directory cache to pickle file')
-    with open('.dir_cache.p', 'wb') as myfile:
+    logging.info('Saving directory cache to pickle file {}'.format(config.DIR_CACHE_FILE))
+    with open(config.DIR_CACHE_FILE, 'wb') as myfile:
       pickle.dump(self.dir_cache, myfile)
 
   def _read_dir_cache(self):
-    logging.info('Reading directory cache from pickle file')
+    logging.info('Reading directory cache from pickle file {}'.format(config.DIR_CACHE_FILE))
     try:
-      with open('.dir_cache.p', 'rb') as myfile:
+      with open(config.DIR_CACHE_FILE, 'rb') as myfile:
         self.dir_cache = pickle.load( myfile )
         self.dir_cache['statistics']['last_check'] = self.dir_cache['statistics']['created']
     except OSError as err:
-      logging.info("Couldn't directory cache from pickle file")
+      logging.info("Couldn't read directory cache from pickle file")
       self.dir_cache = {}
-      pass
 
   # update cache: set exif data for given file
   def set_exif_info( self, file_path_name, orientation, dt, exif_info ):
@@ -142,7 +145,6 @@ class DirCache:
       self.dir_cache['dir'][path]['files'][fname][0] = orientation
       self.dir_cache['dir'][path]['files'][fname][2] = dt
       self.dir_cache['dir'][path]['files'][fname][3] = exif_info
-      logging.info("EXIF info set for: {} - {}, {}, {}".format(file_path_name, orientation, dt, str(exif_info) ))
     except Exception as err:
       logging.error("Couldn't update EXIF info for: {} - {}".format(file_path_name, str(err)))
 

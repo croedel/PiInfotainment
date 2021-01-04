@@ -97,6 +97,7 @@ class Handler(BaseHTTPRequestHandler):
       "End Date": srvstat.get("date_to", "-"),
       "Paused": srvstat.get("paused", "-"), 
       "Picture": srvstat.get("pic_num", "-"),
+      "Current picture": srvstat.get("current_pic", "-"),
       "Monitor status": srvstat.get("monitor_status", "-"),
       "System load": srvstat.get("load", "-")
     }
@@ -124,11 +125,6 @@ class Handler(BaseHTTPRequestHandler):
       content = content.replace( "%redirect%", "")  
     # replace dynamic content  
     content = content.replace( "%server_status%", status_table )
-    current_pic = srvstat.get("current_pic", "-")
-    if current_pic != "-":
-      content = content.replace( "%current_picture%", current_pic )
-    else:   
-      content = content.replace( "%current_picture%", "no-pictures.jpg")  
     return content.encode("utf-8")
 
   def do_GET(self):

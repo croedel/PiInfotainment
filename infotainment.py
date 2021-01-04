@@ -309,7 +309,7 @@ def start_picframe():
       if sfg is None:
         sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
         sbg = sfg
-        mqtt_publish_status( status="no pictures found", pic_num=pic_num )
+        mqtt_publish_status( status="no pictures found" )
 
       a = 0.0 # alpha - proportion front image to back
       name_tm = time.time() + config.INFO_TXT_TIME
