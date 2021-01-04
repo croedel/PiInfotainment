@@ -52,7 +52,7 @@ class DirCache:
       self.dir_cache['dir'] = {}
       self.dir_cache['statistics'] = {}
       self.dir_cache['statistics']['created'] = tm
-    elif tm < self.dir_cache['statistics']['last_check'] + datetime.timedelta(seconds=config.CHECK_DIR_TM):  
+    elif tm < self.dir_cache['statistics']['created'] + datetime.timedelta(seconds=config.CHECK_DIR_TM):  
       logging.info('Refresh of directory cache not necessary: Last update: {}'.format(str(self.dir_cache['statistics']['created'])))
       return False
     else:
@@ -62,7 +62,6 @@ class DirCache:
     for dir_item, val in self.dir_cache['dir'].items():
       val['meta'][3] = False    
 
-    updated = False
     picture_dir = os.path.normpath( config.PIC_DIR )
     for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
       subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
@@ -87,7 +86,6 @@ class DirCache:
         self.dir_cache['dir'][root]['files'] = {} 
 
       logging.info(' - {}: Scanning files'.format(root) )
-      updated = True
       yaml_cfg = None
       if ytime > 0:
         yaml_cfg = self._parse_yaml_file( os.path.join(root, yaml_fname) )
@@ -110,29 +108,23 @@ class DirCache:
     if len(delete_list) > 0:
       for i in delete_list:
         del self.dir_cache['dir'][i]
-      updated = True
+        logging.info('Deleting dir from cache: {}'.format(i) )
 
-    if updated:
-      logging.info('Directory cache refreshed: {} directories'.format( len(self.dir_cache['dir'] )))
-      self.dir_cache['statistics']['created'] = tm
-      updated = True
-    else:
-      logging.info('Directory cache: no changes' )
-      updated = False
-    self.dir_cache['statistics']['last_check'] = tm 
-    return updated
+    self.dir_cache['statistics']['created'] = tm
+    logging.info('Directory cache refreshed: {} directories'.format( len(self.dir_cache['dir'] )))
+    return True
 
   def _save_dir_cache(self):
-    logging.info('Saving directory cache to pickle file {}'.format(config.DIR_CACHE_FILE))
-    with open(config.DIR_CACHE_FILE, 'wb') as myfile:
+    with open(config.DIR_CACHE_FILE+".tmp", 'wb') as myfile:
       pickle.dump(self.dir_cache, myfile)
+    os.replace(config.DIR_CACHE_FILE+".tmp", config.DIR_CACHE_FILE)  
+    logging.info('Saved directory cache to pickle file {}'.format(config.DIR_CACHE_FILE))
 
   def _read_dir_cache(self):
     logging.info('Reading directory cache from pickle file {}'.format(config.DIR_CACHE_FILE))
     try:
       with open(config.DIR_CACHE_FILE, 'rb') as myfile:
         self.dir_cache = pickle.load( myfile )
-        self.dir_cache['statistics']['last_check'] = self.dir_cache['statistics']['created']
     except OSError as err:
       logging.info("Couldn't read directory cache from pickle file")
       self.dir_cache = {}
@@ -181,6 +173,7 @@ class DirCache:
           if random.random() <= propability:
             fpath = os.path.join(path, item)
             file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
+    logging.info("New file list created: {} images".format(len(file_list)))
     return file_list
 
 if __name__ == '__main__':

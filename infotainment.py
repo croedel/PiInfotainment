@@ -46,7 +46,7 @@ nFi = 0
 show_camera = False
 camera_end_tm = 0.0
 monitor_status = "ON"
-pcache = dircache.DirCache()  
+pcache = None  
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -125,6 +125,7 @@ def tex_load(pic_num, iFiles, size=None):
   return tex
 
 def get_files(dt_from=None, dt_to=None):
+  global pcache
   mqtt_publish_status( fields="status", status="updating file_list" )
   file_list = pcache.get_file_list( dt_from, dt_to )
   if config.SHUFFLE:
@@ -142,6 +143,7 @@ def get_files(dt_from=None, dt_to=None):
 
 
 def get_exif_info(file_path_name, im=None):
+  global pcache
   exif_info = {}
   dt = None
   orientation = None
@@ -179,7 +181,7 @@ def convert_heif(fname):
 
 # start the picture frame
 def start_picframe():
-  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status
+  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache
   if config.KENBURNS:
     kb_up = True
     config.FIT = False
@@ -370,6 +372,7 @@ def start_picframe():
           switch_HDMI(scheduled_status)
           paused = True if scheduled_status.startswith("OFF") else False
           monitor_status = scheduled_status
+          mqtt_publish_status( fields="monitor_status" )
         next_monitor_check_tm = tm + 60 # check every minute
 
     slide.draw()
@@ -515,11 +518,12 @@ def mqtt_stop(client):
 
 def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   if isinstance( fields, str):
-    fields = [fields]
+    fields = [fields]  
   global iFiles, nFi, date_from, date_to, paused, monitor_status
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
-  current_pic = iFiles[pic_num][0] if pic_num>=0 else "None" 
+  current_pic = iFiles[pic_num][0] if pic_num>=0 else "None"
+  cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] )
   info_data = {
     "status": status,
     "pic_dir": config.PIC_DIR,
@@ -531,7 +535,8 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
     "pic_num": str(pic_num+1) + " / " + str(nFi),
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-    "current_pic": current_pic 
+    "current_pic": current_pic,
+    "cpu_temp": cpu_temp 
   }
   if hasattr(os, "getloadavg"):
     info_data["load"] = str(os.getloadavg())
@@ -600,8 +605,9 @@ def switch_HDMI( status ):
 #-------------------------------------------
 def main():
   ret = 0
-  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera
+  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache
   logging.info('Starting infotainment system...')
+  pcache = dircache.DirCache()
   mqttclient = mqtt_start()
   mqtt_publish_status( status="initializing" )
 
@@ -611,7 +617,6 @@ def main():
     date_from = config.DATE_FROM
   if config.DATE_TO and len(config.DATE_TO) == 3:
     date_to = config.DATE_TO
-  
   if config.RECENT_DAYS > 0:
     dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
     date_from = (dfrom.year, dfrom.month, dfrom.day)

@@ -16,7 +16,7 @@ div.group-box {
   padding: 0.5em;
   background-color: lightblue;
   float: left;
-  width: calc(50% - 1em);;
+  width: calc(50% - 1em);
   height: 10em;
   margin: 0.5em;
   box-sizing: border-box;  
@@ -61,7 +61,7 @@ div.header{
   color: darkblue;
   margin: 0.5em;
   float: left;
-  width: 100%;
+  width: calc(100% - 1em);
   font-size: 22pt;
   text-align: center;
   text-decoration: none;
@@ -84,8 +84,11 @@ div.footer{
   float: right;
 }
 
-@media all and (max-width:50em){
+@media all and (max-width:42em){
   div.group-box {
-    width: 100%
+    width: 100%;
   }    
+  div.header {
+    font-size: 18pt;
+  }
 } 
