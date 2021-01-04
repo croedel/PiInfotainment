@@ -70,10 +70,15 @@ class DirCache:
           # [orientation, file_changed_date, exif_date, exif_info] 
           self.dir_cache['dir'][root]['files'][filename] = [orientation, mtime, dt, exif_info] 
 
+    # cleanup cache
+    delete_list = []
     for dir_item, val in self.dir_cache['dir'].items():
-      if val['meta'][2] == False and len(val['files']) > 0: # directory was deleted     
-        val['files'].clear()
-        updated = True
+      if val['meta'][2] == False: # directory not existing any more     
+        delete_list.append(dir_item)    
+    if len(delete_list) > 0:
+      for i in delete_list:
+        del self.dir_cache['dir'][i]
+      updated = True
 
     if updated:
       logging.info('Directory cache refreshed: {} directories'.format( len(self.dir_cache['dir'] )))
