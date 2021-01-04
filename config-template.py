@@ -9,7 +9,9 @@ IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore 
 CHECK_DIR_TM = 300.0  # time in seconds between checking if the image directory has changed
 RECENT_DAYS = 60      # If set to > 0, only images which were created within the last N days are shown.
 OUTDATED_FILE_PROP = 0.01  # Include outdated images with this propability (0.0=disable) 
+PROP_SLOPE = 30       # Propability to select files outside [date_from, date_to] slowly decreases to from 1 to OUTDATED_FILE_PROP within this number of days
 NO_FILES_IMG = "/home/pi/infotainment/no-pictures.jpg"  # image to show if none selected
+PIC_EXT = ['.png','.jpg','.jpeg','.heif','.heic'] # Include files with these file extensions
 
 # Shader 
 FIT = True          # shrink to fit screen i.e. don't crop

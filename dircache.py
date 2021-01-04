@@ -145,8 +145,8 @@ class DirCache:
           ftime = attr[2] if attr[2] != None else attr[1] # preferably use EXIF date, fallback is mdate 
           distance_from = max(0, dt_from-ftime) if dt_from is not None else 0
           distance_to = max(0, ftime-dt_to) if dt_to is not None else 0
-          distance = max(distance_from, distance_to) / (3600*24) # days 
-          propability = 1 - (distance * 1/config.RECENT_DAYS)   
+          distance = max(distance_from, distance_to) / (3600*24) # days
+          propability = 1 - (distance * 1/config.PROP_SLOPE)   
           propability = max( config.OUTDATED_FILE_PROP, propability ) # set minimum to config value 
           if random.random() <= propability:
             fpath = os.path.join(path, item)
