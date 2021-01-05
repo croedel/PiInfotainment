@@ -467,9 +467,11 @@ def on_mqtt_message(mqttclient, userdata, message):
     elif message.topic == "screen/monitor":
       if msg == "ON":
         monitor_status = "ON-MANUAL"
+        paused = False
         switch_HDMI( monitor_status )
       elif msg == "OFF":
         monitor_status = "OFF-MANUAL"
+        paused = True
         switch_HDMI( monitor_status )
       else:
         monitor_status = "ON"
@@ -526,7 +528,7 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
     "pic_num": str(pic_num+1) + " / " + str(nFi),
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-    "current_pic": current_pic,
+    "current_pic": current_pic.encode(encoding="utf-8"),
     "cpu_temp": cpu_temp 
   }
   if hasattr(os, "getloadavg"):

@@ -6,6 +6,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import argparse
 import urllib
+import html
+import datetime
 import os
 import config
 
@@ -17,17 +19,24 @@ except Exception as e:
 
 srvstat = {}
 server_address = ()
+pic_history = []
 
 # --------- MQTT -------------
 def on_mqtt_connect(mqttclient, userdata, flags, rc):
   logging.info("Connected to MQTT broker")
 
 def on_mqtt_message(mqttclient, userdata, message):
-  global srvstat
+  global srvstat, pic_history
   try:
     msg = message.payload.decode("utf-8")
     topic = message.topic.split("/")
     srvstat[topic[1]] = msg
+    if topic[1] == "current_pic" and msg != "None":
+      tm = datetime.datetime.now()
+      pic_history.append([tm, msg])
+      pic_history.sort(key=lambda x: x[0], reverse=True)
+      if len(pic_history) > config.PIC_HISTORY:
+        pic_history.pop(len(pic_history)-1)
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
 
@@ -107,16 +116,25 @@ class Handler(BaseHTTPRequestHandler):
     status_table = ""
     for key, val in status_info.items():
       status_table += "<tr>\n"
-      status_table += "  <td> " + key + " </td>\n"
-      status_table += "  <td> " + val + " </td>\n"
+      status_table += "  <td> " + html.escape(key) + " </td>\n"
+      status_table += "  <td> " + html.escape(val) + " </td>\n"
       status_table += "</tr>\n"
     return status_table
+
+  def _get_pic_history(self):
+    global pic_history
+    history_table = ""
+    for item in pic_history:
+      history_table += "<tr>\n"
+      history_table += "  <td> " + item[0].strftime("%d.%m.%Y %H:%M:%S") + " </td>\n"
+      history_table += "  <td> " + html.escape(item[1]) + " </td>\n"
+      history_table += "</tr>\n"
+    return history_table
 
   def _get_dynamic_content( self, content ):
     global server_address
     content = content.decode("utf-8")
     parts = self.path.strip('/').split('?')
-    status_table = self._get_srv_status_info()
     if len(parts) > 1: # URL with parameters -> redirect
       destination = "http://" + server_address[0]
       if server_address[1] != 80:
@@ -126,7 +144,8 @@ class Handler(BaseHTTPRequestHandler):
     else:
       content = content.replace( "%redirect%", "")  
     # replace dynamic content  
-    content = content.replace( "%server_status%", status_table )
+    content = content.replace( "%server_status%", self._get_srv_status_info() )    
+    content = content.replace( "%picture_history%", self._get_pic_history() )
     return content.encode("utf-8")
 
   def do_GET(self):

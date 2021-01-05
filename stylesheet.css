@@ -44,6 +44,7 @@ button:hover{
 div.srvstatus {
   font-size: 14pt;
   float: left;
+  width: calc(50% - 1em);
   margin: 1em 0.5em;
 }
 
@@ -55,6 +56,31 @@ div.srvstatus table, th, td {
   text-align: left;
   background-color: lightcoral;
   font-size: 10pt;
+}
+
+div.srvstatus table{
+  width: 100%;
+}
+
+div.picturehistory {
+  font-size: 14pt;
+  float: left;
+  width: calc(50% - 1em);
+  margin: 1em 0.5em;
+}
+
+div.picturehistory table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  margin: 0.5em 0em;
+  padding: 0.2em 0.5em;
+  text-align: left;
+  background-color: lightcoral;
+  font-size: 10pt;
+}
+
+div.picturehistory table{
+  width: 100%;
 }
 
 div.header{
@@ -85,10 +111,16 @@ div.footer{
 }
 
 @media all and (max-width:42em){
+  div.header {
+    font-size: 18pt;
+  }
   div.group-box {
     width: 100%;
   }    
-  div.header {
-    font-size: 18pt;
+  div.picturehistory{
+    width: 100%;
+  }
+  div.srvstatus{
+    width: 100%;
   }
 } 

@@ -74,7 +74,7 @@ class DirCache:
       if root in self.dir_cache['dir']: # directory is already known
         self.dir_cache['dir'][root]['meta'][3] = True # mark directory as existing  
         if self.dir_cache['dir'][root]['meta'][1] == mtime and self.dir_cache['dir'][root]['meta'][2] == ytime: # check if directory changed since last scan
-          logging.info(' - {}: unchanged'.format(root) )
+          logging.debug(' - {}: unchanged'.format(root) )
           continue
         else: # dir changed
           logging.info(' - {}: directory changed ({} - {})'.format(root, self.dir_cache['dir'][root]['meta'][1], mtime ) )  
