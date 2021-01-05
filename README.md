@@ -3,11 +3,12 @@
 **This project is still work-in-progress!**
 
 Welcome to the Raspi Infotainment system project!  
-This ia a hobby project meant for Raspberry Pi which combines following core functionalities:
+This is a hobby project for Raspberry Pi which combines following core functionalities:
 - Advanced digital picture frame: Enables to displays you digital images in a slideshow with smooth transitions 
 - Weather forecast: Show your local weather forecast
 - Surveillance camera viewer: Show live picture of a surveillance camera when it detects motion  
 - Simple webserver: Enables you to remotely control the Infotainment System
+- Enable to integrate into almost any home automation system which supports HTTP hooks 
 
 The Picture Frame functionality of RaspiInfotainment uses the pi3d (https://pi3d.github.io/) project and is heavily based on PictureFrame2020.py from https://github.com/pi3d/pi3d_demos.
 
@@ -27,11 +28,11 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 - Enable to show images created within the last N days
 - Optionally add randomly older pictures 
 - Enable to specify blacklist for image directories which shall be ignored (e.g. backup, system directories, thumbnails, ...)
-- Enable to ignore directories which contain a "magic filename" `.INFOTAINMENT_IGNORE.txt`
-- Monitor can be scheduled to be switched ON/OFF automatically at certain times 
+- Finegrain control which pictures shall be shown via YUML files with file name pattern matching  
+- Raspi monitor can be scheduled to be switched ON/OFF automatically at certain times 
 
 ### Webserver
-RaspiInfotainment provides a simple HTTP server which can be used to remote control the Infotainment server.
+Raspi Infotainment provides a HTTP server which can be used to remote control the Infotainment server.
 Per default it will start on your Raspberry PI on standard port 80. So you can easily access it within any browser within your lokal network by entering `http://<IP address of yor Raspberry Pi>`
 
 It enables following commands:
@@ -48,9 +49,9 @@ It enables following commands:
 | Camera        | -           |  Switch to surveillance camera viewer
 | Monitor       | ON, OFF, AUTO | Switch monitor ON or OFF manually or re-set to AUTO mode
 
-Feel free to make it look nicer by e.g. customizing `stylesheet.css` ;-)
+It also shows some status info from yor Raspi, e.g. which photo is curretly displayed, monitor status, CPU temperature, etc.
 
-The webserver writes a message into the mosquitto MQTT broker on your Pi which is then again read by the infotainment system.
+The webserver communicates with the infotainment server via the mosquitto MQTT broker on your Pi.
 
 ### Weather forecast
 RaspiInfotainment enables to show a weather forecast page. It uses https://openweathermap.org/ to retrieve the forecast data for your location.
@@ -59,7 +60,7 @@ This forecast page then gets shown as every Nth slide between the images of the 
 ### Surveillance camera viewer
 This fuctionality is meant to display e.g. a frontdoor surveillance camera. It gets automatically displayed when the camera detects a motion.
 
-This functionality automatically switches the monitor ON evan if it was scheduled to be OFF at this pount in time.
+This functionality automatically switches the monitor ON even if it was scheduled to be OFF at this point in time.
 
 --------------------------------------
 
@@ -102,14 +103,14 @@ Now let's install the PIInfotainment system:
 cd /home/pi/infotainment && wget https://github.com/croedel/PiInfotainment/archive/main.zip && unzip main.zip && rm main.zip
 ```
 
-In a next step, you need to copy the config-template.py to config.py. Within this, you need to config e.g. your picture directory, your geo-location, API key etc. (See below for more details on configuration)
+In a next step, you need to copy the `config-template.py` to `config.py`. Within this, you need to config e.g. your picture directory, your geo-location, API key etc. (See below for more details on configuration)
 
 ```
 cd /home/pi/infotainment && cp config-template.py config.py
 ```
 
 ### Auto start using systemd
-In order to start the PiInfotainment system automatically, you can use the systemd script templates within systemd directory:
+In order to start the PiInfotainment system automatically, you can use the systemd script templates within `systemd` directory:
 
 | Script                | Description
 |-----------------------|----------------------------------------------
@@ -208,7 +209,7 @@ MONITOR_SCHEDULE = {
 ### YAML file
 Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
 
-This YAML formatted file contains an `exclude` and and `include` section. Both can contain list of filenames or wildcard patterns (see https://docs.python.org/3/library/fnmatch.html). 
+This YAML formatted file contains an `exclude` and and `include` section. Both can contain list of filenames or wildcard patterns. It supports UNIX shell-style wildcards (e.g. `*` and `?`) (see https://docs.python.org/3/library/fnmatch.html). 
 
 Using this, you can e.g. 
 - exclude all images in a certain directory
