@@ -21,7 +21,7 @@ Following sections explain the 3 core functionalities.
 The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 
 - Optimized for direct mounting of image directory via WIFI (e.g. from a NAS) - no copying required!
-- Fast startup time - even if image directory contains a huge number of sub-directories and pictures 
+- Fast startup time - even if image directory contains a huge number of sub-directories and pictures by implementing a directory cache
 - Largely enhanced ability to overlay info texts: directory, pathname, image date, ...
 - Read image EXIF info and enable to show them as text overlay
 - Read GPS Info from image and reverse lookup to return human readable location info
@@ -128,7 +128,10 @@ _Hint:_ In order to install them, you need to be root (or use sudo):
 - To start a service manually, use `systemctl start infotainment.service` etc. 
 - To start a service at boot time automatically, use `systemctl enable infotainment.service` etc.
 
-_Tipp:_ The logs will get written to `/var/log/syslog`
+_Tipps:_ 
+- The logs will get written to `/var/log/syslog`. So you can whatch what it's doing by e.g. `tail -f /var/log/syslog`
+- If you have a huge photo directory, the first start might take a while sice the infotaiment system needs to walk through the whole tree. Subsequent starts will be significantly faster due to the implemeted disk cache.
+
 
 --------------------------------------
 
