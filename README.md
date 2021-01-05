@@ -152,7 +152,7 @@ Depending of the directory structure you're using for your pictures, you might h
 IGNORE_DIRS   # Ignore images if they are in one of those directories
 ```
 
-If you have a huge ohoto archive, you might want to limit the timerange for the fotos you want to show.
+If you have a huge pohoto archive, you might want to limit the timerange for the fotos you want to show.
 
 ```
 DATE_FROM    # Sets start date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
@@ -171,9 +171,9 @@ Selecting by timerange is the foundation. But wouldn't it be nice to randomly ad
 OUTDATED_FILE_PROP  # Include outdated images with this propability (0.0=disable) 
 ```
 
-To avoid a "hard cut" between the files which are included because they are within RECENT_DAYS, and those outside, you can set `PROP_SLOPE`. This defines a time span in days, which smoothly decreases the propability depending on the "distance" from the desired time span. 
+To avoid a "hard cut" between the files which are included because they are within `DATE_FROM` and `DATE_TO`, and those outside this time interval, you can set `PROP_SLOPE`. This defines a time span in days, which smoothly decreases the propability depending on the "distance" from the configured time span (`DATE_FROM`and `DATE_TO`). 
 
-Example: If you defined `RECENT_DAYS=60` you would miss fotos take 61 days ago. If you define `PROP_SLOPE=10` fotos taken 61 days ago would get included with 90% propability, tose taken 62 days ago with 80% propability, etc. 
+Example: If you defined `RECENT_DAYS=60` you would miss fotos take 61 days ago. If you define `PROP_SLOPE=10` fotos taken 61 days ago would get included with 90% propability, those taken 62 days ago with 80% propability, etc. 
 
 ```
 PROP_SLOPE   # Timespan for smoothly decreasing propability to select files outside timerange 
@@ -190,7 +190,13 @@ FADE_TIME       # change time during which slides overlap
 INFO_TXT_TIME   # duration for showing text overlay over image 
 ```
 
-For convenience and energy saving purposes you can schedule to switch you PI's monitor ON and OFF at certain times. You can schedule this very fine grain an a weekday basis. If you switch the monitor manually (e.g. by using the Webserver), the manually set status has precedence and "wins" over the automated scheduling.
+### Scheduled switching of the monitor
+For convenience and energy saving purposes you can schedule to switch you PI's monitor ON and OFF at certain times. You can schedule this very fine grain an a weekday basis. 
+
+`MONITOR_SCHEDULE` allows to define an array of start-stop time pairs for each weekday.
+- Weekdays are numbered from 0 to 6: 0=Monday ... 6=Sunday
+- Each weekday may contain as many start-stop time pairs as you need
+- Each start-stop time pair consists of tuples (hour, minute)
 
 ```
 # Monitor schedule
@@ -206,6 +212,8 @@ MONITOR_SCHEDULE = {
   6: [ [(8,0), (23,30)] ] 
 }
 ```
+If you switch the monitor manually (e.g. by using the Webserver), the manually set status has precedence and "wins" over the automated scheduling.
+
 ### YAML file
 Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
 
