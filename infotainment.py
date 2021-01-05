@@ -341,23 +341,6 @@ def start_picframe():
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
     else: # no transition effect safe to reshuffle etc
-      if tm > next_check_tm: # time to check 
-        if pcache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
-          if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
-            date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
-            date_from = (date_from.year, date_from.month, date_from.day)
-          iFiles, nFi = get_files(date_from, date_to)
-          num_run_through = 0
-          next_pic_num = 0
-        next_check_tm = tm + config.CHECK_DIR_TM # next check
-      if tm > next_weather_tm: # refresh weather info
-        weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
-        for i in range( min(len(weather_info), w_item_cnt) ):
-          weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
-          weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
-          w_tex = pi3d.Texture('weather_icons/' + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
-          weathericons[i].set_textures( [w_tex] )
-        next_weather_tm = tm + config.W_REFRESH_DELAY # next check
       if tm > next_monitor_check_tm: # Check if it's time to switch monitor status
         scheduled_status = check_monitor_status(tm)
         if monitor_status != scheduled_status and not monitor_status.endswith("-MANUAL"):
@@ -366,6 +349,24 @@ def start_picframe():
           monitor_status = scheduled_status
           mqtt_publish_status( fields="monitor_status" )
         next_monitor_check_tm = tm + 60 # check every minute
+      if monitor_status.startswith("ON"):
+        if tm > next_check_tm: # time to check picture directory
+          if pcache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
+            if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
+              date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
+              date_from = (date_from.year, date_from.month, date_from.day)
+            iFiles, nFi = get_files(date_from, date_to)
+            num_run_through = 0
+            next_pic_num = 0
+          next_check_tm = tm + config.CHECK_DIR_TM # next check
+        if tm > next_weather_tm: # refresh weather info
+          weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
+          for i in range( min(len(weather_info), w_item_cnt) ):
+            weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
+            weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
+            w_tex = pi3d.Texture('weather_icons/' + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
+            weathericons[i].set_textures( [w_tex] )
+          next_weather_tm = tm + config.W_REFRESH_DELAY # next check
 
     slide.draw()
 
