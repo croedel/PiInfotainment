@@ -129,9 +129,8 @@ _Hint:_ In order to install them, you need to be root (or use sudo):
 - To start a service at boot time automatically, use `systemctl enable infotainment.service` etc.
 
 _Tipps:_ 
-- The logs will get written to `/var/log/syslog`. So you can whatch what it's doing by e.g. `tail -f /var/log/syslog`
-- If you have a huge photo directory, the first start might take a while sice the infotaiment system needs to walk through the whole tree. Subsequent starts will be significantly faster due to the implemeted disk cache.
-
+- The logs will get written to `/var/log/syslog`. So you can watch what the system is doing by e.g. `tail -f /var/log/syslog`
+- If you have a realy huge photo directory, the first start will take a few minutes since the infotaiment system needs to walk through the whole directory tree. Subsequent starts will be significantly faster due to the implemeted disk cache.
 
 --------------------------------------
 

@@ -1,6 +1,6 @@
 ---
-  exclude:
+exclude:
   - "*"
----  
 include:
-  - "DCR_*"
+  - "img_*.jpg"
+  - "example.jpg"
