@@ -173,6 +173,20 @@ class DirCache:
           if random.random() <= propability:
             fpath = os.path.join(path, item)
             file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
+
+    if config.SHUFFLE:
+      if config.RECENT_N == 0:
+        random.shuffle(file_list)
+      else:
+        file_list.sort(key=lambda x: x[2]) # will be later files last
+        temp_list_first = file_list[-config.RECENT_N:]
+        temp_list_last = file_list[:-config.RECENT_N]
+        random.shuffle(temp_list_first)
+        random.shuffle(temp_list_last)
+        file_list = temp_list_first + temp_list_last
+    else:
+      file_list.sort() # if not config.SHUFFLEd; sort by name
+        
     logging.info("New file list created: {} images".format(len(file_list)))
     return file_list
 

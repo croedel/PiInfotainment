@@ -99,6 +99,7 @@ class Handler(BaseHTTPRequestHandler):
       "Picture": srvstat.get("pic_num", "-"),
       "Current picture": srvstat.get("current_pic", "-"),
       "Monitor status": srvstat.get("monitor_status", "-"),
+      "Infotainment system started": srvstat.get("start_date", "-"),
       "System load": srvstat.get("load", "-"),
       "CPU temperature": srvstat.get("cpu_temp", "-")
     }

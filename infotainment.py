@@ -47,6 +47,7 @@ show_camera = False
 camera_end_tm = 0.0
 monitor_status = "ON"
 pcache = None  
+start_date = None
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -75,9 +76,9 @@ def tex_load(pic_num, iFiles, size=None):
     if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
         max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
     if w > max_dimension:
-        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.BICUBIC)
+        im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.LANCZOS)
     elif h > max_dimension:
-        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.BICUBIC)
+        im = im.resize((int(w * max_dimension / h), max_dimension), resample=Image.LANCZOS)
     if orientation == 2:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
     elif orientation == 3:
@@ -104,7 +105,7 @@ def tex_load(pic_num, iFiles, size=None):
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
         im_b = im_b.filter(ImageFilter.GaussianBlur(config.BLUR_AMOUNT))
-        im_b = im_b.resize(size, resample=Image.BICUBIC)
+        im_b = im_b.resize(size, resample=Image.LANCZOS)
         im_b.putalpha(round(255 * config.EDGE_ALPHA))  # to apply the same EDGE_ALPHA as the no blur method.
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.LANCZOS)
         """resize can use Image.LANCZOS (alias for Image.ANTIALIAS) for resampling
@@ -128,15 +129,6 @@ def get_files(dt_from=None, dt_to=None):
   global pcache
   mqtt_publish_status( fields="status", status="updating file_list" )
   file_list = pcache.get_file_list( dt_from, dt_to )
-  if config.SHUFFLE:
-    file_list.sort(key=lambda x: x[2]) # will be later files last
-    temp_list_first = file_list[-config.RECENT_N:]
-    temp_list_last = file_list[:-config.RECENT_N]
-    random.shuffle(temp_list_first)
-    random.shuffle(temp_list_last)
-    file_list = temp_list_first + temp_list_last
-  else:
-    file_list.sort() # if not config.SHUFFLEd; sort by name
   mqtt_publish_status( fields="status", status="running" )
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
@@ -455,9 +447,6 @@ def on_mqtt_message(mqttclient, userdata, message):
         reselect = True
     elif message.topic == "screen/time_delay":
       config.TIME_DELAY = float(msg)
-    elif message.topic == "screen/shuffle":
-      config.SHUFFLE = True if msg == "True" else False
-      reselect = True
     elif message.topic == "screen/quit":
       quit = True
     elif message.topic == "screen/pause":
@@ -487,10 +476,10 @@ def on_mqtt_message(mqttclient, userdata, message):
     else:
       logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
+    mqtt_publish_status( status="MQTT command received: {} -> {}".format(message.topic, msg) )
     if reselect:
       iFiles, nFi = get_files(date_from, date_to)
       next_pic_num = 0
-    mqtt_publish_status( status="MQTT command received: {} -> {}".format(message.topic, msg) )
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(e))
 
@@ -519,13 +508,14 @@ def mqtt_stop(client):
 def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   if isinstance( fields, str):
     fields = [fields]  
-  global iFiles, nFi, date_from, date_to, paused, monitor_status
+  global iFiles, nFi, date_from, date_to, paused, monitor_status, start_date
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
   current_pic = iFiles[pic_num][0] if pic_num>=0 else "None"
   cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] )
   info_data = {
     "status": status,
+    "start_date": start_date.strftime("%d.%m.%Y %H:%M:%S"),
     "pic_dir": config.PIC_DIR,
     "subdirectory": config.SUBDIRECTORY,
     "recent_days": config.RECENT_DAYS,
@@ -605,8 +595,9 @@ def switch_HDMI( status ):
 #-------------------------------------------
 def main():
   ret = 0
-  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache
+  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache, start_date
   logging.info('Starting infotainment system...')
+  start_date = datetime.datetime.now()
   pcache = dircache.DirCache()
   mqttclient = mqtt_start()
   mqtt_publish_status( status="initializing" )
