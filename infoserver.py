@@ -79,7 +79,9 @@ class Handler(BaseHTTPRequestHandler):
     if status == 200:
       self.send_response(200)
       self.send_header('Content-type', 'text/html')
-      self.send_header('Cache-Control', 'no-cache')
+      self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+      self.send_header('Pragma', 'no-cache')
+      self.send_header('Expires', '0')
     else:
       self.send_error(status)
     self.end_headers()
@@ -107,6 +109,7 @@ class Handler(BaseHTTPRequestHandler):
       "Paused": srvstat.get("paused", "-"), 
       "Picture": srvstat.get("pic_num", "-"),
       "Current picture": srvstat.get("current_pic", "-"),
+      "Weather skip count": srvstat.get("w_skip_count", "-"),
       "Monitor status": srvstat.get("monitor_status", "-"),
       "Infotainment system started": srvstat.get("start_date", "-"),
       "System load": srvstat.get("load", "-"),

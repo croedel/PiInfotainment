@@ -236,7 +236,7 @@ def start_picframe():
     weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 250, y=DISPLAY.height *0.45-70 - i*(2*w_point_size + w_padding) - w_point_size,
                             text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
                             spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)))
-    weathericons.append( pi3d.ImageSprite('weather_icons/01d.png', icon_shader, w=200, h=200, 
+    weathericons.append( pi3d.ImageSprite(config.W_ICON_DIR + '01d.png', icon_shader, w=200, h=200, 
                             x=-DISPLAY.width * 0.5 + 100, y=DISPLAY.height *0.45-70 - i*(2*w_point_size + w_padding) - 20, z=1.0) )
 
   for item in weathertexts:
@@ -364,7 +364,7 @@ def start_picframe():
           for i in range( min(len(weather_info), w_item_cnt) ):
             weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
             weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
-            w_tex = pi3d.Texture('weather_icons/' + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
+            w_tex = pi3d.Texture(config.W_ICON_DIR + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
             weathericons[i].set_textures( [w_tex] )
           next_weather_tm = tm + config.W_REFRESH_DELAY # next check
 
@@ -457,6 +457,8 @@ def on_mqtt_message(mqttclient, userdata, message):
       if next_pic_num < -1:
         next_pic_num = -1
       nexttm = time.time() - 86400.0
+    elif message.topic == "screen/w_skip_count":
+      config.W_SKIP_CNT = int(msg)
     elif message.topic == "screen/subdirectory":
       config.SUBDIRECTORY = msg
       date_from = date_to = None
@@ -526,6 +528,7 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
     "date_to": dto,
     "paused": str(paused), 
     "pic_num": str(pic_num+1) + " / " + str(nFi),
+    "w_skip_count": config.W_SKIP_CNT,
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
     "current_pic": current_pic.encode(encoding="utf-8"),
