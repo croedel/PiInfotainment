@@ -75,10 +75,10 @@ def mqtt_publish( topic, payload ):
 # actual webserver -------------------------------------------
 
 class Handler(BaseHTTPRequestHandler):
-  def _set_header(self, status=200):
+  def _set_header(self, status=200, type="html"):
     if status == 200:
       self.send_response(200)
-      self.send_header('Content-type', 'text/html')
+      self.send_header('Content-type', 'text/'+type)
       self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
       self.send_header('Pragma', 'no-cache')
       self.send_header('Expires', '0')
@@ -101,7 +101,6 @@ class Handler(BaseHTTPRequestHandler):
     status_info = { 
       "Status date": srvstat.get("status_date", "-"),
       "Status": srvstat.get("status", "-"),
-      "Picture directory": srvstat.get("pic_dir", "-"),
       "Subdirectory": srvstat.get("subdirectory", "-"),
       "Show pictures of last N days": srvstat.get("recent_days", "-"),
       "Start Date": srvstat.get("date_from", "-"),
@@ -109,6 +108,7 @@ class Handler(BaseHTTPRequestHandler):
       "Paused": srvstat.get("paused", "-"), 
       "Picture": srvstat.get("pic_num", "-"),
       "Current picture": srvstat.get("current_pic", "-"),
+      "Picture dir refreshed": srvstat.get("pic_dir_refresh", "-"),
       "Weather skip count": srvstat.get("w_skip_count", "-"),
       "Monitor status": srvstat.get("monitor_status", "-"),
       "Infotainment system started": srvstat.get("start_date", "-"),
@@ -169,7 +169,10 @@ class Handler(BaseHTTPRequestHandler):
         content = file.read()
         if path == "index.html":
           content = self._get_dynamic_content(content)
-        self._set_header(200)
+        if fname.endswith(".css"):
+          self._set_header(200, type="css")
+        else:
+          self._set_header(200, type="html")
         self.wfile.write(content)  
     except IOError as e:
       logging.warning("Couldn't open {}".format(e))

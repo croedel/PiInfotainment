@@ -52,7 +52,7 @@ VERBOSE = True      # show debug messages
 KEYBOARD = False     # set to False when running headless to avoid curses error. True for debugging
 FONT_FILE = BASE_DIR + "fonts/NotoSans-Regular.ttf"
 DELAY_EXIF = True    # set this to false if there are problems with date filtering - it will take a long time for initial loading if there are many images!
-PIC_HISTORY = 10     # Length of the picture history to be shown in web UI
+PIC_HISTORY = 15     # Length of the picture history to be shown in web UI
 CODEPOINTS = '1234567890AÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ.,!* _-/:;@()°%abcdefghijklmnñopqrstuvwxyzäöüß' # valid text characters 
 
 # MQTT

@@ -513,7 +513,7 @@ def mqtt_stop(client):
 def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   if isinstance( fields, str):
     fields = [fields]  
-  global iFiles, nFi, date_from, date_to, paused, monitor_status, start_date
+  global iFiles, nFi, date_from, date_to, paused, monitor_status, start_date, pcache
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
   current_pic = iFiles[pic_num][0] if pic_num>=0 else "None"
@@ -521,18 +521,18 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   info_data = {
     "status": status,
     "start_date": start_date.strftime("%d.%m.%Y %H:%M:%S"),
-    "pic_dir": config.PIC_DIR,
     "subdirectory": config.SUBDIRECTORY,
-    "recent_days": config.RECENT_DAYS,
     "date_from": dfrom,
     "date_to": dto,
+    "recent_days": config.RECENT_DAYS,
     "paused": str(paused), 
     "pic_num": str(pic_num+1) + " / " + str(nFi),
     "w_skip_count": config.W_SKIP_CNT,
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
-    "current_pic": current_pic.encode(encoding="utf-8"),
-    "cpu_temp": cpu_temp 
+    "current_pic": current_pic,
+    "cpu_temp": cpu_temp,
+    "pic_dir_refresh": pcache.get_cache_refresh_date().strftime("%d.%m.%Y %H:%M:%S") 
   }
   if hasattr(os, "getloadavg"):
     info_data["load"] = str(os.getloadavg())

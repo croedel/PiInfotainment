@@ -7,19 +7,20 @@
     %redirect%   
     <title>Infotainment System</title>
   </head>
-  <body>
+  <body>   
     <div class="header" id="header">
       <a href="index.html"> <img src="icon.png" alt="icon"> </a>
       <a href="index.html">Pi Infotainment Admin</a>   
     </div>  
 
-    <div class="group-box" id="time-range"> 
+    <div class="group-box" id="srv-config">
+      Server Configuration 
       <form class="picontrol" action="index.html" method="get" autocomplete="off">
         <button class="button1" type="submit" >Start date</button>
         <input type="hidden" name="topic" value="date_from">
         <input type="text" placeholder="YYYY/MM/DD" name="data">
       </form>
-
+      
       <form class="picontrol" action="index.html" method="get" autocomplete="off">
         <button class="button1" type="submit" >End date</button>
         <input type="hidden" name="topic" value="date_to">
@@ -32,9 +33,6 @@
         <input type="text" placeholder="n days" name="data">
       </form>
 
-    </div>
-
-    <div class="group-box" id="image-selection"> 
       <form class="picontrol" action="index.html" method="get" autocomplete="off">
         <button class="button1" type="submit" >Subdirectory</button>
         <input type="hidden" name="topic" value="subdirectory">
@@ -54,7 +52,8 @@
       </form>
     </div>  
 
-    <div class="group-box" id="display-ctrl"> 
+    <div class="group-box" id="srv-ctrl"> 
+      Server Control 
       <form class="picontrol" action="index.html" method="get" autocomplete="off">
         <button class="button1" type="submit" >Back</button>
         <input type="hidden" name="topic" value="back">
@@ -64,10 +63,7 @@
         <button class="button1" type="submit" >Pause</button>
         <input type="hidden" name="topic" value="pause">
       </form>
-    </div>
 
-    
-    <div class="group-box" id="admin"> 
       <form class="picontrol" action="index.html" method="get" autocomplete="off">
         <button class="button1" type="submit" >Camera</button>
         <input type="hidden" name="topic" value="camera">
@@ -88,7 +84,7 @@
         </select>
       </form>
     </div>
-    
+
     <div class="srvstatus" id="srvstatus">
       Server Status
       <br>
@@ -112,7 +108,6 @@
         %picture_history%
       </table>
     </div>
-
     
     <br>
     <div class="footer" id="footer"> 

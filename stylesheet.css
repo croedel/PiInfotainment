@@ -1,7 +1,7 @@
 body {
   background-color: whitesmoke;
-  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  font-size: 11pt;
+  font-family: Helvetica, sans-serif;
+  float: left;
 }
 
 form.picontrol {
@@ -17,16 +17,17 @@ div.group-box {
   background-color: lightblue;
   float: left;
   width: calc(50% - 1em);
-  height: 10em;
+  height: 13em;
   margin: 0.5em;
   box-sizing: border-box;  
+  font-size: 14pt;
 }
 
 button{
-  font-size: 11pt;
+  font-size: 10pt;
   display: inline-block;
-  padding: 0.5em 1em;
-  margin: 0 0.8em 0.2em 0;
+  padding: 0.25em 0.5em;
+  margin-right: 1em;
   border-radius: 0.5em;
   box-sizing: border-box;
   text-decoration: none;
@@ -55,7 +56,6 @@ div.srvstatus table, th, td {
   padding: 0.2em 0.5em;
   text-align: left;
   background-color: lightcoral;
-  font-size: 10pt;
 }
 
 div.srvstatus table{
@@ -85,10 +85,11 @@ div.picturehistory table{
 
 div.header{
   color: darkblue;
-  margin: 0.5em;
+  margin: 0.2em;
   float: left;
   width: calc(100% - 1em);
   font-size: 22pt;
+  font-weight: bold;
   text-align: center;
   text-decoration: none;
 }

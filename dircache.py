@@ -128,6 +128,9 @@ class DirCache:
     except OSError as err:
       logging.info("Couldn't read directory cache from pickle file")
       self.dir_cache = {}
+  
+  def get_cache_refresh_date(self):
+    return self.dir_cache['statistics']['created']
 
   # update cache: set exif data for given file
   def set_exif_info( self, file_path_name, orientation, dt, exif_info ):
