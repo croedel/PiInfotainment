@@ -24,10 +24,7 @@ def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info 
 # normalize weather info
 def normalize_weather(weather_info, lang):
   if lang == 'de':
-    t_prec_start = 'Niederschlag ab' 
-    t_prec_stop = 'Niederschlag bis'
-    t_prec_none = 'kein Niederschlag'
-    t_prec_cont = 'anhaltender Niederschlag'
+    txt_now = "Aktuell"
     daytime = {
       6: 'Morgens', 
       12: 'Mittags', 
@@ -35,10 +32,7 @@ def normalize_weather(weather_info, lang):
       0: 'Nachts'
     }
   else:
-    t_prec_start = 'precipitation starts' 
-    t_prec_stop = 'precipitation ends'
-    t_prec_none = 'no precipitation'
-    t_prec_cont = 'continous precipitation'
+    txt_now = "Now"
     daytime = {
       6: 'morning', 
       12: 'noon', 
@@ -49,56 +43,41 @@ def normalize_weather(weather_info, lang):
 
   try:
     # current weather
+    w_dict['current'] = {}
+    w_dict['forecast'] = []
     w_current = weather_info.get('current')
     if w_current:
       dt = datetime.datetime.fromtimestamp(w_current.get('dt'))
       dt_rise = datetime.datetime.fromtimestamp(w_current.get('sunrise'))
       dt_set = datetime.datetime.fromtimestamp(w_current.get('sunset'))
-      w_dict['dt'] = dt.strftime('%a %d.%m. %H:%M')
-      w_dict['sunrise'] = dt_rise.strftime('%H:%M')
-      w_dict['sunset'] = dt_set.strftime('%H:%M')
-      w_dict['temp'] = w_current.get('temp', '-')
-      w_dict['feels_like'] = w_current.get('feels_like', '-')
-      w_dict['pressure'] = w_current.get('pressure', '-')
-      w_dict['humidity'] = w_current.get('humidity', '-')
-      w_dict['uvi'] = w_current.get('uvi', '-')
-      w_dict['clouds'] = w_current.get('clouds', '-')
-      w_dict['wind_speed'] = w_current.get('wind_speed', '-')
-      w_dict['wind_deg'] = w_current.get('wind_deg', '-')
+      uvi_str = uvi2str(w_current.get('uvi', '-'), lang=lang)
+      wind_str = degree2str(w_current.get('wind_deg', '-'))
+      w_dict['current']['dt'] = dt.strftime('%a %d.%m. %H:%M')
+      w_dict['current']['sunrise'] = dt_rise.strftime('%H:%M')
+      w_dict['current']['sunset'] = dt_set.strftime('%H:%M')
+      w_dict['current']['uvi'] = '{:s} ({:.0f})'.format(uvi_str, w_current.get('uvi', '-'))
+
+      data = {}
+      data['date'] = dt.strftime('%a %d.%m.')
+      data['daytime'] = txt_now
+
+      data['temp'] = '{:.1f}°C'.format(w_current.get('temp', '-'))
+      data['feels_like'] = '{:.1f}°C'.format(w_current.get('feels_like', '-'))
+      data['pressure'] = '{:.0f}hPa'.format(w_current.get('pressure', '-'))
+      data['humidity'] = '{:.0f}%'.format(w_current.get('humidity', '-'))
+      data['wind'] = '{:s} {:.0f}km/h'.format(wind_str, w_current.get('wind_speed', '-') * 3.6)
+      data['clouds'] = '{:0.0f}/8'.format(w_current.get('clouds', '-') * 8/100)
+      data['pop'] = '{:.0f}%'.format(weather_info['minutely'][0]['precipitation'])
 
       w_current_weather = w_current.get('weather')
       if w_current_weather and w_current_weather[0]:
-        w_dict['wid'] = w_current_weather[0].get('id', '-')
-        w_dict['main'] = w_current_weather[0].get('main', '-')
-        w_dict['description'] = w_current_weather[0].get('description', '-')
-        w_dict['icon'] = w_current_weather[0].get('icon', '-')
-
-    # read minutely forecast data
-    w_minutely = weather_info.get('minutely')
-    w_dict['precipitation'] = ''
-    if w_minutely:
-      prec_now = None 
-      for item in w_minutely:
-        prec = float( item.get('precipitation', '0.0') )
-        if prec < 0.3:
-          prec = 0 # very low amount -> set to 0 
-        if prec_now == None:
-          prec_now = prec
-        else:
-          dt = datetime.datetime.fromtimestamp(item.get('dt'))
-          if prec_now == 0 and prec > 0:
-            w_dict['precipitation'] = '{:s} {:s}'.format( t_prec_start, dt.strftime('%H:%M') )
-            break 
-          elif prec_now > 0 and prec == 0:
-            w_dict['precipitation'] = '{:s} {:s}'.format( t_prec_stop, dt.strftime('%H:%M') )
-            break 
-        if prec == 0:
-          w_dict['precipitation'] = t_prec_none
-        else:
-          w_dict['precipitation'] = t_prec_cont
+        data['wid'] = w_current_weather[0].get('id', '-')
+        data['main'] = w_current_weather[0].get('main', '-')
+        data['description'] = w_current_weather[0].get('description', '-')
+        data['icon'] = w_current_weather[0].get('icon', '-')
+      w_dict['forecast'].append( data )
 
     # read hourly forecast data
-    w_dict['forecast'] = []
     w_hourly = weather_info.get('hourly')
     if w_hourly:
       for item in w_hourly:
@@ -107,17 +86,17 @@ def normalize_weather(weather_info, lang):
           continue
         if dt.hour == 0:
           dt += datetime.timedelta(days=-1) # let this belong to the previous day
+        wind_str = degree2str(w_current.get('wind_deg', '-'))
         data = {}
         data['date'] = dt.strftime('%a %d.%m.')
         data['daytime'] = daytime[dt.hour]
-        data['temp'] = item.get('temp', '-')
-        data['feels_like'] = item.get('feels_like', '-')
-        data['pressure'] = item.get('pressure', '-')
-        data['humidity'] = item.get('humidity', '-')
-        data['wind_speed'] = item.get('wind_speed', '-')
-        data['wind_deg'] = item.get('wind_deg', '-')
-        data['clouds'] = item.get('clouds', '-')
-        data['pop'] = item.get('pop', '-')      
+        data['temp'] = '{:.1f}°C'.format(item.get('temp', '-'))
+        data['feels_like'] = '{:.1f}°C'.format(item.get('feels_like', '-'))
+        data['pressure'] = '{:.0f}hPa'.format(item.get('pressure', '-'))
+        data['humidity'] = '{:.0f}%'.format(item.get('humidity', '-'))
+        data['wind'] = '{:s} {:.0f}km/h'.format(wind_str, w_current.get('wind_speed', '-') * 3.6)
+        data['clouds'] = '{:0.0f}/8'.format(item.get('clouds', '-') * 8/100)
+        data['pop'] = '{:.0f}%'.format(item.get('pop', '-'))      
 
         w_hourly_weather = item.get('weather')
         if w_hourly_weather and w_hourly_weather[0]:
@@ -127,23 +106,8 @@ def normalize_weather(weather_info, lang):
           data['icon'] = w_hourly_weather[0].get('icon', '-')
 
         w_dict['forecast'].append( data )
-
-    # read alerts (if present)
-    w_dict['alerts'] = []
-    w_alerts = weather_info.get('alerts')
-    if w_alerts:
-      for item in w_alerts:
-        data = {}
-        dt_start = datetime.datetime.fromtimestamp(item.get('start'))
-        dt_end = datetime.datetime.fromtimestamp(item.get('end'))
-        data['start'] = dt_start.strftime('%a %d.%m. %H:%M')
-        data['end'] = dt_end.strftime('%a %d.%m. %H:%M')
-        data['event'] = item.get('event', '-')
-        data['description'] = item.get('description', '-')
-
-        w_dict['alerts'].append( data ) 
   except Exception as e:
-    logging.error( "Error while normalizing weather data: Exception {:s}".format(e) )
+    logging.error( "Error while normalizing weather data: Exception {:s}".format(str(e)) )
   return w_dict
 
 def uvi2str( uvi, lang ):
@@ -164,111 +128,34 @@ def degree2str( degree ):
   idx = int((degree + 22.5) / 45)
   return wind_rose[idx]
   
-def format_weather( obj, wtype, lang ):
-  if wtype == 'now':
-    rep = { 
-      '<date>':     obj['dt'], 
-      '<sunrise>':  obj['sunrise'], 
-      '<sunset>':   obj['sunset'],
-      '<temp>':     '{:.1f}°C'.format(obj['temp']), 
-      '<ftemp>':    '{:.1f}°C'.format(obj['feels_like']), 
-      '<desc>':     obj['description'], 
-      '<prec>':     obj['precipitation'], 
-      '<pressure>': '{:.0f}hPa'.format(obj['pressure']),
-      '<humidity>': '{:.0f}%'.format(obj['humidity']),
-      '<clouds>':   '{:0.0f}/8'.format(obj['clouds'] * 8/100),
-      '<wind>':     '{:.0f}km/h'.format(obj['wind_speed'] * 3.6), 
-      '<winddeg>':  degree2str(obj['wind_deg']),
-      '<uvi>':      '{:.0f}'.format(obj['uvi']), 
-      '<uvtxt>':    uvi2str(obj['uvi'], lang)  
-    }
-    title = config.W_NOW_TITLE
-    txt = config.W_NOW_TXT
-  elif wtype == 'alert':
-    rep = { 
-      '<start>':   obj['start'], 
-      '<end>':     obj['end'], 
-      '<event>':   obj['event'], 
-      '<desc>':    obj['description'] 
-    }
-    title = config.W_ALERT_TITLE
-    txt = config.W_ALERT_TXT
-  else:
-    rep = { 
-      '<date>':     obj['date'], 
-      '<daytime>':  obj['daytime'], 
-      '<temp>':     '{:.1f}°C'.format(obj['temp']), 
-      '<ftemp>':    '{:.1f}°C'.format(obj['feels_like']), 
-      '<wind>':     '{:.0f}km/h'.format(obj['wind_speed'] * 3.6), 
-      '<winddeg>':  degree2str(obj['wind_deg']),
-      '<pressure>': '{:.0f}hPa'.format(obj['pressure']),
-      '<humidity>': '{:.0f}%'.format(obj['humidity']),
-      '<clouds>':   '{:0.0f}/8'.format(obj['clouds'] * 8/100),
-      '<pop>':      '{:.0f}%'.format(obj['pop'] * 100) 
-    }
-    if wtype == 'forecast-short':
-      rep['<date>'] = '    '
-    title = config.W_FORECAST_TITE
-    txt = config.W_FORECAST_TXT 
-
-  for i, j in rep.items():
-    title = title.replace(i, j)
-    txt = txt.replace(i, j)
-  return (title, txt)
     
 # this is the main function to get the weather info
 def get_weather_info( lat, lon, units, lang, appid ): 
   logging.info('Refreshing weather info')
+  w_dict = {}
   if lang == 'de':
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")  
-
-  weather_info = []
   raw_data = request_openweathermap( lat, lon, units, lang, appid )
   if raw_data != "ERROR":
     w_dict = normalize_weather(raw_data, lang)
-    if len(w_dict) > 0:
-      item = {}
-      (item['title'], item['txt']) = format_weather( w_dict, 'now', lang )
-      item['icon'] = w_dict['icon'] + '.png'  
-      weather_info.append(item)
-
-      for obj in w_dict['alerts']:
-        item = {}
-        (item['title'], item['txt']) = format_weather( obj, 'alert', lang )
-        item['icon'] = 'alert.png'  
-        weather_info.append(item)
-
-      last_date = ""
-      for obj in w_dict['forecast']:
-        item = {}
-        if obj['date'] != last_date:
-          (item['title'], item['txt']) = format_weather( obj, 'forecast', lang )
-          last_date = obj['date']
-        else:
-          (item['title'], item['txt']) = format_weather( obj, 'forecast-short', lang )
-        item['icon'] = obj['icon'] + '.png'
-        weather_info.append(item)
-    else: 
-      item = {}
-      item['title'] = 'Weather data error'
-      item['txt'] = ''
-      item['icon'] = 'alert.png'  
-      weather_info.append(item)
-  else: 
-    item = {}
-    item['title'] = 'Weather info unavailable'
-    item['txt'] = ''
-    item['icon'] = 'alert.png'  
-    weather_info.append(item)
-
-  return weather_info
+  return w_dict
 
 #############################################################################
 if __name__ == "__main__":
   logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
   weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', config.W_API_KEY )
 
-  for item in weather_info:
-    print( item['title'] )
-    print( ' '*5 + item['txt'] )
-    print()
+  current = weather_info.get('current')
+  print( "Current")
+  if current:
+    for tag, val in current.items():
+      print( " - " + tag + ": " + str(val) )
+  print()
+
+  forecast = weather_info.get('forecast')
+  print( "Forecast")
+  if forecast:
+    for item in weather_info['forecast']:
+      for tag, val in item.items():
+        print( " - " + tag + ": " + str(val) )
+      print()  

@@ -115,10 +115,13 @@ class DirCache:
     return True
 
   def _save_dir_cache(self):
-    with open(config.DIR_CACHE_FILE+".tmp", 'wb') as myfile:
-      pickle.dump(self.dir_cache, myfile)
-    os.replace(config.DIR_CACHE_FILE+".tmp", config.DIR_CACHE_FILE)  
-    logging.info('Saved directory cache to pickle file {}'.format(config.DIR_CACHE_FILE))
+    try:
+      with open(config.DIR_CACHE_FILE+".tmp", 'wb') as myfile:
+        pickle.dump(self.dir_cache, myfile)
+      os.replace(config.DIR_CACHE_FILE+".tmp", config.DIR_CACHE_FILE)  
+      logging.info('Saved directory cache to pickle file {}'.format(config.DIR_CACHE_FILE))
+    except OSError as err:
+      logging.info("Couldn't write directory cache to pickle file: {}".format(str(err)))
 
   def _read_dir_cache(self):
     logging.info('Reading directory cache from pickle file {}'.format(config.DIR_CACHE_FILE))
@@ -126,11 +129,14 @@ class DirCache:
       with open(config.DIR_CACHE_FILE, 'rb') as myfile:
         self.dir_cache = pickle.load( myfile )
     except OSError as err:
-      logging.info("Couldn't read directory cache from pickle file")
+      logging.info("Couldn't read directory cache from pickle file: {}".format(str(err)))
       self.dir_cache = {}
   
   def get_cache_refresh_date(self):
-    return self.dir_cache['statistics']['created']
+    if len(self.dir_cache) > 0:
+      return self.dir_cache['statistics']['created']
+    else:
+      return None  
 
   # update cache: set exif data for given file
   def set_exif_info( self, file_path_name, orientation, dt, exif_info ):

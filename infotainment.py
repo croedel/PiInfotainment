@@ -170,6 +170,86 @@ def convert_heif(fname):
   except:
     logging.warning("Could't convert HEIF. Have you installed pyheif?")
 
+# Weather functionality
+def weather_obj_create( width, height ):
+  weatherobj = {}
+  # Assumed display size: 1920 x 1080 ==> +/-960 ; +/-540 
+  weatherobj['current'] = {}
+  weatherobj['current']['dt'] = pi3d.TextBlock(x=-800, y=500,
+                        text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=20, size=0.99, 
+                        spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  weatherobj['current']['sunrise'] = pi3d.TextBlock(x=-100, y=500,
+                        text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=20, size=0.6, 
+                        spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  weatherobj['current']['sunset'] = pi3d.TextBlock(x=100, y=500,
+                        text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=20, size=0.6, 
+                        spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+  weatherobj['current']['uvi'] = pi3d.TextBlock(x=400, y=500,
+                        text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=20, size=0.6, 
+                        spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+
+  icon_shader = pi3d.Shader("uv_flat")
+  w_icon_size=150
+  w_item_cnt = int(width * 0.9 / (w_icon_size * 1.2))
+  weatherobj['forecast'] = []
+  for i in range(w_item_cnt):
+    item = {}
+    x = -width*0.5 + 100 + i*w_icon_size*1.5
+    item['date'] = pi3d.TextBlock(x=x, y=300,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['daytime'] = pi3d.TextBlock(x=x, y=250,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['temp'] = pi3d.TextBlock(x=x, y=-50,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['feels_like'] = pi3d.TextBlock(x=x+50, y=-50,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['pop'] = pi3d.TextBlock(x=x, y=-150,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['wind'] = pi3d.TextBlock(x=x, y=-250,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['humidity'] = pi3d.TextBlock(x=x, y=-350,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+    item['pressure'] = pi3d.TextBlock(x=x, y=-400,
+                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.6, 
+                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0))
+
+    item['icon'] = pi3d.ImageSprite(config.W_ICON_DIR + '01d.png', icon_shader, w=w_icon_size, h=w_icon_size, 
+                            x=-x, y=200, z=1.0) 
+    item['icon'].set_alpha(0.0)                            
+    weatherobj['forecast'].append( item )
+  return weatherobj
+
+def weather_refresh(weatherobj):
+  weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
+  try:
+    for key, val in weather_info['current'].items():
+      weatherobj['current'][key].set_text(text_format=val)
+    for i in range( min(len(weather_info), len(weatherobj['forecast'])) ):
+      for key, val in weather_info['forecast'][i].items():
+        if key == 'icon':
+          w_tex = pi3d.Texture(config.W_ICON_DIR + weather_info['forecast'][i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
+          weatherobj['forecast'][i][key].set_textures( [w_tex] )
+        else:  
+          weatherobj['forecast'][i][key].set_text(text_format=val) 
+  except Exception as e:
+    logging.error("Couldn't update weather object. error: {}".format(str(e)))
+
+def weather_set_alpha(weatherobj, alpha):
+  for _, obj in weatherobj['current'].items():
+    obj.colouring.set_colour(alpha=alpha)
+  for item in weatherobj['forecast']:
+    for key, obj in item.items():
+      if key == 'icon':
+        obj.set_alpha(alpha)
+      else:
+        obj.colouring.set_colour(alpha=alpha)  
 
 # start the picture frame
 def start_picframe():
@@ -222,30 +302,17 @@ def start_picframe():
     text.add_text_block(item)
 
   # prepare to display weather info
-  w_point_size = config.W_POINT_SIZE
-  w_padding = w_point_size
-  weatherinfo = pi3d.PointText(font, CAMERA, max_chars=3000, point_size=w_point_size)
-  icon_shader = pi3d.Shader("uv_flat")
-  weathertexts = []
-  weathericons = []
-  w_item_cnt = int(DISPLAY.height * 0.9 / (2*w_point_size + w_padding))
-  for i in range(w_item_cnt):
-    weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 200, y=DISPLAY.height *0.45-70 - i*(2*w_point_size + w_padding),
-                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
-                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)) )
-    weathertexts.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 250, y=DISPLAY.height *0.45-70 - i*(2*w_point_size + w_padding) - w_point_size,
-                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=100, size=0.99, 
-                            spacing="F", space=0.02, colour=(1.0, 1.0, 1.0, 1.0)))
-    weathericons.append( pi3d.ImageSprite(config.W_ICON_DIR + '01d.png', icon_shader, w=200, h=200, 
-                            x=-DISPLAY.width * 0.5 + 100, y=DISPLAY.height *0.45-70 - i*(2*w_point_size + w_padding) - 20, z=1.0) )
-
-  for item in weathertexts:
-    weatherinfo.add_text_block( item )
-  for item in weathericons:
-    item.set_alpha(0.0)
-  
   weather_interstitial_active = True
   next_weather_tm = 0.0
+  weatherinfo = pi3d.PointText(font, CAMERA, max_chars=3000, point_size=config.W_POINT_SIZE)
+  weatherobj =  weather_obj_create(DISPLAY.width, DISPLAY.height)
+  for _, obj in weatherobj['current'].items():
+    weatherinfo.add_text_block( obj )
+  for item in weatherobj['forecast']:
+    for key, obj in item.items():
+      if key != 'icon':
+        weatherinfo.add_text_block( obj )
+ 
   next_monitor_check_tm = 0.0
   num_run_through = 0
   
@@ -264,17 +331,11 @@ def start_picframe():
           sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
           for item in textlines:
             item.colouring.set_colour(alpha=0.0)
-          for item in weathertexts:
-            item.colouring.set_colour(alpha=1.0)
-          for item in weathericons:
-            item.set_alpha(1.0)
+          weather_set_alpha(weatherobj=weatherobj, alpha=1.0)
         else: 
           # continue with next picture
           if weather_interstitial_active: # deactivate weather info
-            for item in weathertexts:
-              item.colouring.set_colour(alpha=0.0)
-            for item in weathericons:
-              item.set_alpha(0.0)
+            weather_set_alpha(weatherobj=weatherobj, alpha=0.0)
             weather_interstitial_active = False
           
           start_pic_num = next_pic_num
@@ -360,12 +421,7 @@ def start_picframe():
             next_pic_num = 0
           next_check_tm = tm + config.CHECK_DIR_TM # next check
         if tm > next_weather_tm: # refresh weather info
-          weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
-          for i in range( min(len(weather_info), w_item_cnt) ):
-            weathertexts[i*2].set_text(text_format=weather_info[i]['title'])
-            weathertexts[i*2+1].set_text(text_format=weather_info[i]['txt'])   
-            w_tex = pi3d.Texture(config.W_ICON_DIR + weather_info[i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
-            weathericons[i].set_textures( [w_tex] )
+          weather_refresh( weatherobj )
           next_weather_tm = tm + config.W_REFRESH_DELAY # next check
 
     slide.draw()
@@ -385,8 +441,8 @@ def start_picframe():
     text.draw()
     weatherinfo.regen()
     weatherinfo.draw()
-    for item in weathericons:
-      item.draw()
+    for item in weatherobj['forecast']:
+      item['icon'].draw()
 
     if config.KEYBOARD:
       k = kbd.read()
@@ -466,6 +522,8 @@ def on_mqtt_message(mqttclient, userdata, message):
     elif message.topic == "screen/camera":
       show_camera = True
       camera_end_tm = time.time() + config.CAMERA_THRESHOLD
+      monitor_status = "ON"
+      switch_HDMI( monitor_status )
     elif message.topic == "screen/monitor":
       if msg == "ON":
         monitor_status = "ON-MANUAL"
@@ -517,7 +575,9 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
   current_pic = iFiles[pic_num][0] if pic_num>=0 else "None"
-  cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] )
+  cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] ) if os.name == 'posix' else "-"
+  fcache_t = pcache.get_cache_refresh_date()
+  fcache_t = fcache_t.strftime("%d.%m.%Y %H:%M:%S") if fcache_t != None else "-"  
   info_data = {
     "status": status,
     "start_date": start_date.strftime("%d.%m.%Y %H:%M:%S"),
@@ -532,7 +592,7 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
     "current_pic": current_pic,
     "cpu_temp": cpu_temp,
-    "pic_dir_refresh": pcache.get_cache_refresh_date().strftime("%d.%m.%Y %H:%M:%S") 
+    "pic_dir_refresh": fcache_t 
   }
   if hasattr(os, "getloadavg"):
     info_data["load"] = str(os.getloadavg())
