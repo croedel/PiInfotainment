@@ -18,7 +18,7 @@ def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info 
     if response.status_code == 200:
       ret = response.json()
     else:
-      logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
+      logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), str(response.status_code), response.reason) )
   return ret  
   
 # normalize weather info
@@ -26,17 +26,21 @@ def normalize_weather(weather_info, lang):
   if lang == 'de':
     txt_now = "Aktuell"
     daytime = {
-      6: 'Morgens', 
-      12: 'Mittags', 
-      18: 'Abends', 
+      7: 'Morgens', 
+      10: 'Vormittags',
+      13: 'Mittags',
+      16: 'Nachmittags', 
+      19: 'Abends', 
       0: 'Nachts'
     }
   else:
     txt_now = "Now"
     daytime = {
-      6: 'morning', 
-      12: 'noon', 
-      18: 'evening', 
+      7: 'morning',
+      10: 'forenoon', 
+      13: 'noon',
+      16: 'afternoon', 
+      19: 'evening', 
       0: 'night'
     } 
   w_dict = {}
@@ -52,14 +56,14 @@ def normalize_weather(weather_info, lang):
       dt_set = datetime.datetime.fromtimestamp(w_current.get('sunset'))
       uvi_str = uvi2str(w_current.get('uvi', '-'), lang=lang)
       wind_str = degree2str(w_current.get('wind_deg', '-'))
-      w_dict['current']['dt'] = dt.strftime('%a %d.%m. %H:%M')
+      w_dict['current']['dt'] = dt.strftime('%a %d.%m.%Y %H:%M')
       w_dict['current']['sunrise'] = dt_rise.strftime('%H:%M')
       w_dict['current']['sunset'] = dt_set.strftime('%H:%M')
       w_dict['current']['uvi'] = '{:s} ({:.0f})'.format(uvi_str, w_current.get('uvi', '-'))
 
       data = {}
-      data['date'] = dt.strftime('%a %d.%m.')
-      data['daytime'] = txt_now
+      data['date'] = txt_now
+      data['daytime'] = " "
 
       data['temp'] = '{:.1f}°C'.format(w_current.get('temp', '-'))
       data['feels_like'] = '{:.1f}°C'.format(w_current.get('feels_like', '-'))
@@ -74,21 +78,26 @@ def normalize_weather(weather_info, lang):
         data['wid'] = w_current_weather[0].get('id', '-')
         data['main'] = w_current_weather[0].get('main', '-')
         data['description'] = w_current_weather[0].get('description', '-')
-        data['icon'] = w_current_weather[0].get('icon', '-')
+        data['icon'] = w_current_weather[0].get('icon', '-') + '.png'
       w_dict['forecast'].append( data )
 
     # read hourly forecast data
     w_hourly = weather_info.get('hourly')
     if w_hourly:
+      last_date = "-"
       for item in w_hourly:
         dt = datetime.datetime.fromtimestamp(item.get('dt'))
-        if dt.hour not in (6,12,18,0):
+        if dt.hour not in (7,10,13,16,19,0):
           continue
         if dt.hour == 0:
           dt += datetime.timedelta(days=-1) # let this belong to the previous day
         wind_str = degree2str(w_current.get('wind_deg', '-'))
         data = {}
         data['date'] = dt.strftime('%a %d.%m.')
+        if data['date'] == last_date:
+          data['date'] = " "
+        else:
+          last_date = data['date']
         data['daytime'] = daytime[dt.hour]
         data['temp'] = '{:.1f}°C'.format(item.get('temp', '-'))
         data['feels_like'] = '{:.1f}°C'.format(item.get('feels_like', '-'))
@@ -103,7 +112,7 @@ def normalize_weather(weather_info, lang):
           data['wid'] = w_hourly_weather[0].get('id', '-')
           data['main'] = w_hourly_weather[0].get('main', '-')
           data['description'] = w_hourly_weather[0].get('description', '-')
-          data['icon'] = w_hourly_weather[0].get('icon', '-')
+          data['icon'] = w_hourly_weather[0].get('icon', '-') + '.png'
 
         w_dict['forecast'].append( data )
   except Exception as e:

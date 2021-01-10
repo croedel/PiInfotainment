@@ -78,7 +78,7 @@ def format_text(iFiles, pic_num):
     txt4 = clean_string(txt4)
   except Exception as e: # something went wrong when formatting
     txt1 = txt2 = txt3 = txt4 = ' '
-    logging.warning('Exception in format_text: {}', str(e))
+    logging.warning('Exception in format_text: {}'.format(str(e)) )
   return (txt1, txt2, txt3, txt4)
 
 #---------------------------

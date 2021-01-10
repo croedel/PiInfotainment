@@ -110,7 +110,7 @@ cd /home/pi/infotainment && cp config-template.py config.py
 ```
 
 ### Auto start using systemd
-In order to start the PiInfotainment system automatically, you can use the systemd script templates within `systemd` directory:
+In order to start the PiInfotainment system automatically, you can use the systemd script templates within `templates` directory:
 
 | Script                | Description
 |-----------------------|----------------------------------------------

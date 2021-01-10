@@ -70,15 +70,8 @@ W_UNIT = "metric"           # metric
 W_LANGUAGE = "de"           # language
 W_API_KEY = " "             # openweathermap API key for "One Call API" 
 W_ICON_DIR = BASE_DIR + "weather_icons/standard" # weather icon directory
-W_BACK_IMG = BASE_DIR + "weather_icons/weather_back_16_9.jpg"   # background image for weather info
-
-W_NOW_TITLE     = "<date>: <pressure>, Luftf. <humidity>, Wolken <clouds>, Sonne <sunrise> / <sunset>"
-W_NOW_TXT       = "<temp> (<ftemp>) <desc> <prec>, Wind <wind> (<winddeg>), UV <uvtxt> (<uvi>)"
-W_ALERT_TITLE   = "Wetter Warnung!"
-W_ALERT_TXT     = "<start> - <end>: <event>"
-W_FORECAST_TITE = "<date> <daytime>"
-W_FORECAST_TXT  = "<temp> (<ftemp>), Wind <wind> (<winddeg>), Niederschlag <pop>, Luftf. <humidity>, Wolken <clouds>" 
-W_POINT_SIZE = 42
+W_BACK_IMG = BASE_DIR + "weather_icons/weather.jpg"   # background image for weather info
+W_POINT_SIZE = 60
 
 # CAMERA
 CAMERA_ZOOM = 0.56          # zoom level for vlc player (e.g. shrink or enlarge video)
