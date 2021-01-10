@@ -37,14 +37,14 @@ RESHUFFLE_NUM = 1     # no of loops before reshuffling
 RECENT_N = 5          # when shuffling the keep n most recent ones to play before the rest
 TIME_DELAY = 30.0     # Defines how long a single slide is shown - can be changed by MQTT
 FADE_TIME = 3         # change time during which slides overlap 
-INFO_TXT_TIME = (TIME_DELAY-FADE_TIME) * 0.8   # duration for showing text overlay over image (you can also use a static value) 
+INFO_TXT_TIME = (TIME_DELAY-FADE_TIME) * 0.9   # duration for showing text overlay over image (you can also use a static value) 
 
 # Text overlay
 TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
 TEXT2_FORMAT = "<path>/<file> <desc>"                 
 TEXT3_FORMAT = "<flen> (<flen35>) <exp> <fnum> <iso>"   
 TEXT4_FORMAT = "<rating> <artist>"          
-TEXT_POINT_SIZE = 45 
+TEXT_POINT_SIZE = 55 
 RESOLVE_GPS = True      # Resolve GPS coordinates in EXIF 
 
 # Options
@@ -70,8 +70,8 @@ W_UNIT = "metric"           # metric
 W_LANGUAGE = "de"           # language
 W_API_KEY = " "             # openweathermap API key for "One Call API" 
 W_ICON_DIR = BASE_DIR + "weather_icons/standard" # weather icon directory
-W_BACK_IMG = BASE_DIR + "weather_icons/weather.jpg"   # background image for weather info
-W_POINT_SIZE = 60
+W_BACK_IMG = BASE_DIR + "weather_icons/weather_back_16_9.jpg"   # background image for weather info
+W_POINT_SIZE = 75
 
 # CAMERA
 CAMERA_ZOOM = 0.56          # zoom level for vlc player (e.g. shrink or enlarge video)
