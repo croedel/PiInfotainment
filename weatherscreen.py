@@ -2,6 +2,7 @@
 ''' Manages PI3D objects for weather sceen 
 '''
 import logging
+import os
 import pi3d
 import config
 
@@ -16,23 +17,23 @@ def weather_obj_create( width, height ):
   w_margin_top = 100
   y_top = height*0.5 - w_margin_top
   weatherobj['static'] = {}
-  weatherobj['static']['sunrise'] = pi3d.ImageSprite(config.W_ICON_DIR + 'sunrise.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['sunrise'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'sunrise.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=-160, y=y_top, z=1.0) 
-  weatherobj['static']['sunset'] = pi3d.ImageSprite(config.W_ICON_DIR + 'sunset.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['sunset'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'sunset.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=60, y=y_top, z=1.0) 
-  weatherobj['static']['uvidx'] = pi3d.ImageSprite(config.W_ICON_DIR + 'uvidx.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['uvidx'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'uvidx.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=400, y=y_top, z=1.0) 
 
   x = -width*0.5 + w_margin_left + w_static_size*0.5
-  weatherobj['static']['temp'] = pi3d.ImageSprite(config.W_ICON_DIR + 'temp.png', icon_shader, w=w_static_size*1.5, h=w_static_size*1.5, 
+  weatherobj['static']['temp'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'temp.png'), icon_shader, w=w_static_size*1.5, h=w_static_size*1.5, 
                           x=x, y=-10, z=1.0) 
-  weatherobj['static']['pop'] = pi3d.ImageSprite(config.W_ICON_DIR + 'rainprop.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['pop'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'rainprop.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=x, y=-150, z=1.0) 
-  weatherobj['static']['wind'] = pi3d.ImageSprite(config.W_ICON_DIR + 'wind.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['wind'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'wind.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=x, y=-250, z=1.0) 
-  weatherobj['static']['humidity'] = pi3d.ImageSprite(config.W_ICON_DIR + 'humidity.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['humidity'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'humidity.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=x, y=-350, z=1.0) 
-  weatherobj['static']['pressure'] = pi3d.ImageSprite(config.W_ICON_DIR + 'pressure.png', icon_shader, w=w_static_size, h=w_static_size, 
+  weatherobj['static']['pressure'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'pressure.png'), icon_shader, w=w_static_size, h=w_static_size, 
                           x=x, y=-450, z=1.0) 
 
   weatherobj['current'] = {}
@@ -69,10 +70,9 @@ def weather_obj_create( width, height ):
     item['pressure'] = pi3d.TextBlock(x=x, y=-450, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
-    item['icon'] = pi3d.ImageSprite(config.W_ICON_DIR + '01d.png', icon_shader, w=w_icon_size, h=w_icon_size, 
-                            x=x+60, y=150, z=1.0) 
+    item['icon'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, '01d.png'), icon_shader, w=w_icon_size, h=w_icon_size, 
+                x=x+60, y=150, z=1.0) 
     weatherobj['forecast'].append( item )
-
   return weatherobj
 
 def weather_refresh(weatherobj):
@@ -85,7 +85,8 @@ def weather_refresh(weatherobj):
       for key, val in weather_info['forecast'][i].items():
         if key in weatherobj['forecast'][i]:
           if key == 'icon':
-            w_tex = pi3d.Texture(config.W_ICON_DIR + weather_info['forecast'][i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
+            w_tex = pi3d.Texture(os.path.join(config.W_ICON_DIR, weather_info['forecast'][i]['icon']), 
+                  blend=True, automatic_resize=True, free_after_load=True)
             weatherobj['forecast'][i][key].set_textures( [w_tex] )
           else:  
             weatherobj['forecast'][i][key].set_text(text_format=val) 

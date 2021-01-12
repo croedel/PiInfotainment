@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 ''' RaspiInfotainment: Infotainment display for the Raspberry Pi. 
 It combines an advanced digital picture frame, a weather forecast and a surveillance camera viewer.  
 This project heavily inherited from PictureFrame2020.py, which is part of https://github.com/pi3d/pi3d_demos
+
+(c) by Christian Rödel, https://github.com/croedel/PiInfotainment
 '''
 import os
 import platform
@@ -186,8 +188,7 @@ def start_picframe():
   delta_alpha = 1.0 / (config.FPS * config.FADE_TIME) # delta alpha
 
   # Initialize pi3d system
-  DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS,
-                display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
+  DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS, display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
   CAMERA = pi3d.Camera(is_3d=False)
 
   shader = pi3d.Shader(config.SHADER)
@@ -201,22 +202,17 @@ def start_picframe():
 
   # PointText and TextBlock. If INFO_TXT_TIME <= 0 then this is just used for no images message
   grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-  font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=5.0,
-                  shadow=(0,0,0,128))
+  font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=5.0, shadow=(0,0,0,128))
   text = pi3d.PointText(font, CAMERA, max_chars=1000, point_size=config.TEXT_POINT_SIZE)
   textlines = []
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
-                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=75, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
-                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=75, size=0.99, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=75, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45,
-                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.8, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=49, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45 - 40,
-                            text_format="{:s}".format(" "), z=0.1, rot=0.0, char_count=49, size=0.8, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=49, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   for item in textlines:
     text.add_text_block(item)
 
