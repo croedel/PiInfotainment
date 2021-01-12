@@ -71,7 +71,7 @@ def normalize_weather(weather_info, lang):
       data['humidity'] = '{:.0f}%'.format(w_current.get('humidity', '-'))
       data['wind'] = '{:s} {:.0f}km/h'.format(wind_str, w_current.get('wind_speed', '-') * 3.6)
       data['clouds'] = '{:0.0f}/8'.format(w_current.get('clouds', '-') * 8/100)
-      data['pop'] = '{:.0f}%'.format(weather_info['minutely'][0]['precipitation'])
+      data['pop'] = '{:.0f}%'.format(weather_info['minutely'][0]['precipitation'] *100)
 
       w_current_weather = w_current.get('weather')
       if w_current_weather and w_current_weather[0]:
@@ -105,7 +105,7 @@ def normalize_weather(weather_info, lang):
         data['humidity'] = '{:.0f}%'.format(item.get('humidity', '-'))
         data['wind'] = '{:s} {:.0f}km/h'.format(wind_str, w_current.get('wind_speed', '-') * 3.6)
         data['clouds'] = '{:0.0f}/8'.format(item.get('clouds', '-') * 8/100)
-        data['pop'] = '{:.0f}%'.format(item.get('pop', '-'))      
+        data['pop'] = '{:.0f}%'.format(item.get('pop', '-') *100)
 
         w_hourly_weather = item.get('weather')
         if w_hourly_weather and w_hourly_weather[0]:
