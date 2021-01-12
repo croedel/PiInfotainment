@@ -8,7 +8,7 @@ import os
 import GPSlookup
 import config
 
-def item2str(item):
+def _item2str(item):
   if item == None:
     val = '-' 
   elif isinstance(item, tuple):
@@ -24,7 +24,7 @@ def item2str(item):
     val = str(item)  
   return val      
 
-def clean_string(fmt_str):
+def _clean_string(fmt_str):
   fmt_str = ''.join([c for c in fmt_str if c in config.CODEPOINTS]) # clean string 
   fmt_str = fmt_str[:75]  # limit length to 99 characters
   return fmt_str
@@ -52,12 +52,12 @@ def format_text(iFiles, pic_num):
       '<artist>': exif_info.get('Artist', ''),
       '<copy>':   exif_info.get('Copyright', ''),
       '<desc>':   exif_info.get('ImageDescription', ''),
-      '<exp>':    item2str(exif_info.get('ExposureTime')) + 's',
-      '<fnum>':   'f/' + item2str(exif_info.get('FNumber')),
-      '<iso>':    'ISO ' + item2str(exif_info.get('ISOSpeedRatings')),
-      '<flen>':   item2str(exif_info.get('FocalLength')) + 'mm',
-      '<flen35>': item2str(exif_info.get('FocalLengthIn35mmFilm')) + 'mm',
-      '<res>':    item2str(exif_info.get('ExifImageWidth')) + 'x' + item2str(exif_info.get('ExifImageHeight')),
+      '<exp>':    _item2str(exif_info.get('ExposureTime')) + 's',
+      '<fnum>':   'f/' + _item2str(exif_info.get('FNumber')),
+      '<iso>':    'ISO ' + _item2str(exif_info.get('ISOSpeedRatings')),
+      '<flen>':   _item2str(exif_info.get('FocalLength')) + 'mm',
+      '<flen35>': _item2str(exif_info.get('FocalLengthIn35mmFilm')) + 'mm',
+      '<res>':    _item2str(exif_info.get('ExifImageWidth')) + 'x' + _item2str(exif_info.get('ExifImageHeight')),
       '<gps>':    gps_str 
     }
 
@@ -72,10 +72,10 @@ def format_text(iFiles, pic_num):
       txt3 = txt3.replace(i, j)
       txt4 = txt4.replace(i, j)
 
-    txt1 = clean_string(txt1)
-    txt2 = clean_string(txt2)
-    txt3 = clean_string(txt3)
-    txt4 = clean_string(txt4)
+    txt1 = _clean_string(txt1)
+    txt2 = _clean_string(txt2)
+    txt3 = _clean_string(txt3)
+    txt4 = _clean_string(txt4)
   except Exception as e: # something went wrong when formatting
     txt1 = txt2 = txt3 = txt4 = ' '
     logging.warning('Exception in format_text: {}'.format(str(e)) )

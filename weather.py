@@ -6,7 +6,7 @@ import locale
 import config
 import logging
 
-def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info from OpenWeatherMap API
+def _request_openweathermap( lat, lon, units, lang, appid ):  # get weather info from OpenWeatherMap API
   url = 'https://api.openweathermap.org/data/2.5/onecall'
   payload = { 'lat': lat, 'lon': lon, 'units': units, 'lang': lang, 'appid': appid }
   ret="ERROR"
@@ -18,11 +18,11 @@ def request_openweathermap( lat, lon, units, lang, appid ):  # get weather info 
     if response.status_code == 200:
       ret = response.json()
     else:
-      logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), str(response.status_code), response.reason) )
+      logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
   return ret  
   
 # normalize weather info
-def normalize_weather(weather_info, lang):
+def _normalize_weather(weather_info, lang):
   if lang == 'de':
     txt_now = "Aktuell"
     daytime = {
@@ -54,8 +54,8 @@ def normalize_weather(weather_info, lang):
       dt = datetime.datetime.fromtimestamp(w_current.get('dt'))
       dt_rise = datetime.datetime.fromtimestamp(w_current.get('sunrise'))
       dt_set = datetime.datetime.fromtimestamp(w_current.get('sunset'))
-      uvi_str = uvi2str(w_current.get('uvi', '-'), lang=lang)
-      wind_str = degree2str(w_current.get('wind_deg', '-'))
+      uvi_str = _uvi2str(w_current.get('uvi', '-'), lang=lang)
+      wind_str = _degree2str(w_current.get('wind_deg', '-'))
       w_dict['current']['dt'] = dt.strftime('%a %d.%m.%Y %H:%M')
       w_dict['current']['sunrise'] = dt_rise.strftime('%H:%M')
       w_dict['current']['sunset'] = dt_set.strftime('%H:%M')
@@ -64,7 +64,6 @@ def normalize_weather(weather_info, lang):
       data = {}
       data['date'] = txt_now
       data['daytime'] = " "
-
       data['temp'] = '{:.1f}°C'.format(w_current.get('temp', '-'))
       data['feels_like'] = '{:.1f}°C'.format(w_current.get('feels_like', '-'))
       data['pressure'] = '{:.0f}hPa'.format(w_current.get('pressure', '-'))
@@ -91,7 +90,7 @@ def normalize_weather(weather_info, lang):
           continue
         if dt.hour == 0:
           dt += datetime.timedelta(days=-1) # let this belong to the previous day
-        wind_str = degree2str(w_current.get('wind_deg', '-'))
+        wind_str = _degree2str(w_current.get('wind_deg', '-'))
         data = {}
         data['date'] = dt.strftime('%a %d.%m.')
         if data['date'] == last_date:
@@ -119,7 +118,7 @@ def normalize_weather(weather_info, lang):
     logging.error( "Error while normalizing weather data: Exception {:s}".format(str(e)) )
   return w_dict
 
-def uvi2str( uvi, lang ):
+def _uvi2str( uvi, lang ):
   if uvi < 3:
     ret = 'niedrig' if lang=="de" else 'low'
   elif uvi < 6:
@@ -132,21 +131,21 @@ def uvi2str( uvi, lang ):
     ret = 'extrem' if lang=="de" else 'extreme'
   return ret
 
-def degree2str( degree ):
+def _degree2str( degree ):
   wind_rose = ('N','NO','O','SO','S','SW','W','NW','N')
   idx = int((degree + 22.5) / 45)
   return wind_rose[idx]
   
-    
+#------------------------------------------------------------------    
 # this is the main function to get the weather info
 def get_weather_info( lat, lon, units, lang, appid ): 
   logging.info('Refreshing weather info')
   w_dict = {}
   if lang == 'de':
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")  
-  raw_data = request_openweathermap( lat, lon, units, lang, appid )
+  raw_data = _request_openweathermap( lat, lon, units, lang, appid )
   if raw_data != "ERROR":
-    w_dict = normalize_weather(raw_data, lang)
+    w_dict = _normalize_weather(raw_data, lang)
   return w_dict
 
 #############################################################################

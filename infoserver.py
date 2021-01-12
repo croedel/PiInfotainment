@@ -153,21 +153,21 @@ class Handler(BaseHTTPRequestHandler):
 
   def do_GET(self):
     parts = self.path.strip('/').split('?')
-    path = parts[0]
-    if path == '':
-      path = "index.html"  
+    ressource = parts[0]
+    if ressource == '':
+      ressource = "index.html"  
     if len(parts) > 1:
       params = urllib.parse.parse_qs(parts[1])
     else:
       params = ''
-    fname = os.path.join(os.path.dirname(__file__), path)
-    logging.info("GET request, Path: {}, fname: {}, Params: {}".format(path, fname, str(params)) )  
-    if path == "index.html":
+    fname = os.path.join( config.SRV_ROOT, ressource )
+    logging.info("GET request, Ressource: {}, fname: {}, Params: {}".format(ressource, fname, str(params)) )  
+    if ressource == "index.html":
       self._publish_MQTT( params )
     try:
       with open(fname, 'rb') as file:
         content = file.read()
-        if path == "index.html":
+        if ressource == "index.html":
           content = self._get_dynamic_content(content)
         if fname.endswith(".css"):
           self._set_header(200, type="css")

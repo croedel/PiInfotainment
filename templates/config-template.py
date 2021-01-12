@@ -1,10 +1,10 @@
 """ Config file of RaspiInfotainment project. 
 """
-BASE_DIR = "/home/pi/infotainment/" # Base installation directory
+import os
+BASE_DIR = os.path.dirname(__file__) # Base installation directory
 
 # Picture handling 
 PIC_DIR = "/home/pi/Pictures" # directory where to find the pictures
-#PIC_DIR = "/mnt/photo" # directory where to find the pictures
 SUBDIRECTORY = ""    # (optional) subdir of pic_dir - can be changed by MQTT
 IGNORE_DIRS = ['.AppleDouble','@eaDir','#snapshot','Backup','Archive'] # Ignore images if they are in one of those directories
 CHECK_DIR_TM = 600.0  # time in seconds between checking if the image directory has changed
@@ -13,9 +13,9 @@ DATE_TO = None            # Sets end date (y,m,d) of the timerange for the fotos
 RECENT_DAYS = 60      # If set to > 0, only images which were created within the last N days are shown. (supersedes DATE_FROM)
 OUTDATED_FILE_PROP = 0.01  # Include outdated images with this propability (0.0=disable) 
 PROP_SLOPE = 30       # Timespan for smoothly decreasing propability to select files outside timerange
-NO_FILES_IMG = BASE_DIR + "no-pictures.jpg"  # image to show if none selected
+NO_FILES_IMG = os.path.join(BASE_DIR, "no-pictures.jpg")  # image to show if none selected
 PIC_EXT = ['.png','.jpg','.jpeg','.heif','.heic'] # Include files with these file extensions
-DIR_CACHE_FILE = BASE_DIR + ".dir_cache.p" # Directory cache file 
+DIR_CACHE_FILE = os.path.join(BASE_DIR, ".dir_cache.p") # Directory cache file 
 
 # Shader 
 FIT = True          # shrink to fit screen i.e. don't crop
@@ -25,7 +25,7 @@ BLUR_ZOOM = 1.0      # must be >= 1.0 which expands the backgorund to just fill 
 EDGE_ALPHA = 0.3     # background colour at edge. 1.0 would show reflection of image")
 FPS = 20.0           # granularity of blending
 BACKGROUND = (0.2, 0.2, 0.3, 1.0) # RGBA to fill edges when fitting
-SHADER = BASE_DIR + "shaders/blend_new"
+SHADER = os.path.join(BASE_DIR, "shaders/blend_new")
 KENBURNS = False     # Use Kenburns effect; it set to True: will set FIT->False and BLUR_EDGES->False
 AUTO_RESIZE = True   # set this to False if you want to use 4K resolution on Raspberry Pi 4. You should ensure your images are the correct size for the display
 BLEND_TYPE = 0.0     # choose between ["blend":0.0, "burn":1.0, "bump:2.0"]; type of blend the shader can do
@@ -34,9 +34,9 @@ BLEND_OPTIONS = {"blend":0.0, "burn":1.0, "bump":2.0} # that work with the blend
 # Shuffle
 SHUFFLE = True        # shuffle on reloading image files - can be changed by MQTT
 RESHUFFLE_NUM = 1     # no of loops before reshuffling
-RECENT_N = 5          # when shuffling the keep n most recent ones to play before the rest
+RECENT_N = 0          # when shuffling the keep n most recent ones to play before the rest
 TIME_DELAY = 30.0     # Defines how long a single slide is shown - can be changed by MQTT
-FADE_TIME = 3         # change time during which slides overlap 
+FADE_TIME = 3.0         # change time during which slides overlap 
 INFO_TXT_TIME = (TIME_DELAY-FADE_TIME) * 0.9   # duration for showing text overlay over image (you can also use a static value) 
 
 # Text overlay
@@ -50,9 +50,8 @@ RESOLVE_GPS = True      # Resolve GPS coordinates in EXIF
 # Options
 VERBOSE = True      # show debug messages
 KEYBOARD = False     # set to False when running headless to avoid curses error. True for debugging
-FONT_FILE = BASE_DIR + "fonts/NotoSans-Regular.ttf"
+FONT_FILE = os.path.join(BASE_DIR, "fonts/NotoSans-Regular.ttf")
 DELAY_EXIF = True    # set this to false if there are problems with date filtering - it will take a long time for initial loading if there are many images!
-PIC_HISTORY = 15     # Length of the picture history to be shown in web UI
 CODEPOINTS = '1234567890AÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ.,!* _-/:;@()°%abcdefghijklmnñopqrstuvwxyzäöüß' # valid text characters 
 
 # MQTT
@@ -69,8 +68,8 @@ W_LONGITUDE =               # longitude of your location (decimal degrees, e.g. 
 W_UNIT = "metric"           # metric 
 W_LANGUAGE = "de"           # language
 W_API_KEY = " "             # openweathermap API key for "One Call API" 
-W_ICON_DIR = BASE_DIR + "weather_icons/standard" # weather icon directory
-W_BACK_IMG = BASE_DIR + "weather_icons/weather_back_16_9.jpg"   # background image for weather info
+W_ICON_DIR = os.path.join(BASE_DIR, "images/icons") # weather icon directory
+W_BACK_IMG = os.path.join(BASE_DIR, "images/weather_back_16_9.jpg")   # background image for weather info
 W_POINT_SIZE = 75
 
 # CAMERA
@@ -90,6 +89,10 @@ MONITOR_SCHEDULE = {
   5: [ [(8,0), (23,30)] ], 
   6: [ [(8,0), (23,30)] ] 
 }
+
+# Infoserver (Webserver) config
+SRV_ROOT = os.path.join(BASE_DIR, "srvroot/")
+PIC_HISTORY = 15     # Length of the picture history to be shown in web UI
 
 #############################################################################
 ######### Usually you don't ned to change anything below this line ##########

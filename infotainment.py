@@ -20,7 +20,8 @@ from PIL import Image, ImageFilter # these are needed for getting exif data from
 import config
 import dircache
 import weather
-import display
+import weatherscreen
+import displaymsg
 
 try:
   import paho.mqtt.client as mqttcl
@@ -133,7 +134,6 @@ def get_files(dt_from=None, dt_to=None):
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
-
 def get_exif_info(file_path_name, im=None):
   global pcache
   exif_info = {}
@@ -169,107 +169,6 @@ def convert_heif(fname):
     return image
   except:
     logging.warning("Could't convert HEIF. Have you installed pyheif?")
-
-# Weather functionality
-def weather_obj_create( width, height ):
-  icon_shader = pi3d.Shader("uv_flat")
-  weatherobj = {}
-  # Assumed display size: 1920 x 1080 ==> +/-960 ; +/-540
-
-  w_static_size = 75
-  w_icon_size = 150
-  w_margin_left = 25
-  x = -width*0.5 + w_margin_left + w_static_size*0.5
-  weatherobj['static'] = {}
-  weatherobj['static']['sunrise'] = pi3d.ImageSprite(config.W_ICON_DIR + 'sunrise.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=-160, y=440, z=1.0) 
-  weatherobj['static']['sunset'] = pi3d.ImageSprite(config.W_ICON_DIR + 'sunset.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=60, y=440, z=1.0) 
-  weatherobj['static']['uvidx'] = pi3d.ImageSprite(config.W_ICON_DIR + 'uvidx.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=400, y=440, z=1.0) 
-
-  weatherobj['static']['temp'] = pi3d.ImageSprite(config.W_ICON_DIR + 'temp.png', icon_shader, w=w_static_size*1.5, h=w_static_size*1.5, 
-                          x=x, y=-10, z=1.0) 
-  weatherobj['static']['pop'] = pi3d.ImageSprite(config.W_ICON_DIR + 'rainprop.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-150, z=1.0) 
-  weatherobj['static']['wind'] = pi3d.ImageSprite(config.W_ICON_DIR + 'wind.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-250, z=1.0) 
-  weatherobj['static']['humidity'] = pi3d.ImageSprite(config.W_ICON_DIR + 'humidity.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-350, z=1.0) 
-  weatherobj['static']['pressure'] = pi3d.ImageSprite(config.W_ICON_DIR + 'pressure.png', icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-450, z=1.0) 
-
-  weatherobj['current'] = {}
-  weatherobj['current']['dt'] = pi3d.TextBlock(x=-900, y=440, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['sunrise'] = pi3d.TextBlock(x=-105, y=440, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['sunset'] = pi3d.TextBlock(x=120, y=440, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['uvi'] = pi3d.TextBlock(x=460, y=440, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.6, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-
-  w_margin_left = w_margin_left + 1.5*w_static_size
-  w_spacing = int(w_icon_size / 1.5)
-  w_item_cnt = int( (width-w_margin_left) / (w_icon_size + w_spacing))
-  weatherobj['forecast'] = []
-  for i in range(w_item_cnt):
-    item = {}
-    x = -width*0.5 + w_margin_left + i*(w_icon_size + w_spacing)
-    item['date'] = pi3d.TextBlock(x=x, y=320, text_format=" ", z=0.1, rot=0.0, char_count=20, size=0.8, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['daytime'] = pi3d.TextBlock(x=x, y=270, text_format=" ", z=0.1, rot=0.0, char_count=15, size=0.6, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['temp'] = pi3d.TextBlock(x=x, y=0, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.99, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['feels_like'] = pi3d.TextBlock(x=x, y=-40, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['pop'] = pi3d.TextBlock(x=x, y=-150, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['wind'] = pi3d.TextBlock(x=x, y=-250, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['humidity'] = pi3d.TextBlock(x=x, y=-350, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['pressure'] = pi3d.TextBlock(x=x, y=-450, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
-                            spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-
-    item['icon'] = pi3d.ImageSprite(config.W_ICON_DIR + '01d.png', icon_shader, w=w_icon_size, h=w_icon_size, 
-                            x=x+60, y=150, z=1.0) 
-    weatherobj['forecast'].append( item )
-
-  return weatherobj
-
-def weather_refresh(weatherobj):
-  weather_info = weather.get_weather_info( config.W_LATITUDE, config.W_LONGITUDE, config.W_UNIT, config.W_LANGUAGE, config.W_API_KEY )
-  try:
-    for key, val in weather_info['current'].items():
-      if key in weatherobj['current']:
-        weatherobj['current'][key].set_text(text_format=val)
-    for i in range( min(len(weather_info['forecast']), len(weatherobj['forecast'])) ):
-      for key, val in weather_info['forecast'][i].items():
-        if key in weatherobj['forecast'][i]:
-          if key == 'icon':
-            w_tex = pi3d.Texture(config.W_ICON_DIR + weather_info['forecast'][i]['icon'], blend=True, automatic_resize=True, free_after_load=True)
-            weatherobj['forecast'][i][key].set_textures( [w_tex] )
-          else:  
-            weatherobj['forecast'][i][key].set_text(text_format=val) 
-  except Exception as e:
-    logging.error("Couldn't update weather object. error: {}".format(str(e)))
-
-def weather_set_alpha(weatherobj, alpha):
-  try:
-    for _, obj in weatherobj['static'].items():
-      obj.set_alpha(alpha)
-    for _, obj in weatherobj['current'].items():
-      obj.colouring.set_colour(alpha=alpha)
-    for item in weatherobj['forecast']:
-      for key, obj in item.items():
-        if key == 'icon':
-          obj.set_alpha(alpha)
-        else:
-          obj.colouring.set_colour(alpha=alpha)  
-  except Exception as e:
-    logging.error("Couldn't set alpha for weather object. error: {}".format(str(e)))
 
 # start the picture frame
 def start_picframe():
@@ -325,7 +224,7 @@ def start_picframe():
   weather_interstitial_active = True
   next_weather_tm = 0.0
   weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=config.W_POINT_SIZE)
-  weatherobj =  weather_obj_create(DISPLAY.width, DISPLAY.height)
+  weatherobj =  weatherscreen.weather_obj_create(DISPLAY.width, DISPLAY.height)
   for _, obj in weatherobj['current'].items():
     weatherinfo.add_text_block( obj )
   for item in weatherobj['forecast']:
@@ -351,11 +250,11 @@ def start_picframe():
           sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
           for item in textlines:
             item.colouring.set_colour(alpha=0.0)
-          weather_set_alpha(weatherobj=weatherobj, alpha=1.0)
+          weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1.0)
         else: 
           # continue with next picture
           if weather_interstitial_active: # deactivate weather info
-            weather_set_alpha(weatherobj=weatherobj, alpha=0.0)
+            weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=0.0)
             weather_interstitial_active = False
           
           start_pic_num = next_pic_num
@@ -371,7 +270,7 @@ def start_picframe():
               break
           # set description
           if config.INFO_TXT_TIME > 0.0:
-            texts = display.format_text(iFiles, pic_num)
+            texts = displaymsg.format_text(iFiles, pic_num)
             i=0
             for item in textlines:
               item.set_text(text_format=texts[i])
@@ -441,7 +340,7 @@ def start_picframe():
             next_pic_num = 0
           next_check_tm = tm + config.CHECK_DIR_TM # next check
         if tm > next_weather_tm: # refresh weather info
-          weather_refresh( weatherobj )
+          weatherscreen.weather_refresh( weatherobj )
           next_weather_tm = tm + config.W_REFRESH_DELAY # next check
 
     slide.draw()
@@ -550,14 +449,13 @@ def on_mqtt_message(mqttclient, userdata, message):
       if msg == "ON":
         monitor_status = "ON-MANUAL"
         paused = False
-        switch_HDMI( monitor_status )
       elif msg == "OFF":
         monitor_status = "OFF-MANUAL"
         paused = True
-        switch_HDMI( monitor_status )
       else:
         monitor_status = "ON"
-        switch_HDMI( monitor_status )
+        paused = False
+      switch_HDMI( monitor_status )
     else:
       logging.info('Unknown MQTT topic: {}'.format(message.topic))
 
@@ -648,7 +546,7 @@ def cam_show():
     switch_HDMI("ON") # switch monitor temporarily ON
   player = cam_viewer_start()
   while camera_end_tm > time.time():
-    time.sleep(5) # wake up regularly to check if camera_end_tm changed async via MQTT   
+    time.sleep(3) # wake up regularly to check if camera_end_tm changed async via MQTT   
   cam_viewer_stop(player)
   if monitor_status.startswith("OFF"):
     switch_HDMI("OFF") # switch monitor OFF again 
