@@ -5,6 +5,7 @@ import logging
 import os
 import pi3d
 import config
+import weather
 
 def weather_obj_create( width, height ):
   icon_shader = pi3d.Shader("uv_flat")

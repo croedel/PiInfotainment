@@ -21,7 +21,6 @@ from PIL import Image, ImageFilter # these are needed for getting exif data from
 
 import config
 import dircache
-import weather
 import weatherscreen
 import displaymsg
 
@@ -130,7 +129,7 @@ def tex_load(pic_num, iFiles, size=None):
 
 def get_files(dt_from=None, dt_to=None):
   global pcache
-  mqtt_publish_status( fields="status", status="updating file_list" )
+  mqtt_publish_status( fields=["status","pic_dir_refresh"], status="updating file_list" )
   file_list = pcache.get_file_list( dt_from, dt_to )
   mqtt_publish_status( fields="status", status="running" )
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )

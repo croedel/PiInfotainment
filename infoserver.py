@@ -66,7 +66,7 @@ def mqtt_publish( topic, payload ):
     'username': config.MQTT_LOGIN,
     'password': config.MQTT_PASSWORD 
   }  
-  logging.info("Publish MQTT command {}: {} {}".format(topic, payload, str(auth)))
+  logging.debug("Publish MQTT command {}: {} {}".format(topic, payload, str(auth)))
   try:
     publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
   except Exception as e:
@@ -161,7 +161,7 @@ class Handler(BaseHTTPRequestHandler):
     else:
       params = ''
     fname = os.path.join( config.SRV_ROOT, ressource )
-    logging.info("GET request, Ressource: {}, fname: {}, Params: {}".format(ressource, fname, str(params)) )  
+    logging.debug("GET request, Ressource: {}, fname: {}, Params: {}".format(ressource, fname, str(params)) )  
     if ressource == "index.html":
       self._publish_MQTT( params )
     try:
@@ -181,7 +181,7 @@ class Handler(BaseHTTPRequestHandler):
   def do_POST(self):
     content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
     post_data = self.rfile.read(content_length) # <--- Gets the data itself
-    logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
+    logging.debug("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
             str(self.path), str(self.headers), post_data.decode('utf-8'))
     self._set_header()
     self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
