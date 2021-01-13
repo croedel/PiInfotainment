@@ -31,7 +31,7 @@ def _request_openweathermap( lat, lon, units, lang, appid ):  # get weather info
   ret="ERROR"
   global last_refresh
   tm = time.time()
-  if tm > last_refresh + 60:  # limit to max. one request per min to prevent API abuse
+  if tm > last_refresh + 120:  # limit to max. 30 requests per hour to prevent API abuse
     last_refresh = tm
     url = 'https://api.openweathermap.org/data/2.5/onecall'
     payload = { 'lat': lat, 'lon': lon, 'units': units, 'lang': lang, 'appid': appid }
