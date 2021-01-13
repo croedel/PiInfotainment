@@ -1,24 +1,52 @@
 """ Fetches weather data from openweathermap.org and returns the result as formatted strings 
 """
 import requests
+import time
 import datetime
 import locale
 import config
 import logging
 
-def _request_openweathermap( lat, lon, units, lang, appid ):  # get weather info from OpenWeatherMap API
-  url = 'https://api.openweathermap.org/data/2.5/onecall'
-  payload = { 'lat': lat, 'lon': lon, 'units': units, 'lang': lang, 'appid': appid }
-  ret="ERROR"
-  try:
-    response = requests.get( url, payload )
-  except requests.exceptions.RequestException as err:
-    logging.error( "Couldn't request openweathermap API: Exception {:s}".format(err) )
+last_refresh = 0.0
+
+def _uvi2str( uvi, lang ):
+  if uvi < 3:
+    ret = 'niedrig' if lang=="de" else 'low'
+  elif uvi < 6:
+    ret = 'mittel' if lang=="de" else 'medium'
+  elif uvi < 8:
+    ret = 'hoch' if lang=="de" else 'high'
+  elif uvi < 11:
+    ret = 'sehr hoch' if lang=="de" else 'very high'
   else:
-    if response.status_code == 200:
-      ret = response.json()
+    ret = 'extrem' if lang=="de" else 'extreme'
+  return ret
+
+def _degree2str( degree ):
+  wind_rose = ('N','NO','O','SO','S','SW','W','NW','N')
+  idx = int((degree + 22.5) / 45)
+  return wind_rose[idx]
+
+def _request_openweathermap( lat, lon, units, lang, appid ):  # get weather info from OpenWeatherMap API
+  ret="ERROR"
+  global last_refresh
+  tm = time.time()
+  if tm > last_refresh + 60:  # limit to max. one request per min to prevent API abuse
+    last_refresh = tm
+    url = 'https://api.openweathermap.org/data/2.5/onecall'
+    payload = { 'lat': lat, 'lon': lon, 'units': units, 'lang': lang, 'appid': appid }
+    try:
+      response = requests.get( url, payload )
+    except requests.exceptions.RequestException as err:
+      logging.error( "Couldn't request openweathermap API: Exception {:s}".format(err) )
     else:
-      logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
+      if response.status_code == 200:
+        ret = response.json()
+      else:
+        logging.error( "Error while requesting openweathermap API: {:s} -> {:d} {:s}".format( str(payload), response.status_code, response.reason) )
+  else:
+    logging.info( "Weather data refresh aborted: abuse prevention triggered" )
+    ret = "ABUSE"
   return ret  
   
 # normalize weather info
@@ -117,24 +145,6 @@ def _normalize_weather(weather_info, lang):
   except Exception as e:
     logging.error( "Error while normalizing weather data: Exception {:s}".format(str(e)) )
   return w_dict
-
-def _uvi2str( uvi, lang ):
-  if uvi < 3:
-    ret = 'niedrig' if lang=="de" else 'low'
-  elif uvi < 6:
-    ret = 'mittel' if lang=="de" else 'medium'
-  elif uvi < 8:
-    ret = 'hoch' if lang=="de" else 'high'
-  elif uvi < 11:
-    ret = 'sehr hoch' if lang=="de" else 'very high'
-  else:
-    ret = 'extrem' if lang=="de" else 'extreme'
-  return ret
-
-def _degree2str( degree ):
-  wind_rose = ('N','NO','O','SO','S','SW','W','NW','N')
-  idx = int((degree + 22.5) / 45)
-  return wind_rose[idx]
   
 #------------------------------------------------------------------    
 # this is the main function to get the weather info
@@ -144,7 +154,7 @@ def get_weather_info( lat, lon, units, lang, appid ):
   if lang == 'de':
     locale.setlocale(locale.LC_ALL, "de_DE.UTF-8")  
   raw_data = _request_openweathermap( lat, lon, units, lang, appid )
-  if raw_data != "ERROR":
+  if isinstance(raw_data, dict):
     w_dict = _normalize_weather(raw_data, lang)
   return w_dict
 
