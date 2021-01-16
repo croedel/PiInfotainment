@@ -300,7 +300,7 @@ http://<IP Address of you RasperryPi>/index.html?topic=<command>&data=<data>
 
 The webserver writes a message into the mosquitto MQTT broker on ypur Pi which is then again read by the infotainment system.
 
-### Utilities
-## Dircache Manager
+## Utilities
+### Dircache Manager
 
 `dircachemgr.py` is a small command-line tool which you can use to manage the picture dir cache. You can e.g. list the content, refresh it etc. See help (`dircachemgr.py -h`) for more details
