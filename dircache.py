@@ -14,8 +14,11 @@ import config
   
 class DirCache:
   dir_cache = {}
+  fname = ""
 
-  def __init__(self):
+  # ------- private core functionalities -----------------
+  def __init__(self, fname=config.DIR_CACHE_FILE):
+    self.fname = fname
     self._read_dir_cache()
 
   def _parse_yaml_file(self, filepath):
@@ -82,6 +85,7 @@ class DirCache:
           self.dir_cache['dir'][root]['files'].clear()
       else: 
         self.dir_cache['dir'][root] = {}
+        # [file_create_date, file_changed_date, yuml_date, exif_info] 
         self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, ytime, True ]   
         self.dir_cache['dir'][root]['files'] = {} 
 
@@ -116,28 +120,23 @@ class DirCache:
 
   def _save_dir_cache(self):
     try:
-      with open(config.DIR_CACHE_FILE+".tmp", 'wb') as myfile:
+      with open(self.fname+".tmp", 'wb') as myfile:
         pickle.dump(self.dir_cache, myfile)
-      os.replace(config.DIR_CACHE_FILE+".tmp", config.DIR_CACHE_FILE)  
-      logging.info('Saved directory cache to pickle file {}'.format(config.DIR_CACHE_FILE))
+      os.replace(self.fname+".tmp", self.fname)  
+      logging.info('Saved directory cache to pickle file {}'.format(self.fname))
     except OSError as err:
       logging.info("Couldn't write directory cache to pickle file: {}".format(str(err)))
 
   def _read_dir_cache(self):
-    logging.info('Reading directory cache from pickle file {}'.format(config.DIR_CACHE_FILE))
+    logging.info('Reading directory cache from pickle file {}'.format(self.fname))
     try:
-      with open(config.DIR_CACHE_FILE, 'rb') as myfile:
+      with open(self.fname, 'rb') as myfile:
         self.dir_cache = pickle.load( myfile )
     except OSError as err:
       logging.info("Couldn't read directory cache from pickle file: {}".format(str(err)))
       self.dir_cache = {}
   
-  def get_cache_refresh_date(self):
-    if len(self.dir_cache) > 0:
-      return self.dir_cache['statistics']['created']
-    else:
-      return None  
-
+  # ----------- public functions --------------------
   # update cache: set exif data for given file
   def set_exif_info( self, file_path_name, orientation, dt, exif_info ):
     file_path_name = os.path.normpath( file_path_name )
@@ -181,6 +180,7 @@ class DirCache:
           propability = max( config.OUTDATED_FILE_PROP, propability ) # set minimum to config value 
           if random.random() <= propability:
             fpath = os.path.join(path, item)
+            # [file_path, orientation, file_changed_date, exif_date, exif_info]
             file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
 
     if config.SHUFFLE:
@@ -199,6 +199,55 @@ class DirCache:
     logging.info("New file list created: {} images".format(len(file_list)))
     return file_list
 
+  # ------- maintenance functionalities -----------------
+  def get_cache_refresh_date(self):
+    date=None
+    if len(self.dir_cache) > 0:
+      date = self.dir_cache['statistics']['created']
+    return date  
+
+  def get_dircount(self):
+    count=0
+    if len(self.dir_cache) > 0:
+      count = len(self.dir_cache['dir'])
+    return count
+
+  def get_dirstat(self):
+    dirstat = {}
+    if len(self.dir_cache) > 0:
+      for path, val in self.dir_cache['dir'].items():
+        dirstat[path] = len(val['files'])  
+    return dirstat
+
+  def get_filecount(self):
+    count=0
+    if len(self.dir_cache) > 0:
+      for path, val in self.dir_cache['dir'].items():
+        count += len(val['files'])
+    return count
+
+  def get_exifcount(self):
+    count=0
+    if len(self.dir_cache) > 0:
+      for path, val in self.dir_cache['dir'].items():
+        for item, attr in val['files'].items():
+          if attr[2] != None:
+            count += 1 
+    return count
+
+  def clear_exif(self):
+    count=0
+    if len(self.dir_cache) > 0:
+      for path, val in self.dir_cache['dir'].items():
+        for item, attr in val['files'].items():
+          if attr[2] != None:
+            attr[2] = None
+            attr[3] = {}
+            count += 1 
+    return count
+
+
+#-----------------------------------------
 if __name__ == '__main__':
   # some test / demo code
   pcache = DirCache()  
