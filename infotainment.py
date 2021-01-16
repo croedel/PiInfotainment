@@ -489,7 +489,7 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   global iFiles, nFi, date_from, date_to, paused, monitor_status, start_date, pcache
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
-  current_pic = iFiles[pic_num][0] if pic_num>=0 else "None"
+  current_pic = iFiles[pic_num][0][len(config.PIC_DIR)+1:] if pic_num>=0 else "None"
   cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] ) if os.name == 'posix' else "-"
   fcache_t = pcache.get_cache_refresh_date()
   fcache_t = fcache_t.strftime("%d.%m.%Y %H:%M:%S") if fcache_t != None else "-"  

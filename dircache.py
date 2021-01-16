@@ -212,12 +212,26 @@ class DirCache:
       count = len(self.dir_cache['dir'])
     return count
 
-  def get_dirstat(self):
-    dirstat = {}
+  def get_dirlist(self):
+    dirlist = []
     if len(self.dir_cache) > 0:
       for path, val in self.dir_cache['dir'].items():
-        dirstat[path] = len(val['files'])  
-    return dirstat
+        dirlist.append( [path, len(val['files'])] ) 
+    return dirlist
+
+  def get_dirlist_full(self):
+    dirlist = []
+    if len(self.dir_cache) > 0:
+      for path, val in self.dir_cache['dir'].items():
+        ctime = self.dir_cache['dir'][path]['meta'][0]
+        mtime = self.dir_cache['dir'][path]['meta'][1]
+        ytime = self.dir_cache['dir'][path]['meta'][2]
+        # Directory: ["d", dir_name, ctime, mtime, ytime]
+        dirlist.append( ["d", path, ctime, mtime, ytime ] ) 
+        for item, attr in val['files'].items():
+          # File: ["f", filename, orientation, file_changed_date, exif_date, exif_info]
+          dirlist.append( ["f", item, attr[0], attr[1], attr[2], attr[3] ] ) 
+    return dirlist
 
   def get_filecount(self):
     count=0
