@@ -10,69 +10,77 @@ import weather
 def weather_obj_create( width, height ):
   icon_shader = pi3d.Shader("uv_flat")
   weatherobj = {}
-  # Assumed display size: 1920 x 1080 ==> +/-960 ; +/-540
 
-  w_static_size = 75  # size of static images
-  w_icon_size = 180   # size of weather icons
-  w_margin_left = 30
-  w_margin_top = 100
-  y_top = height*0.5 - w_margin_top
+  # This screen is optimized for a display size of FullHD 1920 x 1080
+  # So the ranges are ==> x +/-960 ; y +/-540
+  # You might need to adjust for other display dimensions
+  y_top = height*0.5 - config.W_MARGIN_TOP
+  x_sunrise = -width*0.5 + config.W_POINT_SIZE*11
+  x_sunset = x_sunrise + config.W_STATIC_SIZE*3
+  x_uvi = x_sunset + config.W_STATIC_SIZE*4 
   weatherobj['static'] = {}
-  weatherobj['static']['sunrise'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'sunrise.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=-160, y=y_top, z=1.0) 
-  weatherobj['static']['sunset'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'sunset.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=60, y=y_top, z=1.0) 
-  weatherobj['static']['uvidx'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'uvidx.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=400, y=y_top, z=1.0) 
+  weatherobj['static']['sunrise'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'sunrise.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x_sunrise, y=y_top, z=1.0) 
+  weatherobj['static']['sunset'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'sunset.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x_sunset, y=y_top, z=1.0) 
+  weatherobj['static']['uvidx'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'uvidx.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x_uvi, y=y_top, z=1.0) 
 
-  x = -width*0.5 + w_margin_left + w_static_size*0.5
-  weatherobj['static']['temp'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'temp.png'), icon_shader, w=w_static_size*1.5, h=w_static_size*1.5, 
-                          x=x, y=-10, z=1.0) 
-  weatherobj['static']['pop'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'rainprop.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-150, z=1.0) 
-  weatherobj['static']['wind'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'wind.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-250, z=1.0) 
-  weatherobj['static']['humidity'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'humidity.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-350, z=1.0) 
-  weatherobj['static']['pressure'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'pressure.png'), icon_shader, w=w_static_size, h=w_static_size, 
-                          x=x, y=-450, z=1.0) 
+  x = -width*0.5 + config.W_MARGIN_LEFT + config.W_STATIC_SIZE*0.5
+  x_dt = -width*0.5 + config.W_MARGIN_LEFT + config.W_STATIC_SIZE*0.5
+  y_date = y_top - config.W_STATIC_SIZE*1.5
+  y_icon = y_date - config.W_ICON_SIZE*0.9
+  y_temp = 0
+  y_pop = y_temp - config.W_STATIC_SIZE*1.5
+  y_wind = y_pop - config.W_STATIC_SIZE*1.5
+  y_humidity = y_wind - config.W_STATIC_SIZE*1.5
+  y_pressure = y_humidity - config.W_STATIC_SIZE*1.5
+
+  weatherobj['static']['temp'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'temp.png'), icon_shader, w=config.W_STATIC_SIZE*1.5, h=config.W_STATIC_SIZE*1.5, 
+                          x=x, y=y_temp, z=1.0) 
+  weatherobj['static']['pop'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'rainprop.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x, y=y_pop, z=1.0) 
+  weatherobj['static']['wind'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'wind.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x, y=y_wind, z=1.0) 
+  weatherobj['static']['humidity'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'humidity.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x, y=y_humidity, z=1.0) 
+  weatherobj['static']['pressure'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, 'pressure.png'), icon_shader, w=config.W_STATIC_SIZE, h=config.W_STATIC_SIZE, 
+                          x=x, y=y_pressure, z=1.0) 
 
   weatherobj['current'] = {}
-  weatherobj['current']['dt'] = pi3d.TextBlock(x=-900, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
+  weatherobj['current']['dt'] = pi3d.TextBlock(x=x_dt, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['sunrise'] = pi3d.TextBlock(x=-105, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
+  weatherobj['current']['sunrise'] = pi3d.TextBlock(x=x_sunrise+config.W_STATIC_SIZE*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['sunset'] = pi3d.TextBlock(x=120, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
+  weatherobj['current']['sunset'] = pi3d.TextBlock(x=x_sunset+config.W_STATIC_SIZE*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['uvi'] = pi3d.TextBlock(x=460, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.6, 
+  weatherobj['current']['uvi'] = pi3d.TextBlock(x=x_uvi+config.W_STATIC_SIZE*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.6, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
-  w_margin_left = w_margin_left + 2*w_static_size
-  w_spacing = int(w_icon_size / 1.8)
-  w_item_cnt = int( (width-w_margin_left) / (w_icon_size + w_spacing))
+  w_item_cnt = int( (width-config.W_MARGIN_LEFT) / (config.W_ICON_SIZE + config.W_SPACING))
   weatherobj['forecast'] = []
   for i in range(w_item_cnt):
     item = {}
-    x = -width*0.5 + w_margin_left + i*(w_icon_size + w_spacing)
-    item['date'] = pi3d.TextBlock(x=x, y=320, text_format=" ", z=0.1, rot=0.0, char_count=20, size=0.8, 
+    x = -width*0.5 + config.W_MARGIN_LEFT + 2*config.W_STATIC_SIZE + i*(config.W_ICON_SIZE + config.W_SPACING)
+    item['date'] = pi3d.TextBlock(x=x, y=y_date, text_format=" ", z=0.1, rot=0.0, char_count=20, size=0.8, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['daytime'] = pi3d.TextBlock(x=x, y=270, text_format=" ", z=0.1, rot=0.0, char_count=15, size=0.6, 
+    item['daytime'] = pi3d.TextBlock(x=x, y=y_date-config.W_STATIC_SIZE*0.7, text_format=" ", z=0.1, rot=0.0, char_count=15, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['temp'] = pi3d.TextBlock(x=x, y=20, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.99, 
+    item['temp'] = pi3d.TextBlock(x=x, y=y_temp+config.W_STATIC_SIZE*0.4, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.99, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['feels_like'] = pi3d.TextBlock(x=x, y=-40, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
+    item['feels_like'] = pi3d.TextBlock(x=x, y=y_temp-config.W_STATIC_SIZE*0.4, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['pop'] = pi3d.TextBlock(x=x, y=-150, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
+    item['pop'] = pi3d.TextBlock(x=x, y=y_pop, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['wind'] = pi3d.TextBlock(x=x, y=-250, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
+    item['wind'] = pi3d.TextBlock(x=x, y=y_wind, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['humidity'] = pi3d.TextBlock(x=x, y=-350, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
+    item['humidity'] = pi3d.TextBlock(x=x, y=y_humidity, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['pressure'] = pi3d.TextBlock(x=x, y=-450, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
+    item['pressure'] = pi3d.TextBlock(x=x, y=y_pressure, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
-    item['icon'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, '01d.png'), icon_shader, w=w_icon_size, h=w_icon_size, 
-                x=x+90, y=150, z=1.0) 
+    item['icon'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, '01d.png'), icon_shader, w=config.W_ICON_SIZE, h=config.W_ICON_SIZE, 
+                x=x+config.W_ICON_SIZE*0.5, y=y_icon, z=1.0) 
     weatherobj['forecast'].append( item )
   return weatherobj
 

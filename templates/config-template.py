@@ -70,7 +70,12 @@ W_LANGUAGE = "de"           # language
 W_API_KEY = " "             # openweathermap API key for "One Call API" 
 W_ICON_DIR = os.path.join(BASE_DIR, "images", "icons") # weather icon directory
 W_BACK_IMG = os.path.join(BASE_DIR, "images", "weather_back_16_9.jpg")   # background image for weather info
-W_POINT_SIZE = 75
+W_POINT_SIZE = 75           # weather text size
+W_STATIC_SIZE = 75          # size of static images (temp, humidity, wind, ...)
+W_ICON_SIZE = 200           # size of weather forecast icons (sunny, cloudy, ...) 
+W_MARGIN_LEFT = 30          # left margin 
+W_MARGIN_TOP = 75           # top margin
+W_SPACING = W_ICON_SIZE*0.4 # spacing between the weather columns
 
 # CAMERA
 CAMERA_ZOOM = 0.56          # zoom level for vlc player (e.g. shrink or enlarge video)
