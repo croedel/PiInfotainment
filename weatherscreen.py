@@ -13,8 +13,8 @@ def weather_obj_create( width, height ):
   # Assumed display size: 1920 x 1080 ==> +/-960 ; +/-540
 
   w_static_size = 75  # size of static images
-  w_icon_size = 150   # size of weather icons
-  w_margin_left = 25
+  w_icon_size = 180   # size of weather icons
+  w_margin_left = 30
   w_margin_top = 100
   y_top = height*0.5 - w_margin_top
   weatherobj['static'] = {}
@@ -47,8 +47,8 @@ def weather_obj_create( width, height ):
   weatherobj['current']['uvi'] = pi3d.TextBlock(x=460, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.6, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
-  w_margin_left = w_margin_left + 1.5*w_static_size
-  w_spacing = int(w_icon_size / 1.5)
+  w_margin_left = w_margin_left + 2*w_static_size
+  w_spacing = int(w_icon_size / 1.8)
   w_item_cnt = int( (width-w_margin_left) / (w_icon_size + w_spacing))
   weatherobj['forecast'] = []
   for i in range(w_item_cnt):
@@ -58,7 +58,7 @@ def weather_obj_create( width, height ):
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
     item['daytime'] = pi3d.TextBlock(x=x, y=270, text_format=" ", z=0.1, rot=0.0, char_count=15, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-    item['temp'] = pi3d.TextBlock(x=x, y=0, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.99, 
+    item['temp'] = pi3d.TextBlock(x=x, y=20, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.99, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
     item['feels_like'] = pi3d.TextBlock(x=x, y=-40, text_format=" ", z=0.1, rot=0.0, char_count=10, size=0.6, 
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
@@ -72,7 +72,7 @@ def weather_obj_create( width, height ):
                             spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
     item['icon'] = pi3d.ImageSprite(os.path.join(config.W_ICON_DIR, '01d.png'), icon_shader, w=w_icon_size, h=w_icon_size, 
-                x=x+60, y=150, z=1.0) 
+                x=x+90, y=150, z=1.0) 
     weatherobj['forecast'].append( item )
   return weatherobj
 
