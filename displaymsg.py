@@ -8,7 +8,7 @@ import os
 import GPSlookup
 import config
 
-def _item2str(item):
+def item2str(item):
   if item == None:
     val = '-' 
   elif isinstance(item, tuple):
@@ -52,12 +52,12 @@ def format_text(iFiles, pic_num):
       '<artist>': exif_info.get('Artist', ''),
       '<copy>':   exif_info.get('Copyright', ''),
       '<desc>':   exif_info.get('ImageDescription', ''),
-      '<exp>':    _item2str(exif_info.get('ExposureTime')) + 's',
-      '<fnum>':   'f/' + _item2str(exif_info.get('FNumber')),
-      '<iso>':    'ISO ' + _item2str(exif_info.get('ISOSpeedRatings')),
-      '<flen>':   _item2str(exif_info.get('FocalLength')) + 'mm',
-      '<flen35>': _item2str(exif_info.get('FocalLengthIn35mmFilm')) + 'mm',
-      '<res>':    _item2str(exif_info.get('ExifImageWidth')) + 'x' + _item2str(exif_info.get('ExifImageHeight')),
+      '<exp>':    item2str(exif_info.get('ExposureTime')) + 's',
+      '<fnum>':   'f/' + item2str(exif_info.get('FNumber')),
+      '<iso>':    'ISO ' + item2str(exif_info.get('ISOSpeedRatings')),
+      '<flen>':   item2str(exif_info.get('FocalLength')) + 'mm',
+      '<flen35>': item2str(exif_info.get('FocalLengthIn35mmFilm')) + 'mm',
+      '<res>':    item2str(exif_info.get('ExifImageWidth')) + 'x' + item2str(exif_info.get('ExifImageHeight')),
       '<gps>':    gps_str 
     }
 

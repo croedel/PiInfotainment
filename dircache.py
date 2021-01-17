@@ -148,6 +148,22 @@ class DirCache:
     except Exception as err:
       logging.error("Couldn't update EXIF info for: {} - {}".format(file_path_name, str(err)))
 
+  def get_exif_info(self, file_path_name):
+    exif_data = {}
+    file_path_name = os.path.normpath( file_path_name )
+    if not file_path_name.startswith(config.PIC_DIR):
+      file_path_name = os.path.join(config.PIC_DIR, file_path_name)
+    path, fname = os.path.split( file_path_name )
+    exif_data['path'] = path
+    exif_data['file'] = fname
+    try:
+      exif_data['orientation'] = self.dir_cache['dir'][path]['files'][fname][0]
+      exif_data['dt'] = self.dir_cache['dir'][path]['files'][fname][2]
+      exif_data['exif_info'] = self.dir_cache['dir'][path]['files'][fname][3]
+    except Exception as err:
+      logging.warning("Couldn't get EXIF info for: {} - {}".format(file_path_name, str(err)))
+    return exif_data  
+
   # refreshes the cache, if needed
   def refresh_cache(self):
     updated = self._update_dir_cache()
@@ -259,7 +275,6 @@ class DirCache:
             attr[3] = {}
             count += 1 
     return count
-
 
 #-----------------------------------------
 if __name__ == '__main__':

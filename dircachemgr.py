@@ -6,6 +6,8 @@ import datetime
 import logging
 import config
 import dircache
+import GPSlookup
+import displaymsg
 
 #-----------------------------
 def do_summary(cache, args): 
@@ -24,7 +26,7 @@ def do_list(cache, args):
   for dir_item in dirlist:
     print( "{:s}: {:d} files".format(dir_item[0], dir_item[1]) )
 
-def do_list_full(cache, args):
+def do_list_long(cache, args):
   path_trunc = len(config.PIC_DIR) + 1
   do_summary(cache, args)
   dirlist = cache.get_dirlist_full()
@@ -59,18 +61,33 @@ def do_clear_exif(cache, args):
   cache.clear_exif()
   do_summary(cache, args)
 
+def do_get_exif(cache, args):
+  print( "File: {:s}".format(args.param) )
+  print( "EXIF:" ) 
+  exif = cache.get_exif_info(args.param)
+  exif_data = exif.get('exif_info')
+  if exif_data:
+    for key, val in exif_data.items():
+      if key == 'GPSInfo': 
+        val = GPSlookup.lookup(val)
+      else:
+        val = displaymsg.item2str(val)  
+      print( "  {:25s}: {:s}".format( key, str(val) ) )
+
 #-----------------------------
 def parse_options():
   epilog = """commands:
   summary:    List a short summary of the cache.
   list:       Lists all directories plus the no. of files. 
-  list_full:  Lists all directories and all files. 
+  list_long:  Lists all directories and all files. 
   refresh:    Refreshes the directory cache.
   clear_exif: Clears the cached EXIF info.
+  get_exif:   Show cached EXIF info for given file. 
   """
   parser = argparse.ArgumentParser(description='PI Infotainment dircache manager utility', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
   parser.add_argument('--file', '-f', default=config.DIR_CACHE_FILE, help='cache file')
-  parser.add_argument('command', choices=["summary", "list", "list_full", "refresh", "clear_exif"] )
+  parser.add_argument('command', choices=["summary", "list", "list_long", "refresh", "clear_exif", "get_exif"], nargs='?', default="summary" )
+  parser.add_argument('param', nargs='?', help="parameter" )
   return parser.parse_args()
 
 def main():
@@ -82,10 +99,12 @@ def main():
     do_refresh(cache, args)
   elif args.command == "clear_exif": 
     do_clear_exif(cache, args)
+  elif args.command == "get_exif": 
+    do_get_exif(cache, args)
   elif args.command == "list": 
     do_list(cache, args)
-  elif args.command == "list_full": 
-    do_list_full(cache, args)
+  elif args.command == "list_long": 
+    do_list_long(cache, args)
 
 #-------------------------------
 if __name__ == '__main__':
