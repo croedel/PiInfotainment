@@ -210,9 +210,9 @@ def start_picframe():
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
                       text_format=" ", z=0.1, rot=0.0, char_count=75, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45,
-                      text_format=" ", z=0.1, rot=0.0, char_count=49, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45 - 40,
-                      text_format=" ", z=0.1, rot=0.0, char_count=49, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   for item in textlines:
     text.add_text_block(item)
 

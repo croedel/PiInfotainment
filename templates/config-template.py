@@ -41,9 +41,9 @@ INFO_TXT_TIME = (TIME_DELAY-FADE_TIME) * 0.9   # duration for showing text overl
 
 # Text overlay
 TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
-TEXT2_FORMAT = "<path>/<file> <desc>"                 
-TEXT3_FORMAT = "<flen> (<flen35>) <exp> <fnum> <iso>"   
-TEXT4_FORMAT = "<artist> <rating>"          
+TEXT2_FORMAT = "<path>/<file>"                 
+TEXT3_FORMAT = "<flen> (<flen35>) <exp> <fnum> <iso> <artist>"   
+TEXT4_FORMAT = "<rating> <desc>"          
 TEXT_POINT_SIZE = 55 
 RESOLVE_GPS = True      # Resolve GPS coordinates in EXIF 
 

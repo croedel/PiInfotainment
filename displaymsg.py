@@ -33,17 +33,21 @@ def format_text(iFiles, pic_num):
   try:
     filename = os.path.basename(iFiles[pic_num][0])
     pathname = os.path.dirname(os.path.relpath(iFiles[pic_num][0], config.PIC_DIR))
-    dt = datetime.datetime.fromtimestamp(iFiles[pic_num][3])
-    exif_info = iFiles[pic_num][4] 
+    dt_str = '-'
+    if iFiles[pic_num][3]:
+      dt_str = datetime.datetime.fromtimestamp(iFiles[pic_num][3]).strftime("%d.%m.%Y")
+    gps_str = '' 
     if config.RESOLVE_GPS: # GPS reverse lookup is quite expensive - so we check if it is required, before executing
-      gps_str = GPSlookup.lookup( exif_info.get('GPSInfo') )
-    else:
-      gps_str = '' 
+      exif_info = iFiles[pic_num][4] 
+      if exif_info: 
+        gps_info = exif_info.get('GPSInfo')
+        if gps_info: 
+          gps_str = GPSlookup.lookup( gps_info )
 
     rep = { 
       '<file>':   filename[:40],    # filename of image
       '<path>':   pathname[:40],    # pathname of image
-      '<date>':   dt.strftime("%d.%m.%Y"),  # image creation date (dd.mm.yyyy)
+      '<date>':   dt_str,           # image creation date (dd.mm.yyyy)
       '<num>':    str(pic_num+1),        # number of current picuture in current file list
       '<total>':  str(len(iFiles)),      # total number of picutures in current file list  
       '<rating>': '*' * int(exif_info.get('Rating', 0)),

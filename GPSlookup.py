@@ -21,9 +21,13 @@ def reverse_lookup(lat, lon):
   return ret
 
 def latlon2dec(direction, degrees, minutes, seconds):
-  degrees = degrees[0] / degrees[1]
-  minutes = minutes[0] / minutes[1]
-  seconds = seconds[0] / seconds[1]
+  # GPS info can be decimal or tuples
+  if isinstance(degrees, tuple): 
+    degrees = degrees[0] / degrees[1]
+  if isinstance(minutes, tuple): 
+    minutes = minutes[0] / minutes[1]
+  if isinstance(seconds, tuple): 
+    seconds = seconds[0] / seconds[1]
   dec = float(degrees) + float(minutes)/60 + float(seconds)/(60*60)
   if direction == 'S' or direction == 'W':
     dec *= -1
@@ -53,5 +57,7 @@ if __name__ == "__main__":
 
   gps_info =  { 1: 'N', 2: ((48, 1), (7, 1), (3162, 100)), 3: 'E', 4: ((11, 1), (21, 1), (5236, 100)), 
     5: b'\x00', 6: (691071, 1286), 12: 'K', 13: (0, 1), 16: 'T', 17: (171448, 1293), 23: 'T', 24: (171448, 1293), 31: (65, 1)}
+  print( lookup(gps_info) )
 
+  gps_info = { 1: 'N', 2: (48, 7, 1, 3.162), 3: 'E', 4: (11, 21, 5.236 ) } 
   print( lookup(gps_info) )
