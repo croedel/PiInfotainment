@@ -41,6 +41,7 @@ date_from = None
 date_to = None
 quit = False
 paused = False 
+shutdown = False
 nexttm = 0.0
 next_pic_num = 0
 iFiles = []
@@ -387,7 +388,7 @@ def on_mqtt_message(mqttclient, userdata, message):
   try:
     # TODO not ideal to have global but probably only reasonable way to do it
     global next_pic_num, iFiles, nFi, date_from, date_to 
-    global quit, paused, nexttm, show_camera, camera_end_tm, monitor_status
+    global quit, shutdown, paused, nexttm, show_camera, camera_end_tm, monitor_status
     msg = message.payload.decode("utf-8")
     reselect = False
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
@@ -422,6 +423,9 @@ def on_mqtt_message(mqttclient, userdata, message):
       config.TIME_DELAY = float(msg)
     elif message.topic == "screen/quit":
       quit = True
+    elif message.topic == "screen/shutdown":
+      quit = True
+      shutdown = True
     elif message.topic == "screen/pause":
       paused = not paused # toggle from previous value
     elif message.topic == "screen/back":
@@ -573,10 +577,15 @@ def switch_HDMI( status ):
     cmd = ["vcgencmd", "display_power", "0"]
   subprocess.call(cmd)
 
+def system_shutdown():
+  logging.warning( "!!! Initiating system shutdown !!!" )    
+  cmd = ["shutdown", "now"]
+  subprocess.call(cmd)
+
 #-------------------------------------------
 def main():
   ret = 0
-  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache, start_date
+  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache, start_date, shutdown
   logging.info('Starting infotainment system...')
   start_date = datetime.datetime.now()
   pcache = dircache.DirCache()
@@ -615,6 +624,8 @@ def main():
   else:  
     mqtt_publish_status( fields="status", status="stopped" )
   logging.info('Infotainment system stopped')
+  if shutdown:
+    system_shutdown()
   sys.exit(ret)
 
 #############################################################################

@@ -42,6 +42,17 @@ button:hover{
   background-color: darkblue;
 }
 
+.button_red{
+  background-color: orangered;
+}
+
+.button_red:hover{
+  background-color: darkred;
+  border-color: yellow;
+  border-width: 3pt;
+  color: yellow;
+}
+
 div.srvstatus {
   font-size: 14pt;
   float: left;
