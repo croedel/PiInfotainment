@@ -8,10 +8,10 @@ import os
 import GPSlookup
 import config
 
-def item2str(item):
+def item2str(item, prefix='', postfix=''):
   if item == None:
-    val = '-' 
-  elif isinstance(item, tuple):
+    return ''
+  if isinstance(item, tuple):
     val = int(item[0]) / int(item[1])
     if val > 1:
       if val == int(val):
@@ -21,12 +21,13 @@ def item2str(item):
     else:
       val = '1/' + str(int(item[1] / item[0])) # display as fracture    
   else:
-    val = str(item)  
+    val = str(item)
+  val = prefix + val + postfix    
   return val      
 
 def _clean_string(fmt_str):
   fmt_str = ''.join([c for c in fmt_str if c in config.CODEPOINTS]) # clean string 
-  fmt_str = fmt_str[:75]  # limit length to 99 characters
+  fmt_str = fmt_str[:99]  # limit length to 99 characters
   return fmt_str
 
 def format_text(iFiles, pic_num):
@@ -56,12 +57,12 @@ def format_text(iFiles, pic_num):
       '<artist>': exif_info.get('Artist', ''),
       '<copy>':   exif_info.get('Copyright', ''),
       '<desc>':   exif_info.get('ImageDescription', ''),
-      '<exp>':    item2str(exif_info.get('ExposureTime')) + 's',
-      '<fnum>':   'f/' + item2str(exif_info.get('FNumber')),
-      '<iso>':    'ISO ' + item2str(exif_info.get('ISOSpeedRatings')),
-      '<flen>':   item2str(exif_info.get('FocalLength')) + 'mm',
-      '<flen35>': item2str(exif_info.get('FocalLengthIn35mmFilm')) + 'mm',
-      '<res>':    item2str(exif_info.get('ExifImageWidth')) + 'x' + item2str(exif_info.get('ExifImageHeight')),
+      '<exp>':    item2str(exif_info.get('ExposureTime'), postfix='s'),
+      '<fnum>':   item2str(exif_info.get('FNumber'), prefix='f/'),
+      '<iso>':    item2str(exif_info.get('ISOSpeedRatings'), prefix='ISO '),
+      '<flen>':   item2str(exif_info.get('FocalLength'), postfix='mm'),
+      '<flen35>': item2str(exif_info.get('FocalLengthIn35mmFilm'), postfix='mm'),
+      '<res>':    item2str(exif_info.get('ExifImageWidth'), postfix='x') + item2str(exif_info.get('ExifImageHeight')),
       '<gps>':    gps_str 
     }
 

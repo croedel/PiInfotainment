@@ -128,10 +128,10 @@ def tex_load(pic_num, iFiles, size=None):
     tex = None
   return tex
 
-def get_files(dt_from=None, dt_to=None):
+def get_files(dt_from=None, dt_to=None, refresh=True):
   global pcache
   mqtt_publish_status( fields=["status","pic_dir_refresh"], status="updating file_list" )
-  file_list = pcache.get_file_list( dt_from, dt_to )
+  file_list = pcache.get_file_list( dt_from, dt_to, refresh=refresh )
   mqtt_publish_status( fields="status", status="running" )
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
@@ -206,9 +206,9 @@ def start_picframe():
   text = pi3d.PointText(font, CAMERA, max_chars=1000, point_size=config.TEXT_POINT_SIZE)
   textlines = []
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
-                      text_format=" ", z=0.1, rot=0.0, char_count=75, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
-                      text_format=" ", z=0.1, rot=0.0, char_count=75, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45,
                       text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45 - 40,
@@ -603,7 +603,7 @@ def main():
     date_from = (dfrom.year, dfrom.month, dfrom.day)
 
   logging.info('Initial scan of image directory...')
-  iFiles, nFi = get_files(date_from, date_to)
+  iFiles, nFi = get_files(date_from, date_to, refresh=False)
     
   while not quit:
     mqtt_publish_status( fields="status", status="started" )

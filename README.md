@@ -268,6 +268,21 @@ W_LONGITUDE     # longitude of your location
 W_API_KEY       # put your API key here       
 ```
 
+Though the weather screen is created dynamically according to the display resolution, it is optimized for a display size of FullHD (1920 x 1080). If you use a different screen size or ratio, you might need to adjust it.
+You might want to start with following config entries:
+
+```
+W_POINT_SIZE     # weather text size
+W_STATIC_SIZE    # size of static images (temp, humidity, wind, ...)
+W_ICON_SIZE      # size of weather forecast icons (sunny, cloudy, ...) 
+W_MARGIN_LEFT    # left margin 
+W_MARGIN_TOP     # top margin
+W_SPACING        # spacing between the weather columns
+```
+
+If this shouldn't give you the desired results, you can think about changing the sizing calculation within `weatherscreen.py`
+
+
 ### Surveillance camera viewer
 The project assumes you have a surveillance camera which can be accessed via e.g rtsp protocol.
 This then gets displayed by VLC.

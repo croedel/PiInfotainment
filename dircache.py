@@ -172,8 +172,9 @@ class DirCache:
     return updated
 
   # create a filtered file list
-  def get_file_list( self, dt_from=None, dt_to=None ):
-    updated = self.refresh_cache()
+  def get_file_list( self, dt_from=None, dt_to=None, refresh=True ):
+    if refresh:  
+      self.refresh_cache()
     # dt_from and dt_to are either None or tuples (2016,12,25)
     if isinstance(dt_from, tuple):  
       dt_from = time.mktime(dt_from + (0, 0, 0, 0, 0, 0))
