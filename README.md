@@ -33,16 +33,16 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 
 ### Webserver
 Raspi Infotainment provides a HTTP server which can be used to remote control the Infotainment server.
-Per default it will start on your Raspberry PI on standard port 80. So you can easily access it within any browser within your lokal network by entering `http://<IP address of yor Raspberry Pi>`
+Per default it will start on your Raspberry PI on standard port 80. So you can easily access it within any browser within your lokal network by entering `http://<IP address of your Raspberry Pi>`
 
 The webserver communicates with the infotainment server via the mosquitto MQTT broker on your Pi.
 
 It offers:
 
-* Server configuration: Change most useful server config settings at runtime, e.g. start date, end date, ...
-* Server control: Remote control the infotainment server, e.g. pause,  monitor on/off, restart, shutdown, ...
-* Server status: Shows some status info from yor Raspi, e.g. which photo is currently displayed, monitor status, CPU temperature, etc.
-* Picture history: Recent photos which were displayed
+- Server configuration: Change most useful server config settings at runtime, e.g. start date, end date, ...
+- Server control: Remote control the infotainment server, e.g. pause,  monitor on/off, restart, shutdown, ...
+- Server status: Shows some status info from yor Raspi, e.g. which photo is currently displayed, monitor status, CPU temperature, etc.
+- Picture history: Recent photos which were displayed
 
 
 ### Weather forecast
@@ -338,6 +338,8 @@ And add following URL as Web Hook:
 ```
 http://<IP Address of you RasperryPi>/index.html?topic=camera
 ```
+
+-------------------------
 
 ## Home-Automation integration
 It's very easy to integrate the Infotainment system into any existing Home-Automation environment which supports web hooks (e.g. Alexa, Google Home, ...).

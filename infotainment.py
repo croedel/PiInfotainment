@@ -339,27 +339,28 @@ def start_picframe():
           weatherscreen.weather_refresh( weatherobj )
           next_weather_tm = tm + config.W_REFRESH_DELAY # next check
 
-    slide.draw()
-
-    if nFi <= 0:
-      textlines[0].set_text("NO IMAGES SELECTED")
-      textlines[0].colouring.set_colour(alpha=1.0)
-      next_check_tm = tm + 5.0
-    elif tm < name_tm and weather_interstitial_active == False:
-      # this sets alpha for the TextBlock from 0 to 1 then back to 0
-      dt = (config.INFO_TXT_TIME - name_tm + tm + 0.1) / config.INFO_TXT_TIME
-      alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
-      for item in textlines:
-        item.colouring.set_colour(alpha=alpha)
-
-    text.regen()
-    text.draw()
-    weatherinfo.regen()
-    weatherinfo.draw()
-    for item in weatherobj['forecast']:
-      item['icon'].draw()
-    for _, obj in weatherobj['static'].items():  
-      obj.draw()
+    if monitor_status.startswith("ON"):
+      slide.draw()
+      if nFi <= 0:
+        textlines[0].set_text("NO IMAGES SELECTED")
+        textlines[0].colouring.set_colour(alpha=1.0)
+        next_check_tm = tm + 5.0
+      elif tm < name_tm and weather_interstitial_active == False:
+        # this sets alpha for the TextBlock from 0 to 1 then back to 0
+        dt = (config.INFO_TXT_TIME - name_tm + tm + 0.1) / config.INFO_TXT_TIME
+        alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
+        for item in textlines:
+          item.colouring.set_colour(alpha=alpha)
+      text.regen()
+      text.draw()
+      weatherinfo.regen()
+      weatherinfo.draw()
+      for item in weatherobj['forecast']:
+        item['icon'].draw()
+      for _, obj in weatherobj['static'].items():  
+        obj.draw()
+    else: # monitor OFF -> minimize system activity to reduce power consumption
+      time.sleep(30)
 
     if config.KEYBOARD:
       k = kbd.read()
