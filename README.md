@@ -10,7 +10,7 @@ This is a hobby project for Raspberry Pi which combines following core functiona
 - Simple webserver: Enables you to remotely control the Infotainment System
 - Enable to integrate into almost any home automation system which supports HTTP hooks 
 
-The Picture Frame functionality of RaspiInfotainment uses the pi3d (https://pi3d.github.io/) project and is heavily based on PictureFrame2020.py from https://github.com/pi3d/pi3d_demos.
+The Picture Frame functionality of RaspiInfotainment uses the pi3d (https://pi3d.github.io/) project and is heavily based on PictureFrame2020.py from https://github.com/pi3d/pi3d_demos. Kudos to these awsome projects!
 
 By the way: If you're new to the topic, I can definitively recommend to read https://www.thedigitalpictureframe.com/. You'll find a lot of useful info there!
 
@@ -29,29 +29,21 @@ The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
 - Optionally add randomly older pictures 
 - Enable to specify blacklist for image directories which shall be ignored (e.g. backup, system directories, thumbnails, ...)
 - Finegrain control which pictures shall be shown via YUML files with file name pattern matching  
-- Raspi monitor can be scheduled to be switched ON/OFF automatically at certain times 
+- Energy saving: Raspi monitor can be scheduled to be switched ON/OFF automatically at certain times 
 
 ### Webserver
 Raspi Infotainment provides a HTTP server which can be used to remote control the Infotainment server.
 Per default it will start on your Raspberry PI on standard port 80. So you can easily access it within any browser within your lokal network by entering `http://<IP address of yor Raspberry Pi>`
 
-It enables following commands:
-
-| Command       | Parameter   | Description
-|---------------|-------------|-----------------------
-| Back          | -           | Back to previous image
-| Subdirectory  | -           | Scan and display images withi this subdirectory
-| Start date    | YYYY/MM/DD  |  Show only images which were taken after this date
-| End date      | YYYY/MM/DD  |  Show only images which were taken before this date 
-| Recent days   | N           |  Show only images which were taken within the last N days
-| Time delay    | N           |  How long each photo shall be shown (in seconds)
-| Pause         | -           |  Pause photos
-| Camera        | -           |  Switch to surveillance camera viewer
-| Monitor       | ON, OFF, AUTO | Switch monitor ON or OFF manually or re-set to AUTO mode
-
-It also shows some status info from yor Raspi, e.g. which photo is curretly displayed, monitor status, CPU temperature, etc.
-
 The webserver communicates with the infotainment server via the mosquitto MQTT broker on your Pi.
+
+It offers:
+
+* Server configuration: Change most useful server config settings at runtime, e.g. start date, end date, ...
+* Server control: Remote control the infotainment server, e.g. pause,  monitor on/off, restart, shutdown, ...
+* Server status: Shows some status info from yor Raspi, e.g. which photo is currently displayed, monitor status, CPU temperature, etc.
+* Picture history: Recent photos which were displayed
+
 
 ### Weather forecast
 RaspiInfotainment enables to show a weather forecast page. It uses https://openweathermap.org/ to retrieve the forecast data for your location.
