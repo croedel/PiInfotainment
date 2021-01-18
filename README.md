@@ -282,6 +282,49 @@ W_SPACING        # spacing between the weather columns
 
 If this shouldn't give you the desired results, you can think about changing the sizing calculation within `weatherscreen.py`
 
+### Metadata display
+Pi Infotainment offers 4 text lines to show customizable metadata of the shown image:
+
+* Text1 and Text2 are footer lines
+* Text3 and Text4 are header lines
+
+The content can be configures within the confog file:
+
+``` 
+TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
+TEXT2_FORMAT = "<path>/<file>"                 
+TEXT3_FORMAT = "<flen> (<flen35>) <exp> <fnum> <iso> <artist>"   
+TEXT4_FORMAT = "<rating> <desc>"          
+```
+
+The format supports following variables which will be dynamically replaced:
+
+| Variable      | Description 
+|------------   |------------------------- 
+| `<file>`      | filename of image 
+| `<path>`      | pathname of image
+| `<date>`      | image creation date (dd.mm.yyyy)
+| `<num>`       | number of current picuture in current file list
+| `<total>`     | # total number of picutures in current file list 
+
+Additionally following EXIF metadata tags are supported
+
+| Variable      | EXIF Tag                    | Description
+|------------   |-----------------------------|---------------------
+| `<rating>`    | Rating                      | 0-5 "stars"
+| `<make>`      | Make                        | Camera 
+| `<model>`     | Model                       | Camera model
+| `<artist>`    | Artist                      | Photographer
+| `<copy>`      | Copyright                   | Copyright
+| `<desc>`      | ImageDescription            | Description of the image
+| `<exp>`       | ExposureTime                | Exposure time
+| `<fnum>`      | FNumber                     | Camera aperture
+| `<iso>`       | ISOSpeedRatings             | ISO rating
+| `<flen>`      | FocalLength                 | focal length 
+| `<flen35>`    | FocalLengthIn35mmFilm       | focal length compared to a 35mm camera  
+| `<res>`       | ExifImageWidth, ExifImageHeight | image width and height
+| `<gps>`       | GPSInfo                     | reverse lookuped geo location 
+
 
 ### Surveillance camera viewer
 The project assumes you have a surveillance camera which can be accessed via e.g rtsp protocol.
