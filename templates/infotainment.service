@@ -1,13 +1,13 @@
 [Unit]
 Description=PiInfotainment system
 After=multi-user.target
+StartLimitBurst=5
+StartLimitIntervalSec=30
 
 [Service]
 Type=idle
-
 User=root
 ExecStart=xinit /bin/sh /home/pi/infotainment/PiInfotainment.sh -- -s off -dpms -s noblank
-
 Restart=always
 
 [Install]
