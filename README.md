@@ -275,21 +275,19 @@ W_SPACING        # spacing between the weather columns
 If this shouldn't give you the desired results, you can think about changing the sizing calculation within `weatherscreen.py`
 
 ### Metadata display
-Pi Infotainment offers 4 text lines to show customizable metadata of the shown image:
-
-* Text1 and Text2 are footer lines
-* Text3 and Text4 are header lines
-
-The content can be configures within the confog file:
+Pi Infotainment offers 4 text lines to show customizable metadata of the shown image: 2 footer lines and 2 header lines.
+The content can be configures within the config file:
 
 ``` 
-TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
-TEXT2_FORMAT = "<path>/<file>"                 
-TEXT3_FORMAT = "<flen> (<flen35>) <exp> <fnum> <iso> <artist>"   
-TEXT4_FORMAT = "<rating> <desc>"          
+TEXT_FORMAT = [
+  "<date> (<num>/<total>) <gps>",                   # Footer line 1
+  "<path>/<file>",                                  # Footer line 2
+  "<flen> (<flen35>) <exp> <fnum> <iso> <artist>",  # Header line 1 
+  "<rating> <desc>"                                 # Header line 2
+]
 ```
 
-The format supports following variables which will be dynamically replaced:
+The format supports following variables which will be dynamically replaced with image data:
 
 | Variable      | Description 
 |------------   |------------------------- 
