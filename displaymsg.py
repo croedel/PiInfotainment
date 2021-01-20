@@ -31,9 +31,12 @@ def _clean_string(fmt_str):
   return fmt_str
 
 def format_text(iFiles, pic_num):
+  texts = [' ', ' ', ' ', ' ']
   try:
-    filename = os.path.basename(iFiles[pic_num][0])
-    pathname = os.path.dirname(os.path.relpath(iFiles[pic_num][0], config.PIC_DIR))
+    fname = os.path.normpath(iFiles[pic_num][0])
+    filename = os.path.basename(fname)
+    pathname = os.path.dirname(fname)
+    pathname = pathname[len(config.PIC_DIR)+1:]
     dt_str = '-'
     if iFiles[pic_num][3]:
       dt_str = datetime.datetime.fromtimestamp(iFiles[pic_num][3]).strftime("%d.%m.%Y")
@@ -66,26 +69,25 @@ def format_text(iFiles, pic_num):
       '<gps>':    gps_str 
     }
 
-    txt1 = config.TEXT1_FORMAT
-    txt2 = config.TEXT2_FORMAT
-    txt3 = config.TEXT3_FORMAT
-    txt4 = config.TEXT4_FORMAT
-
-    for i, j in rep.items():
-      txt1 = txt1.replace(i, j)
-      txt2 = txt2.replace(i, j)
-      txt3 = txt3.replace(i, j)
-      txt4 = txt4.replace(i, j)
-
-    txt1 = _clean_string(txt1)
-    txt2 = _clean_string(txt2)
-    txt3 = _clean_string(txt3)
-    txt4 = _clean_string(txt4)
+    texts = config.TEXT_FORMAT.copy() # Load templates
+    # Substitute dynamic content
+    for param, val in rep.items():
+      for i in range(0, len(texts)):
+        texts[i] = texts[i].replace(param, val)   
+    for i in range(0, len(texts)):
+      if not any(char in texts[i] for char in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
+        texts[i] = ' '  # set empty if there's only "syntactical sugar" as e.g. brackets or dashes but no chars or numbers)  
+      else:
+        texts[i] = _clean_string(texts[i])
   except Exception as e: # something went wrong when formatting
-    txt1 = txt2 = txt3 = txt4 = ' '
     logging.warning('Exception in format_text: {}'.format(str(e)) )
-  return (txt1, txt2, txt3, txt4)
+  return texts
 
 #---------------------------
 if __name__ == "__main__":
-  format_text( {}, 0 )
+
+  iFiles = [
+    [ '\\\\SYNOLOGYDS216\\photo\\2020\\DCR_1819.JPG', 1, 1600605768.0, None, {} ]
+  ]
+  texts = format_text( iFiles, 0 )
+  print(texts)
