@@ -38,7 +38,7 @@ def _request_openweathermap( lat, lon, units, lang, appid ):  # get weather info
     try:
       response = requests.get( url, payload )
     except requests.exceptions.RequestException as err:
-      logging.error( "Couldn't request openweathermap API: Exception {:s}".format(err) )
+      logging.error( "Couldn't request openweathermap API: Exception {:s}".format(str(err)) )
     else:
       if response.status_code == 200:
         ret = response.json()
@@ -96,9 +96,11 @@ def _normalize_weather(weather_info, lang):
       data['feels_like'] = '{:.1f}°C'.format(w_current.get('feels_like', '-'))
       data['pressure'] = '{:.0f}hPa'.format(w_current.get('pressure', '-'))
       data['humidity'] = '{:.0f}%'.format(w_current.get('humidity', '-'))
-      data['wind'] = '{:s} {:.0f}km/h'.format(wind_str, w_current.get('wind_speed', '-') * 3.6)
+      data['wind'] = '{:s} {:.0f}km/h'.format(wind_str, w_current.get('wind_speed', 0) * 3.6)
       data['clouds'] = '{:0.0f}/8'.format(w_current.get('clouds', '-') * 8/100)
-      data['pop'] = '{:.0f}%'.format(weather_info['minutely'][0]['precipitation'] *100)
+      minutely = weather_info.get('minutely')
+      if minutely and len(minutely)>0: 
+        data['pop'] = '{:.0f}%'.format(weather_info['minutely'][0].get('precipitation', 0) *100)
 
       w_current_weather = w_current.get('weather')
       if w_current_weather and w_current_weather[0]:

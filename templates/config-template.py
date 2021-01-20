@@ -40,10 +40,12 @@ FADE_TIME = 3.0         # change time during which slides overlap
 INFO_TXT_TIME = (TIME_DELAY-FADE_TIME) * 0.9   # duration for showing text overlay over image (you can also use a static value) 
 
 # Text overlay
-TEXT1_FORMAT = "<date> (<num>/<total>) <gps>"           
-TEXT2_FORMAT = "<path>/<file>"                 
-TEXT3_FORMAT = "<flen> (<flen35>) <exp> <fnum> <iso> <artist>"   
-TEXT4_FORMAT = "<rating> <desc>"          
+TEXT_FORMAT = [
+  "<date> (<num>/<total>) <gps>",                   # Footer line 1
+  "<path>/<file>",                                  # Footer line 2
+  "<flen> (<flen35>) <exp> <fnum> <iso> <artist>",  # Header line 1 
+  "<rating> <desc>"                                 # Header line 2
+]
 TEXT_POINT_SIZE = 55 
 RESOLVE_GPS = True      # Resolve GPS coordinates in EXIF 
 
