@@ -13,6 +13,48 @@
       <a href="index.html">Pi Infotainment Admin</a>   
     </div>  
 
+    <div class="group-box" id="srvctrl"> 
+      Server Control 
+      <div class="playerctrl" id="playerctrl"> 
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <input class="playerimg" type="image" src="back.png" alt="Show previous picture" title="Show previous picture" />
+          <input type="hidden" name="topic" value="back">
+        </form>
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <input class="playerimg" type="image" src="pause_play.png" alt="Toggle pause" title="Toggle pause" />
+          <input type="hidden" name="topic" value="pause">
+        </form>
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <input class="playerimg" type="image" src="forward.png" alt="Show next picture" title="Show next picture" />
+          <input type="hidden" name="topic" value="next">
+        </form>
+      </div>    
+
+      <div class="srvopts" id="srvopts"> 
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <button class="button1" type="submit" title="Display surveillance camera">Camera</button>
+          <input type="hidden" name="topic" value="camera">
+        </form>
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <button class="button1" type="submit" title="Restart infotainment system">Restart</button>
+          <input type="hidden" name="topic" value="quit">
+        </form>
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <button class="button1" type="submit" title="Switch monitor manually on/off or set to auto mode">Monitor</button>
+          <input type="hidden" name="topic" value="monitor">
+          <select name="data" id="data">
+            <option value="ON">ON</option>
+            <option value="OFF">OFF</option>
+            <option value="AUTO">AUTO</option>
+          </select>
+        </form>
+        <form class="picontrol" action="index.html" method="get" autocomplete="off" onSubmit="return confirm('Do you really want to shutdown the PI system?') ">
+          <button class="button_red" type="submit" title="CAUTION: Shutdown raspberry pi">Shutdown</button>
+          <input type="hidden" name="topic" value="shutdown">
+        </form>
+      </div>
+    </div>
+
     <div class="group-box" id="srv-config">
       Server Configuration 
       <form class="picontrol" action="index.html" method="get" autocomplete="off">
@@ -51,44 +93,6 @@
         <input type="text" placeholder="10" name="data">
       </form>
     </div>  
-
-    <div class="group-box" id="srv-ctrl"> 
-      Server Control 
-      <form class="picontrol" action="index.html" method="get" autocomplete="off">
-        <button class="button1" type="submit" title="Show previous picture">Back</button>
-        <input type="hidden" name="topic" value="back">
-      </form>
-
-      <form class="picontrol" action="index.html" method="get" autocomplete="off">
-        <button class="button1" type="submit" title="Pause picture frame">Pause</button>
-        <input type="hidden" name="topic" value="pause">
-      </form>
-
-      <form class="picontrol" action="index.html" method="get" autocomplete="off">
-        <button class="button1" type="submit" title="Display surveillance camera">Camera</button>
-        <input type="hidden" name="topic" value="camera">
-      </form>
-
-      <form class="picontrol" action="index.html" method="get" autocomplete="off">
-        <button class="button1" type="submit" title="Restart infotainment system">Restart</button>
-        <input type="hidden" name="topic" value="quit">
-      </form>
-
-      <form class="picontrol" action="index.html" method="get" autocomplete="off">
-        <button class="button1" type="submit" title="Switch monitor manually on/off or set to auto mode">Monitor</button>
-        <input type="hidden" name="topic" value="monitor">
-        <select name="data" id="data">
-          <option value="ON">ON</option>
-          <option value="OFF">OFF</option>
-          <option value="AUTO">AUTO</option>
-        </select>
-      </form>
-
-      <form class="picontrol" action="index.html" method="get" autocomplete="off" onSubmit="return confirm('Do you really want to shutdown the PI system?') ">
-        <button class="button_red" type="submit" title="CAUTION: Shutdown raspberry pi">Shutdown</button>
-        <input type="hidden" name="topic" value="shutdown">
-      </form>
-    </div>
 
     <div class="srvstatus" id="srvstatus">
       Server Status

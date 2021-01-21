@@ -280,10 +280,10 @@ The content can be configures within the config file:
 
 ``` 
 TEXT_FORMAT = [
-  "<date> (<num>/<total>) <gps>",                   # Footer line 1
-  "<path>/<file>",                                  # Footer line 2
   "<flen> (<flen35>) <exp> <fnum> <iso> <artist>",  # Header line 1 
-  "<rating> <desc>"                                 # Header line 2
+  "<rating> <desc>",                                # Header line 2
+  "<date> (<num>/<total>) <gps>",                   # Footer line 1
+  "<path>/<file>"                                   # Footer line 2
 ]
 ```
 

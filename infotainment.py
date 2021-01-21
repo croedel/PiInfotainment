@@ -205,14 +205,14 @@ def start_picframe():
   font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=5.0, shadow=(0,0,0,128))
   text = pi3d.PointText(font, CAMERA, max_chars=1000, point_size=config.TEXT_POINT_SIZE)
   textlines = []
-  textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
-                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
-  textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
-                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45,
                       text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45 - 40,
                       text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+  textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4,
+                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
+  textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=-DISPLAY.height * 0.4 - 50,
+                      text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.99, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
   for item in textlines:
     text.add_text_block(item)
 
@@ -360,17 +360,17 @@ def start_picframe():
       for _, obj in weatherobj['static'].items():  
         obj.draw()
     else: # monitor OFF -> minimize system activity to reduce power consumption
-      time.sleep(30)
+      time.sleep(10)
 
     if config.KEYBOARD:
       k = kbd.read()
       if k != -1:
-        nexttm = time.time() - 86400.0
+        nexttm = time.time()
       if k==27: #ESC
         break
       if k==ord(' '):
         paused = not paused
-      if k==ord('s'): # go back a picture
+      if k==ord('b'): # go back a picture
         next_pic_num -= 2
         if next_pic_num < -1:
           next_pic_num = -1      
@@ -433,7 +433,9 @@ def on_mqtt_message(mqttclient, userdata, message):
       next_pic_num -= 2
       if next_pic_num < -1:
         next_pic_num = -1
-      nexttm = time.time() - 86400.0
+      nexttm = time.time() 
+    elif message.topic == "screen/next":
+      nexttm = time.time() 
     elif message.topic == "screen/w_skip_count":
       config.W_SKIP_CNT = int(msg)
     elif message.topic == "screen/subdirectory":

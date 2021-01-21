@@ -23,6 +23,21 @@ div.group-box {
   font-size: 14pt;
 }
 
+div.playerctrl{
+  padding: 0.5em 0em;
+  height: 2.5em;
+}
+
+div.srvopts{
+  clear: left;
+}
+
+.playerimg{
+  width: 3em;
+  padding-right: 0.5em;
+  float: left; 
+}
+
 button{
   font-size: 10pt;
   display: inline-block;
