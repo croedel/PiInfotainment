@@ -253,15 +253,15 @@ class DirCache:
   def get_filecount(self):
     count=0
     if len(self.dir_cache) > 0:
-      for path, val in self.dir_cache['dir'].items():
+      for _, val in self.dir_cache['dir'].items():
         count += len(val['files'])
     return count
 
   def get_exifcount(self):
     count=0
     if len(self.dir_cache) > 0:
-      for path, val in self.dir_cache['dir'].items():
-        for item, attr in val['files'].items():
+      for _, val in self.dir_cache['dir'].items():
+        for _, attr in val['files'].items():
           if attr[2] != None:
             count += 1 
     return count
@@ -269,8 +269,8 @@ class DirCache:
   def clear_exif(self):
     count=0
     if len(self.dir_cache) > 0:
-      for path, val in self.dir_cache['dir'].items():
-        for item, attr in val['files'].items():
+      for _, val in self.dir_cache['dir'].items():
+        for _, attr in val['files'].items():
           if attr[2] != None:
             attr[2] = None
             attr[3] = {}
