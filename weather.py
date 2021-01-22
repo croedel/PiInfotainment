@@ -111,12 +111,13 @@ def _normalize_weather(weather_info, lang):
       w_dict['forecast'].append( data )
 
     # read hourly forecast data
+    dt_now = datetime.datetime.now()
     w_hourly = weather_info.get('hourly')
     if w_hourly:
       last_date = "-"
       for item in w_hourly:
         dt = datetime.datetime.fromtimestamp(item.get('dt'))
-        if dt.hour not in (7,10,13,16,19,0):
+        if dt < dt_now or dt.hour not in (7,10,13,16,19,0):
           continue
         if dt.hour == 0:
           dt += datetime.timedelta(days=-1) # let this belong to the previous day
