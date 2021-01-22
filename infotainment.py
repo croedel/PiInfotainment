@@ -217,7 +217,7 @@ def start_picframe():
     text.add_text_block(item)
 
   # prepare to display weather info
-  weather_interstitial_active = True
+  weather_interstitial = 'OFF'
   next_weather_tm = 0.0
   weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=config.W_POINT_SIZE)
   weatherobj =  weatherscreen.weather_obj_create(DISPLAY.width, DISPLAY.height)
@@ -227,7 +227,8 @@ def start_picframe():
     for key, obj in item.items():
       if key != 'icon':
         weatherinfo.add_text_block( obj )
- 
+  weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=0)
+
   next_monitor_check_tm = 0.0
   num_run_through = 0
   
@@ -240,18 +241,14 @@ def start_picframe():
         sbg = sfg
         sfg = None
 
-        if (config.W_SKIP_CNT > 0) and (next_pic_num % config.W_SKIP_CNT == 0) and not weather_interstitial_active: 
+        if (config.W_SKIP_CNT > 0) and next_pic_num > 0 and (next_pic_num % config.W_SKIP_CNT == 0) and weather_interstitial == 'OFF': #not weather_interstitial_active: 
           # show weather interstitial
-          weather_interstitial_active = True
+          weather_interstitial = 'ON'
           sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
-          for item in textlines:
-            item.colouring.set_colour(alpha=0.0)
-          weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1.0)
         else: 
           # continue with next picture
-          if weather_interstitial_active: # deactivate weather info
-            weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=0.0)
-            weather_interstitial_active = False
+          if weather_interstitial == 'ON':
+            weather_interstitial = 'FADE'
           
           start_pic_num = next_pic_num
           while sfg is None: # keep going through until a usable picture is found  
@@ -316,6 +313,13 @@ def start_picframe():
       if a > 1.0:
         a = 1.0
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
+      if weather_interstitial == 'ON':
+        weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=a)
+      elif weather_interstitial == 'FADE':
+        weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1-a)
+        if a==1:
+          weather_interstitial = 'OFF'
+
     else: # no transition effect safe to reshuffle etc
       if tm > next_monitor_check_tm: # Check if it's time to switch monitor status
         scheduled_status = check_monitor_status(tm)
@@ -345,7 +349,7 @@ def start_picframe():
         textlines[0].set_text("NO IMAGES SELECTED")
         textlines[0].colouring.set_colour(alpha=1.0)
         next_check_tm = tm + 5.0
-      elif tm < name_tm and weather_interstitial_active == False:
+      elif tm < name_tm and weather_interstitial != 'ON':
         # this sets alpha for the TextBlock from 0 to 1 then back to 0
         dt = (config.INFO_TXT_TIME - name_tm + tm + 0.1) / config.INFO_TXT_TIME
         alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
