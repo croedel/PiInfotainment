@@ -502,7 +502,7 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
   current_pic = iFiles[pic_num][0][len(config.PIC_DIR)+1:] if pic_num>=0 else "None"
   cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] ) if os.name == 'posix' else "-"
-  fcache_t = pcache.get_cache_refresh_date()
+  fcache_t = pcache.get_cache_check_date()
   fcache_t = fcache_t.strftime("%d.%m.%Y %H:%M:%S") if fcache_t != None else "-"  
   info_data = {
     "status": status,
@@ -536,7 +536,11 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
 #-------------------------------------------
 def cam_viewer_start():
   logging.info("CamViewer started")
-  player = vlc.MediaPlayer(config.CAMERA_URL) 
+  vlc_instance = vlc.Instance('--no-xlib')
+  player = vlc_instance.media_player_new() 
+  player.set_fullscreen(True)
+  media = vlc.Media(config.CAMERA_URL) 
+  player.set_media(media) 
   player.video_set_scale(config.CAMERA_ZOOM)
   player.play()
   return player

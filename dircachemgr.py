@@ -15,7 +15,8 @@ def do_summary(cache, args):
   exifcount = cache.get_exifcount() 
   exifrate = exifcount / filecount if filecount>0 else 0 
   print( "Cache file:       {:s}".format( args.file ))
-  print( "Created:          {:s}".format( str(cache.get_cache_refresh_date())) )
+  print( "Created:          {:s}".format( str(cache.get_cache_create_date())) )
+  print( "Last check:       {:s}".format( str(cache.get_cache_check_date())) )
   print( "#Directories:     {:d}".format( cache.get_dircount()) )
   print( "#Files:           {:d}".format( filecount ) )
   print( "#Files with EXIF: {:d} ({:.1f}%)".format( exifcount, exifrate)  )

@@ -15,6 +15,7 @@ import config
 class DirCache:
   dir_cache = {}
   fname = ""
+  dirty = False
 
   # ------- private core functionalities -----------------
   def __init__(self, fname=config.DIR_CACHE_FILE):
@@ -49,17 +50,22 @@ class DirCache:
 
   def _update_dir_cache(self):
     tm = datetime.datetime.now()
+    updated = False
+
     if len(self.dir_cache) < 2: # invalid - create new one
       logging.info('Refreshing directory cache. No valid pickle file found - creating new one')
       self.dir_cache.clear()
       self.dir_cache['dir'] = {}
       self.dir_cache['statistics'] = {}
       self.dir_cache['statistics']['created'] = tm
-    elif tm < self.dir_cache['statistics']['created'] + datetime.timedelta(seconds=config.CHECK_DIR_TM):  
-      logging.info('Refresh of directory cache not necessary: Last update: {}'.format(str(self.dir_cache['statistics']['created'])))
+      self.dir_cache['statistics']['checked'] = tm
+    if not self.dir_cache['statistics'].get('checked'):
+      self.dir_cache['statistics']['checked'] = self.dir_cache['statistics']['created'] 
+    if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=config.CHECK_DIR_TM):  
+      logging.info('Refresh of directory cache not necessary: Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
       return False
     else:
-      logging.info('Refreshing directory cache. Last update: {}'.format(str(self.dir_cache['statistics']['created'])))
+      logging.info('Refreshing directory cache. Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
 
     # mark all directories in cache
     for dir_item, val in self.dir_cache['dir'].items():
@@ -89,6 +95,7 @@ class DirCache:
         self.dir_cache['dir'][root]['meta'] = [ ctime, mtime, ytime, True ]   
         self.dir_cache['dir'][root]['files'] = {} 
 
+      updated = True
       logging.info(' - {}: Scanning files'.format(root) )
       yaml_cfg = None
       if ytime > 0:
@@ -110,13 +117,18 @@ class DirCache:
       if val['meta'][3] == False: # directory not existing any more     
         delete_list.append(dir_item)    
     if len(delete_list) > 0:
+      updated = True
       for i in delete_list:
         del self.dir_cache['dir'][i]
         logging.info('Deleting dir from cache: {}'.format(i) )
 
-    self.dir_cache['statistics']['created'] = tm
-    logging.info('Directory cache refreshed: {} directories'.format( len(self.dir_cache['dir'] )))
-    return True
+    self.dir_cache['statistics']['checked'] = tm
+    if updated:
+      self.dir_cache['statistics']['created'] = tm
+      logging.info('Directory cache refreshed: {} directories'.format( len(self.dir_cache['dir'] )))
+    else:  
+      logging.info('Directory cache: No changes')
+    return updated
 
   def _save_dir_cache(self):
     try:
@@ -145,6 +157,7 @@ class DirCache:
       self.dir_cache['dir'][path]['files'][fname][0] = orientation
       self.dir_cache['dir'][path]['files'][fname][2] = dt
       self.dir_cache['dir'][path]['files'][fname][3] = exif_info
+      self.dirty = True
     except Exception as err:
       logging.error("Couldn't update EXIF info for: {} - {}".format(file_path_name, str(err)))
 
@@ -167,7 +180,7 @@ class DirCache:
   # refreshes the cache, if needed
   def refresh_cache(self):
     updated = self._update_dir_cache()
-    if updated:
+    if updated or self.dirty:
       self._save_dir_cache()
     return updated
 
@@ -217,10 +230,16 @@ class DirCache:
     return file_list
 
   # ------- maintenance functionalities -----------------
-  def get_cache_refresh_date(self):
+  def get_cache_create_date(self):
     date=None
     if len(self.dir_cache) > 0:
       date = self.dir_cache['statistics']['created']
+    return date  
+
+  def get_cache_check_date(self):
+    date=None
+    if len(self.dir_cache) > 0:
+      date = self.dir_cache['statistics']['checked']
     return date  
 
   def get_dircount(self):
