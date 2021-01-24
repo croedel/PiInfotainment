@@ -58,9 +58,14 @@ def do_refresh(cache, args):
   do_summary(cache, args)
 
 def do_clear_exif(cache, args):
-  print("Clearing EXIF info...")
-  cache.clear_exif()
-  do_summary(cache, args)
+  yn = input("Do you really want to clear all cached EXIF info from cache? (y/N)")
+  if yn == "y" or yn == "Y": 
+    print("Clearing EXIF info...")
+    cache.clear_exif()
+    cache._save_dir_cache()
+    do_summary(cache, args)
+  else:
+    print("aborted")  
 
 def do_get_exif(cache, args):
   print( "File: {:s}".format(args.param) )
@@ -78,12 +83,12 @@ def do_get_exif(cache, args):
 #-----------------------------
 def parse_options():
   epilog = """commands:
-  summary:    List a short summary of the cache.
-  list:       Lists all directories plus the no. of files. 
-  list_long:  Lists all directories and all files. 
-  refresh:    Refreshes the directory cache.
-  clear_exif: Clears the cached EXIF info.
-  get_exif:   Show cached EXIF info for given file. 
+  summary:              List a short summary of the cache.
+  list:                 List all directories plus the no. of files. 
+  list_long:            List all directories and all files. 
+  refresh:              Refreshe the directory cache.
+  get_exif <filepath>:  Show cached EXIF info for given <filepath>.
+  clear_exif:           Clear all cached EXIF infos(!) from cache. 
   """
   parser = argparse.ArgumentParser(description='PI Infotainment dircache manager utility', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
   parser.add_argument('--file', '-f', default=config.DIR_CACHE_FILE, help='cache file')
