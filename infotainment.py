@@ -449,8 +449,9 @@ def on_mqtt_message(mqttclient, userdata, message):
     elif message.topic == "screen/camera":
       show_camera = True
       camera_end_tm = time.time() + config.CAMERA_THRESHOLD
-      monitor_status = "ON"
-      switch_HDMI( monitor_status )
+      if monitor_status.startswith('OFF'): 
+        monitor_status = "ON"
+        switch_HDMI(monitor_status)
     elif message.topic == "screen/monitor":
       if msg == "ON":
         monitor_status = "ON-MANUAL"
@@ -583,7 +584,7 @@ def switch_HDMI( status ):
   if status.startswith("ON"):
     logging.info( "Switching HDMI to: ON" )    
     cmd = ["vcgencmd", "display_power", "1"]
-  elif status.startswith("OFF"):
+  else:
     logging.info( "Switching HDMI to: OFF" )    
     cmd = ["vcgencmd", "display_power", "0"]
   subprocess.call(cmd)
