@@ -245,8 +245,11 @@ def start_picframe():
         if (w_show_now or (config.W_SKIP_CNT > 0 and next_pic_num > 0 and (next_pic_num % config.W_SKIP_CNT == 0))) and weather_interstitial == 'OFF':  
           # show weather interstitial
           weather_interstitial = 'ON'
-          w_show_now = False
           sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
+          if w_show_now:
+            w_show_now = False
+            for item in textlines:
+              item.colouring.set_colour(alpha=0)
         else: 
           # continue with next picture
           if weather_interstitial == 'ON':
@@ -281,7 +284,7 @@ def start_picframe():
         mqtt_publish_status( status="no pictures found" )
 
       a = 0.0 # alpha - proportion front image to back
-      name_tm = time.time() + config.INFO_TXT_TIME
+      name_tm = tm + config.INFO_TXT_TIME
       if sbg is None: # first time through
         sbg = sfg
       slide.set_textures([sfg, sbg])
