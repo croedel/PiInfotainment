@@ -51,6 +51,7 @@ camera_end_tm = 0.0
 monitor_status = "ON"
 pcache = None  
 start_date = None
+w_show_now = False
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -174,7 +175,7 @@ def convert_heif(fname):
 
 # start the picture frame
 def start_picframe():
-  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache
+  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache, w_show_now
   if config.KENBURNS:
     kb_up = True
     config.FIT = False
@@ -235,15 +236,16 @@ def start_picframe():
   # here comes the main loop
   while DISPLAY.loop_running():
     tm = time.time()
-    if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: # this must run first iteration of loop
+    if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: 
       if nFi > 0:
         nexttm = tm + config.TIME_DELAY
         sbg = sfg
         sfg = None
 
-        if (config.W_SKIP_CNT > 0) and next_pic_num > 0 and (next_pic_num % config.W_SKIP_CNT == 0) and weather_interstitial == 'OFF': #not weather_interstitial_active: 
+        if (w_show_now or (config.W_SKIP_CNT > 0 and next_pic_num > 0 and (next_pic_num % config.W_SKIP_CNT == 0))) and weather_interstitial == 'OFF':  
           # show weather interstitial
           weather_interstitial = 'ON'
+          w_show_now = False
           sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
         else: 
           # continue with next picture
@@ -315,6 +317,8 @@ def start_picframe():
       slide.unif[44] = a * a * (3.0 - 2.0 * a)
       if weather_interstitial == 'ON':
         weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=a)
+        for item in textlines:
+          item.colouring.set_colour(alpha=1-a)
       elif weather_interstitial == 'FADE':
         weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1-a)
         if a==1:
@@ -392,7 +396,7 @@ def on_mqtt_connect(mqttclient, userdata, flags, rc):
 def on_mqtt_message(mqttclient, userdata, message):
   try:
     # TODO not ideal to have global but probably only reasonable way to do it
-    global next_pic_num, iFiles, nFi, date_from, date_to 
+    global next_pic_num, iFiles, nFi, date_from, date_to, w_show_now 
     global quit, shutdown, paused, nexttm, show_camera, camera_end_tm, monitor_status
     msg = message.payload.decode("utf-8")
     reselect = False
@@ -452,6 +456,9 @@ def on_mqtt_message(mqttclient, userdata, message):
       if monitor_status.startswith('OFF'): 
         monitor_status = "ON"
         switch_HDMI(monitor_status)
+    elif message.topic == "screen/w_show_now":
+      w_show_now = True
+      nexttm = time.time() 
     elif message.topic == "screen/monitor":
       if msg == "ON":
         monitor_status = "ON-MANUAL"

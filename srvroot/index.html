@@ -36,8 +36,8 @@
           <input type="hidden" name="topic" value="camera">
         </form>
         <form class="picontrol" action="index.html" method="get" autocomplete="off">
-          <button class="button1" type="submit" title="Restart infotainment system">Restart</button>
-          <input type="hidden" name="topic" value="quit">
+          <button class="button1" type="submit" title="Show weather screen">Weather</button>
+          <input type="hidden" name="topic" value="w_show_now">
         </form>
         <form class="picontrol" action="index.html" method="get" autocomplete="off">
           <button class="button1" type="submit" title="Switch monitor manually on/off or set to auto mode">Monitor</button>
@@ -47,6 +47,10 @@
             <option value="OFF">OFF</option>
             <option value="AUTO">AUTO</option>
           </select>
+        </form>
+        <form class="picontrol" action="index.html" method="get" autocomplete="off">
+          <button class="button1" type="submit" title="Restart infotainment system">Restart</button>
+          <input type="hidden" name="topic" value="quit">
         </form>
         <form class="picontrol" action="index.html" method="get" autocomplete="off" onSubmit="return confirm('Do you really want to shutdown the PI system?') ">
           <button class="button_red" type="submit" title="CAUTION: Shutdown raspberry pi">Shutdown</button>

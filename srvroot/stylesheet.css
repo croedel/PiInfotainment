@@ -17,7 +17,7 @@ div.group-box {
   background-color: lightblue;
   float: left;
   width: calc(50% - 1em);
-  height: 13em;
+  height: 14.5em;
   margin: 0.5em;
   box-sizing: border-box;  
   font-size: 14pt;
@@ -142,12 +142,12 @@ div.footer{
     font-size: 18pt;
   }
   div.group-box {
-    width: 100%;
+    width: 98%;
   }    
   div.picturehistory{
-    width: 100%;
+    width: 98%;
   }
   div.srvstatus{
-    width: 100%;
+    width: 98%;
   }
 } 
