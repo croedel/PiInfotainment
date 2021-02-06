@@ -13,7 +13,7 @@ import displaymsg
 def do_summary(cache, args): 
   filecount = cache.get_filecount()
   exifcount = cache.get_exifcount() 
-  exifrate = exifcount / filecount if filecount>0 else 0 
+  exifrate = exifcount / filecount * 100 if filecount>0 else 0 
   print( "Cache file:       {:s}".format( args.file ))
   print( "Created:          {:s}".format( str(cache.get_cache_create_date())) )
   print( "Last check:       {:s}".format( str(cache.get_cache_check_date())) )
