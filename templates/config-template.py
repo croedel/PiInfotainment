@@ -61,6 +61,7 @@ MQTT_SERVER = "localhost"   # Just change if you want to use a different MQTT se
 MQTT_PORT = 1883            # Just change if you want to use a different MQTT server
 MQTT_LOGIN  = " "           # Just change if you want to use a different MQTT server
 MQTT_PASSWORD = ""          # Just change if you want to use a different MQTT server  
+MQTT_TOPIC = "screen"       # MQTT topic name (top-level); just change if you e.g. run multiple infotainment screens  
 
 # Weather
 W_SKIP_CNT = 2              # show weather info after each N pictures (=0 disables weather info)

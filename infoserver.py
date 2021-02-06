@@ -30,36 +30,36 @@ def on_mqtt_message(mqttclient, userdata, message):
   try:
     msg = message.payload.decode("utf-8")
     topic = message.topic.split("/")
-    srvstat[topic[1]] = msg
-    if topic[1] == "current_pic" and msg != "None":
+    srvstat[topic[2]] = msg
+    if topic[2] == "current_pic" and msg != "None":
       tm = datetime.datetime.now()
       pic_history.append([tm, msg])
       pic_history.sort(key=lambda x: x[0], reverse=True)
       if len(pic_history) > config.PIC_HISTORY:
         pic_history.pop(len(pic_history)-1)
   except Exception as e:
-    logging.warning("Error while handling MQTT message: {}".format(e))
+    logging.warning("Error while handling MQTT message: {}".format(str(e)))
 
 def mqtt_start(): 
   try: 
     client = mqttcl.Client()
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    client.subscribe("screenstat/+", qos=0)
+    client.subscribe(config.MQTT_TOPIC + "/stat/+", qos=0)
     client.on_connect = on_mqtt_connect
     client.on_message = on_mqtt_message
     client.loop_start()
-    logging.info('MQTT client started')
+    logging.info('MQTT client started. topic={}'.format(config.MQTT_TOPIC))
     return client
   except Exception as e:
-    logging.warning("Couldn't start MQTT: {}".format(e))
+    logging.warning("Couldn't start MQTT: {}".format(str(e)))
 
 def mqtt_stop(client):
   try: 
     client.loop_stop()
     logging.info('MQTT client stopped')
   except Exception as e:
-    logging.warning("Couldn't stop MQTT: {}".format(e))
+    logging.warning("Couldn't stop MQTT: {}".format(str(e)))
 
 def mqtt_publish( topic, payload ):  
   auth = {
@@ -70,7 +70,7 @@ def mqtt_publish( topic, payload ):
   try:
     publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
   except Exception as e:
-    logging.error("Could't send MQTT command: {}".format(e))
+    logging.error("Could't send MQTT command: {}".format(str(e)))
 
 # actual webserver -------------------------------------------
 
@@ -89,7 +89,7 @@ class Handler(BaseHTTPRequestHandler):
   def _publish_MQTT( self, params ):
     # publish command to MQTT
     if 'topic' in params:
-      topic = 'screen/' + params['topic'][0]   
+      topic = config.MQTT_TOPIC + '/cmd/' + params['topic'][0]   
       if 'data' in params:
         data = params['data'][0]
       else:
@@ -134,6 +134,11 @@ class Handler(BaseHTTPRequestHandler):
       history_table += "</tr>\n"
     return history_table
 
+  def _get_srv_info(self):
+    global server_address
+    srv_info = "host: {:s}:{:d}, MQTT topic: {:s}".format( server_address[0], server_address[1], config.MQTT_TOPIC)
+    return srv_info
+
   def _get_dynamic_content( self, content ):
     global server_address
     content = content.decode("utf-8")
@@ -147,6 +152,7 @@ class Handler(BaseHTTPRequestHandler):
     else:
       content = content.replace( "%redirect%", "")  
     # replace dynamic content  
+    content = content.replace( "%server_info%", self._get_srv_info() )
     content = content.replace( "%server_status%", self._get_srv_status_info() )    
     content = content.replace( "%picture_history%", self._get_pic_history() )
     return content.encode("utf-8")

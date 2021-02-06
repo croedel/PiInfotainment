@@ -404,7 +404,7 @@ def on_mqtt_message(mqttclient, userdata, message):
     msg = message.payload.decode("utf-8")
     reselect = False
     logging.info( 'MQTT: {} -> {}'.format(message.topic, msg))
-    if message.topic == "screen/date_from": # NB entered as mqtt string "2016:12:25"
+    if message.topic.endswith("/date_from"): # NB entered as mqtt string "2016:12:25"
       try:
         msg = msg.replace(".",":").replace("/",":").replace("-",":")
         df = msg.split(":")
@@ -414,7 +414,7 @@ def on_mqtt_message(mqttclient, userdata, message):
       except:
         date_from = None
       reselect = True
-    elif message.topic == "screen/date_to":
+    elif message.topic.endswith("/date_to"):
       try:
         msg = msg.replace(".",":").replace("/",":").replace("-",":")
         df = msg.split(":")
@@ -424,45 +424,45 @@ def on_mqtt_message(mqttclient, userdata, message):
       except:
         date_to = None
       reselect = True
-    elif message.topic == "screen/recent_days":
+    elif message.topic.endswith("/recent_days"):
       config.RECENT_DAYS = int(msg)  
       if config.RECENT_DAYS > 0:
         date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
         date_from = (date_from.year, date_from.month, date_from.day)
         date_to = None
         reselect = True
-    elif message.topic == "screen/time_delay":
+    elif message.topic.endswith("/time_delay"):
       config.TIME_DELAY = float(msg)
-    elif message.topic == "screen/quit":
+    elif message.topic.endswith("/quit"):
       quit = True
-    elif message.topic == "screen/shutdown":
+    elif message.topic.endswith("/shutdown"):
       quit = True
       shutdown = True
-    elif message.topic == "screen/pause":
+    elif message.topic.endswith("/pause"):
       paused = not paused # toggle from previous value
-    elif message.topic == "screen/back":
+    elif message.topic.endswith("/back"):
       next_pic_num -= 2
       if next_pic_num < -1:
         next_pic_num = -1
       nexttm = time.time() 
-    elif message.topic == "screen/next":
+    elif message.topic.endswith("/next"):
       nexttm = time.time() 
-    elif message.topic == "screen/w_skip_count":
+    elif message.topic.endswith("/w_skip_count"):
       config.W_SKIP_CNT = int(msg)
-    elif message.topic == "screen/subdirectory":
+    elif message.topic.endswith("/subdirectory"):
       config.SUBDIRECTORY = msg
       date_from = date_to = None
       reselect = True
-    elif message.topic == "screen/camera":
+    elif message.topic.endswith("/camera"):
       show_camera = True
       camera_end_tm = time.time() + config.CAMERA_THRESHOLD
       if monitor_status.startswith('OFF'): 
         monitor_status = "ON"
         switch_HDMI(monitor_status)
-    elif message.topic == "screen/w_show_now":
+    elif message.topic.endswith("/w_show_now"):
       w_show_now = True
       nexttm = time.time() 
-    elif message.topic == "screen/monitor":
+    elif message.topic.endswith("/monitor"):
       if msg == "ON":
         monitor_status = "ON-MANUAL"
         paused = False
@@ -489,11 +489,11 @@ def mqtt_start():
     client = mqttcl.Client()
     client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
     client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    client.subscribe("screen/+", qos=0)
+    client.subscribe(config.MQTT_TOPIC + "/cmd/+", qos=0)
     client.on_connect = on_mqtt_connect
     client.on_message = on_mqtt_message
     client.loop_start()
-    logging.info('MQTT client started')
+    logging.info('MQTT client started. topic={}'.format(config.MQTT_TOPIC))
     return client
   except Exception as e:
     logging.warning("Couldn't start MQTT: {}".format(e))
@@ -537,7 +537,8 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   messages = []
   for key, val in info_data.items():
     if len(fields)==0 or key in fields:
-      messages.append( { "topic": "screenstat/" + key, "payload": val } )  
+      topic = config.MQTT_TOPIC + "/stat/" + key
+      messages.append( { "topic": topic, "payload": val } )  
   auth = { "username": config.MQTT_LOGIN, "password": config.MQTT_PASSWORD }
   try:
     mqttpub.multiple( messages, client_id="infotainment-server", hostname=config.MQTT_SERVER, port=config.MQTT_PORT, auth=auth)

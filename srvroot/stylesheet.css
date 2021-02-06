@@ -111,11 +111,21 @@ div.picturehistory table{
 
 div.header{
   color: darkblue;
-  margin: 0.2em;
   float: left;
   width: calc(100% - 1em);
   font-size: 22pt;
   font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+}
+
+div.subheader{
+  color: darkblue;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+  float: left;
+  width: 100%;
+  font-size: 12pt;
   text-align: center;
   text-decoration: none;
 }
@@ -140,6 +150,9 @@ div.footer{
 @media all and (max-width:42em){
   div.header {
     font-size: 18pt;
+  }
+  div.subheader {
+    font-size: 10pt;
   }
   div.group-box {
     width: 98%;

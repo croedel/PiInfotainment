@@ -199,19 +199,20 @@ class DirCache:
  
     # create file_list
     file_list=[]
-    for path, val in self.dir_cache['dir'].items():
-      if not path_restrict or path.startswith( path_restrict ): # if either no restriction or path matches restriction 
-        for item, attr in val['files'].items():
-          ftime = attr[2] if attr[2] != None else attr[1] # preferably use EXIF date, fallback is mdate 
-          distance_from = max(0, dt_from-ftime) if dt_from is not None else 0
-          distance_to = max(0, ftime-dt_to) if dt_to is not None else 0
-          distance = max(distance_from, distance_to) / (3600*24) # days
-          propability = 1 - (distance * 1/config.PROP_SLOPE)   
-          propability = max( config.OUTDATED_FILE_PROP, propability ) # set minimum to config value 
-          if random.random() <= propability:
-            fpath = os.path.join(path, item)
-            # [file_path, orientation, file_changed_date, exif_date, exif_info]
-            file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
+    if self.dir_cache.get('dir'):
+      for path, val in self.dir_cache['dir'].items():
+        if not path_restrict or path.startswith( path_restrict ): # if either no restriction or path matches restriction 
+          for item, attr in val['files'].items():
+            ftime = attr[2] if attr[2] != None else attr[1] # preferably use EXIF date, fallback is mdate 
+            distance_from = max(0, dt_from-ftime) if dt_from is not None else 0
+            distance_to = max(0, ftime-dt_to) if dt_to is not None else 0
+            distance = max(distance_from, distance_to) / (3600*24) # days
+            propability = 1 - (distance * 1/config.PROP_SLOPE)   
+            propability = max( config.OUTDATED_FILE_PROP, propability ) # set minimum to config value 
+            if random.random() <= propability:
+              fpath = os.path.join(path, item)
+              # [file_path, orientation, file_changed_date, exif_date, exif_info]
+              file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
 
     if config.SHUFFLE:
       if config.RECENT_N == 0:
