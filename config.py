@@ -49,10 +49,11 @@ except yaml.YAMLError as err:
 
 cfg['EXIF_DICT'] = create_EXIF_dict() 
 
-cfg['NO_FILES_IMG'] =   os.path.join(BASE_DIR, "images", cfg['NO_FILES_IMG'])  # image to show if none selected
-cfg['DIR_CACHE_FILE'] = os.path.join(BASE_DIR, cfg['DIR_CACHE_FILE']) # Directory cache file 
+# create absolute file paths
+cfg['NO_FILES_IMG'] =   os.path.join(BASE_DIR, "images", cfg['NO_FILES_IMG'])  
+cfg['DIR_CACHE_FILE'] = os.path.join(BASE_DIR, cfg['DIR_CACHE_FILE'])  
 cfg['SHADER'] =         os.path.join(BASE_DIR, "shaders", cfg['SHADER'])
 cfg['FONT_FILE'] =      os.path.join(BASE_DIR, "fonts", cfg['FONT_FILE'])
-cfg['W_ICON_DIR'] =     os.path.join(BASE_DIR, "images", cfg['W_ICON_DIR']) # weather icon directory
-cfg['W_BACK_IMG'] =     os.path.join(BASE_DIR, "images", cfg['W_BACK_IMG'])   # background image for weather info 
+cfg['W_ICON_DIR'] =     os.path.join(BASE_DIR, "images", cfg['W_ICON_DIR']) 
+cfg['W_BACK_IMG'] =     os.path.join(BASE_DIR, "images", cfg['W_BACK_IMG'])   
 cfg['SRV_ROOT'] =       os.path.join(BASE_DIR, cfg['SRV_ROOT'])
