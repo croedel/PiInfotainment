@@ -173,6 +173,13 @@ def convert_heif(fname):
   except:
     logging.warning("Could't convert HEIF. Have you installed pyheif?")
 
+def set_text_overlay(iFiles, pic_num, textlines):
+  texts = displaymsg.format_text(iFiles, pic_num)
+  i=0
+  for item in textlines:
+    item.set_text(text_format=texts[i])
+    i += 1    
+
 # start the picture frame
 def start_picframe():
   global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache, w_show_now
@@ -185,7 +192,6 @@ def start_picframe():
 
   sfg = None # slide for background
   sbg = None # slide for foreground
-  next_check_tm = time.time() + cfg['CHECK_DIR_TM'] # check if new file or directory every n seconds
   delta_alpha = 1.0 / (cfg['FPS'] * cfg['FADE_TIME']) # delta alpha
 
   # Initialize pi3d system
@@ -230,6 +236,7 @@ def start_picframe():
         weatherinfo.add_text_block( obj )
   weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=0)
 
+  next_check_tm = time.time() + cfg['CHECK_DIR_TM'] # check for new files or directory in image dir every n seconds
   next_monitor_check_tm = 0.0
   num_run_through = 0
   
@@ -268,11 +275,7 @@ def start_picframe():
               break
           # set description
           if cfg['INFO_TXT_TIME'] > 0.0:
-            texts = displaymsg.format_text(iFiles, pic_num)
-            i=0
-            for item in textlines:
-              item.set_text(text_format=texts[i])
-              i += 1    
+            set_text_overlay(iFiles, pic_num, textlines)
           else: # could have a NO IMAGES selected and being drawn
             for item in textlines:
               item.colouring.set_colour(alpha=0.0)
@@ -313,21 +316,50 @@ def start_picframe():
       slide.unif[48] = xstep * t_factor
       slide.unif[49] = ystep * t_factor
 
-    if a < 1.0: # transition is happening
-      a += delta_alpha
-      if a > 1.0:
-        a = 1.0
-      slide.unif[44] = a * a * (3.0 - 2.0 * a)
-      if weather_interstitial == 'ON':
-        weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=a)
-        for item in textlines:
-          item.colouring.set_colour(alpha=1-a)
-      elif weather_interstitial == 'FADE':
-        weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1-a)
-        if a==1:
-          weather_interstitial = 'OFF'
+    transition_happening = False
+    if monitor_status.startswith("ON"):
+      if a < 1.0: # image transition is happening
+        transition_happening = True
+        a += delta_alpha
+        if a > 1.0:
+          a = 1.0
+        slide.unif[44] = a * a * (3.0 - 2.0 * a)
+        if weather_interstitial == 'ON': # fade in weather
+          weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=a)
+        else: # fade in picture -> fade in text
+          for item in textlines:
+            item.colouring.set_colour(alpha=a)
+          if weather_interstitial == 'FADE': # fade out weather
+            weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1-a)
+            if a==1:
+              weather_interstitial = 'OFF'
 
-    else: # no transition effect safe to reshuffle etc
+      if nFi <= 0:
+        textlines[0].set_text("NO IMAGES SELECTED")
+        textlines[0].colouring.set_colour(alpha=1.0)
+        next_check_tm = tm + 10.0
+        text.regen()
+      elif tm > name_tm and tm < name_tm + 2.0 and weather_interstitial != 'ON':  # fade out text
+        alpha = 1- (tm - name_tm)/2.0
+        for item in textlines:
+          item.colouring.set_colour(alpha=alpha)
+        transition_happening = True
+        text.regen()
+  
+      slide.draw()
+      text.draw()
+
+      if weather_interstitial != 'OFF':
+        weatherinfo.regen()
+        weatherinfo.draw()
+        for item in weatherobj['forecast']:
+          item['icon'].draw()
+        for _, obj in weatherobj['static'].items():  
+          obj.draw()
+    else: # monitor OFF -> minimize system activity to reduce power consumption
+      time.sleep(10)
+
+    if not transition_happening: # no transition effect safe to reshuffle etc
       if tm > next_monitor_check_tm: # Check if it's time to switch monitor status
         scheduled_status = check_monitor_status(tm)
         if monitor_status != scheduled_status and not monitor_status.endswith("-MANUAL"):
@@ -349,29 +381,6 @@ def start_picframe():
         if tm > next_weather_tm: # refresh weather info
           weatherscreen.weather_refresh( weatherobj )
           next_weather_tm = tm + cfg['W_REFRESH_DELAY'] # next check
-
-    if monitor_status.startswith("ON"):
-      slide.draw()
-      if nFi <= 0:
-        textlines[0].set_text("NO IMAGES SELECTED")
-        textlines[0].colouring.set_colour(alpha=1.0)
-        next_check_tm = tm + 5.0
-      elif tm < name_tm and weather_interstitial != 'ON':
-        # this sets alpha for the TextBlock from 0 to 1 then back to 0
-        dt = (cfg['INFO_TXT_TIME'] - name_tm + tm + 0.1) / cfg['INFO_TXT_TIME']
-        alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
-        for item in textlines:
-          item.colouring.set_colour(alpha=alpha)
-      text.regen()
-      text.draw()
-      weatherinfo.regen()
-      weatherinfo.draw()
-      for item in weatherobj['forecast']:
-        item['icon'].draw()
-      for _, obj in weatherobj['static'].items():  
-        obj.draw()
-    else: # monitor OFF -> minimize system activity to reduce power consumption
-      time.sleep(10)
 
     if cfg['KEYBOARD']:
       k = kbd.read()

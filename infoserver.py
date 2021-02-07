@@ -136,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
 
   def _get_srv_info(self):
     global server_address
-    srv_info = "host: {:s}:{:d}, MQTT topic: {:s}".format( server_address[0], server_address[1], cfg['MQTT_TOPIC'])
+    srv_info = "Server: {:s}:{:d}, MQTT topic: {:s}".format( server_address[0], server_address[1], cfg['MQTT_TOPIC'])
     return srv_info
 
   def _get_dynamic_content( self, content ):
