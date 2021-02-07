@@ -10,3 +10,4 @@ config.yaml
 libvlc.dll
 .dir_cache.p
 commands.txt
+.vscode/launch.json
