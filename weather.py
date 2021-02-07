@@ -4,7 +4,7 @@ import requests
 import time
 import datetime
 import locale
-import config
+from config import cfg
 import logging
 
 last_refresh = 0.0
@@ -164,7 +164,7 @@ def get_weather_info( lat, lon, units, lang, appid ):
 #############################################################################
 if __name__ == "__main__":
   logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
-  weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', config.W_API_KEY )
+  weather_info = get_weather_info( 48.1355979, 11.3627159, 'metric', 'de', cfg['W_API_KEY'] )
 
   current = weather_info.get('current')
   print( "Current")

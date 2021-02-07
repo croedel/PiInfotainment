@@ -4,7 +4,9 @@ __pycache__/
 *$py.class
 
 # Private config file
-config.py
+config.yaml
+
+# others
 libvlc.dll
 .dir_cache.p
 commands.txt

@@ -6,7 +6,7 @@ import time
 import datetime
 import os
 import GPSlookup
-import config
+from config import cfg
 
 def item2str(item, prefix='', postfix=''):
   if item == None:
@@ -26,7 +26,7 @@ def item2str(item, prefix='', postfix=''):
   return val      
 
 def _clean_string(fmt_str):
-  fmt_str = ''.join([c for c in fmt_str if c in config.CODEPOINTS]) # clean string 
+  fmt_str = ''.join([c for c in fmt_str if c in cfg['CODEPOINTS']]) # clean string 
   fmt_str = fmt_str[:99]  # limit length to 99 characters
   return fmt_str
 
@@ -36,12 +36,12 @@ def format_text(iFiles, pic_num):
     fname = os.path.normpath(iFiles[pic_num][0])
     filename = os.path.basename(fname)
     pathname = os.path.dirname(fname)
-    pathname = pathname[len(config.PIC_DIR)+1:]
+    pathname = pathname[len(cfg['PIC_DIR'])+1:]
     dt_str = '-'
     if iFiles[pic_num][3]:
       dt_str = datetime.datetime.fromtimestamp(iFiles[pic_num][3]).strftime("%d.%m.%Y")
     gps_str = '' 
-    if config.RESOLVE_GPS: # GPS reverse lookup is quite expensive - so we check if it is required, before executing
+    if cfg['RESOLVE_GPS']: # GPS reverse lookup is quite expensive - so we check if it is required, before executing
       exif_info = iFiles[pic_num][4] 
       if exif_info: 
         gps_info = exif_info.get('GPSInfo')
@@ -69,7 +69,7 @@ def format_text(iFiles, pic_num):
       '<gps>':    gps_str 
     }
 
-    texts = config.TEXT_FORMAT.copy() # Load templates
+    texts = cfg['TEXT_FORMAT'].copy() # Load templates
     # Substitute dynamic content
     for param, val in rep.items():
       for i in range(0, len(texts)):

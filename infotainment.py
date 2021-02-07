@@ -19,7 +19,7 @@ import pi3d
 from pi3d.Texture import MAX_SIZE
 from PIL import Image, ImageFilter # these are needed for getting exif data from images
 
-import config
+from config import cfg
 import dircache
 import weatherscreen
 import displaymsg
@@ -69,7 +69,7 @@ def tex_load(pic_num, iFiles, size=None):
       im = convert_heif(fname)
     else:
       im = Image.open(fname)      
-    if config.DELAY_EXIF and type(pic_num) is int: # don't do this if passed a file name
+    if cfg['DELAY_EXIF'] and type(pic_num) is int: # don't do this if passed a file name
       if dt is None: # exif info ot yet available
         (orientation, dt, exif_info) = get_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
@@ -77,7 +77,7 @@ def tex_load(pic_num, iFiles, size=None):
         iFiles[pic_num][4] = exif_info
     (w, h) = im.size
     max_dimension = MAX_SIZE # TODO changing MAX_SIZE causes serious crash on linux laptop!
-    if not config.AUTO_RESIZE: # turned off for 4K display - will cause issues on RPi before v4
+    if not cfg['AUTO_RESIZE']: # turned off for 4K display - will cause issues on RPi before v4
         max_dimension = 3840 # TODO check if mipmapping should be turned off with this setting.
     if w > max_dimension:
         im = im.resize((max_dimension, int(h * max_dimension / w)), resample=Image.LANCZOS)
@@ -97,20 +97,20 @@ def tex_load(pic_num, iFiles, size=None):
         im = im.transpose(Image.FLIP_LEFT_RIGHT).transpose(Image.ROTATE_90)
     elif orientation == 8:
         im = im.transpose(Image.ROTATE_90)
-    if config.BLUR_EDGES and size is not None:
+    if cfg['BLUR_EDGES'] and size is not None:
       wh_rat = (size[0] * im.size[1]) / (size[1] * im.size[0])
       if abs(wh_rat - 1.0) > 0.01: # make a blurred background
         (sc_b, sc_f) = (size[1] / im.size[1], size[0] / im.size[0])
         if wh_rat > 1.0:
           (sc_b, sc_f) = (sc_f, sc_b) # swap round
-        (w, h) =  (round(size[0] / sc_b / config.BLUR_ZOOM), round(size[1] / sc_b / config.BLUR_ZOOM))
+        (w, h) =  (round(size[0] / sc_b / cfg['BLUR_ZOOM']), round(size[1] / sc_b / cfg['BLUR_ZOOM']))
         (x, y) = (round(0.5 * (im.size[0] - w)), round(0.5 * (im.size[1] - h)))
         box = (x, y, x + w, y + h)
         blr_sz = (int(x * 512 / size[0]) for x in size)
         im_b = im.resize(size, resample=0, box=box).resize(blr_sz)
-        im_b = im_b.filter(ImageFilter.GaussianBlur(config.BLUR_AMOUNT))
+        im_b = im_b.filter(ImageFilter.GaussianBlur(cfg['BLUR_AMOUNT']))
         im_b = im_b.resize(size, resample=Image.LANCZOS)
-        im_b.putalpha(round(255 * config.EDGE_ALPHA))  # to apply the same EDGE_ALPHA as the no blur method.
+        im_b.putalpha(round(255 * cfg['EDGE_ALPHA']))  # to apply the same EDGE_ALPHA as the no blur method.
         im = im.resize((int(x * sc_f) for x in im.size), resample=Image.LANCZOS)
         """resize can use Image.LANCZOS (alias for Image.ANTIALIAS) for resampling
         for better rendering of high-contranst diagonal lines. NB downscaled large
@@ -120,10 +120,10 @@ def tex_load(pic_num, iFiles, size=None):
         im_b.paste(im, box=(round(0.5 * (im_b.size[0] - im.size[0])),
                             round(0.5 * (im_b.size[1] - im.size[1]))))
         im = im_b # have to do this as paste applies in place
-    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
+    tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=cfg['AUTO_RESIZE'],
                         free_after_load=True)
-    #tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=config.AUTO_RESIZE,
-    #                    mipmap=config.AUTO_RESIZE, free_after_load=True) # poss try this if still some artifacts with full resolution
+    #tex = pi3d.Texture(im, blend=True, m_repeat=True, automatic_resize=cfg['AUTO_RESIZE'],
+    #                    mipmap=cfg['AUTO_RESIZE, free_after_load=True) # poss try this if still some artifacts with full resolution
   except Exception as e:
     logging.error('''Couldn't load file {} giving error: {}'''.format(fname, e))
     tex = None
@@ -147,10 +147,10 @@ def get_exif_info(file_path_name, im=None):
       im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
     exif_data = im._getexif() # TODO check if/when this becomes proper function
     dt = time.mktime(
-        time.strptime(exif_data[config.EXIF_DICT['DateTimeOriginal']], '%Y:%m:%d %H:%M:%S'))
-    orientation = int(exif_data[config.EXIF_DICT['Orientation']])
+        time.strptime(exif_data[cfg['EXIF_DICT']['DateTimeOriginal']], '%Y:%m:%d %H:%M:%S'))
+    orientation = int(exif_data[cfg['EXIF_DICT']['Orientation']])
     # assemble exif_info
-    for tag, val in config.EXIF_DICT.items():
+    for tag, val in cfg['EXIF_DICT'].items():
       data = exif_data.get(val)
       if data:
         exif_info[tag] = data
@@ -176,35 +176,35 @@ def convert_heif(fname):
 # start the picture frame
 def start_picframe():
   global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache, w_show_now
-  if config.KENBURNS:
+  if cfg['KENBURNS']:
     kb_up = True
-    config.FIT = False
-    config.BLUR_EDGES = False
-  if config.BLUR_ZOOM < 1.0:
-    config.BLUR_ZOOM = 1.0
+    cfg['FIT'] = False
+    cfg['BLUR_EDGES'] = False
+  if cfg['BLUR_ZOOM'] < 1.0:
+    cfg['BLUR_ZOOM'] = 1.0
 
   sfg = None # slide for background
   sbg = None # slide for foreground
-  next_check_tm = time.time() + config.CHECK_DIR_TM # check if new file or directory every n seconds
-  delta_alpha = 1.0 / (config.FPS * config.FADE_TIME) # delta alpha
+  next_check_tm = time.time() + cfg['CHECK_DIR_TM'] # check if new file or directory every n seconds
+  delta_alpha = 1.0 / (cfg['FPS'] * cfg['FADE_TIME']) # delta alpha
 
   # Initialize pi3d system
-  DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=config.FPS, display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=config.BACKGROUND)
+  DISPLAY = pi3d.Display.create(x=0, y=0, frames_per_second=cfg['FPS'], display_config=pi3d.DISPLAY_CONFIG_HIDE_CURSOR, background=cfg['BACKGROUND'])
   CAMERA = pi3d.Camera(is_3d=False)
 
-  shader = pi3d.Shader(config.SHADER)
+  shader = pi3d.Shader(cfg['SHADER'])
   slide = pi3d.Sprite(camera=CAMERA, w=DISPLAY.width, h=DISPLAY.height, z=5.0)
   slide.set_shader(shader)
-  slide.unif[47] = config.EDGE_ALPHA
-  slide.unif[54] = config.BLEND_TYPE
+  slide.unif[47] = cfg['EDGE_ALPHA']
+  slide.unif[54] = cfg['BLEND_TYPE']
 
-  if config.KEYBOARD:
+  if cfg['KEYBOARD']:
     kbd = pi3d.Keyboard()
 
   # PointText and TextBlock. If INFO_TXT_TIME <= 0 then this is just used for no images message
-  grid_size = math.ceil(len(config.CODEPOINTS) ** 0.5)
-  font = pi3d.Font(config.FONT_FILE, codepoints=config.CODEPOINTS, grid_size=grid_size, shadow_radius=5.0, shadow=(0,0,0,128))
-  text = pi3d.PointText(font, CAMERA, max_chars=1000, point_size=config.TEXT_POINT_SIZE)
+  grid_size = math.ceil(len(cfg['CODEPOINTS']) ** 0.5)
+  font = pi3d.Font(cfg['FONT_FILE'], codepoints=cfg['CODEPOINTS'], grid_size=grid_size, shadow_radius=5.0, shadow=(0,0,0,128))
+  text = pi3d.PointText(font, CAMERA, max_chars=1000, point_size=cfg['TEXT_POINT_SIZE'])
   textlines = []
   textlines.append( pi3d.TextBlock(x=-DISPLAY.width * 0.5 + 50, y=DISPLAY.height * 0.45,
                       text_format=" ", z=0.1, rot=0.0, char_count=100, size=0.8, spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0)) )
@@ -220,7 +220,7 @@ def start_picframe():
   # prepare to display weather info
   weather_interstitial = 'OFF'
   next_weather_tm = 0.0
-  weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=config.W_POINT_SIZE)
+  weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=cfg['W_POINT_SIZE'])
   weatherobj =  weatherscreen.weather_obj_create(DISPLAY.width, DISPLAY.height)
   for _, obj in weatherobj['current'].items():
     weatherinfo.add_text_block( obj )
@@ -238,14 +238,14 @@ def start_picframe():
     tm = time.time()
     if (tm > nexttm and not paused) or (tm - nexttm) >= 86400.0: 
       if nFi > 0:
-        nexttm = tm + config.TIME_DELAY
+        nexttm = tm + cfg['TIME_DELAY']
         sbg = sfg
         sfg = None
 
-        if (w_show_now or (config.W_SKIP_CNT > 0 and next_pic_num > 0 and (next_pic_num % config.W_SKIP_CNT == 0))) and weather_interstitial == 'OFF':  
+        if (w_show_now or (cfg['W_SKIP_CNT'] > 0 and next_pic_num > 0 and (next_pic_num % cfg['W_SKIP_CNT'] == 0))) and weather_interstitial == 'OFF':  
           # show weather interstitial
           weather_interstitial = 'ON'
-          sfg = tex_load(config.W_BACK_IMG, 1, (DISPLAY.width, DISPLAY.height))
+          sfg = tex_load(cfg['W_BACK_IMG'], 1, (DISPLAY.width, DISPLAY.height))
           if w_show_now:
             w_show_now = False
             for item in textlines:
@@ -267,7 +267,7 @@ def start_picframe():
               nFi = 0
               break
           # set description
-          if config.INFO_TXT_TIME > 0.0:
+          if cfg['INFO_TXT_TIME'] > 0.0:
             texts = displaymsg.format_text(iFiles, pic_num)
             i=0
             for item in textlines:
@@ -279,19 +279,19 @@ def start_picframe():
           mqtt_publish_status( status="running", pic_num=pic_num )
 
       if sfg is None:
-        sfg = tex_load(config.NO_FILES_IMG, 1, (DISPLAY.width, DISPLAY.height))
+        sfg = tex_load(cfg['NO_FILES_IMG'], 1, (DISPLAY.width, DISPLAY.height))
         sbg = sfg
         mqtt_publish_status( status="no pictures found" )
 
       a = 0.0 # alpha - proportion front image to back
-      name_tm = tm + config.INFO_TXT_TIME
+      name_tm = tm + cfg['INFO_TXT_TIME']
       if sbg is None: # first time through
         sbg = sfg
       slide.set_textures([sfg, sbg])
       slide.unif[45:47] = slide.unif[42:44] # transfer front width and height factors to back
       slide.unif[51:53] = slide.unif[48:50] # transfer front width and height offsets
       wh_rat = (DISPLAY.width * sfg.iy) / (DISPLAY.height * sfg.ix)
-      if (wh_rat > 1.0 and config.FIT) or (wh_rat <= 1.0 and not config.FIT):
+      if (wh_rat > 1.0 and cfg['FIT']) or (wh_rat <= 1.0 and not cfg['FIT']):
         sz1, sz2, os1, os2 = 42, 43, 48, 49
       else:
         sz1, sz2, os1, os2 = 43, 42, 49, 48
@@ -300,16 +300,16 @@ def start_picframe():
       slide.unif[sz2] = 1.0
       slide.unif[os1] = (wh_rat - 1.0) * 0.5
       slide.unif[os2] = 0.0
-      if config.KENBURNS:
-        xstep, ystep = (slide.unif[i] * 2.0 / config.TIME_DELAY for i in (48, 49))
+      if cfg['KENBURNS']:
+        xstep, ystep = (slide.unif[i] * 2.0 / cfg['TIME_DELAY'] for i in (48, 49))
         slide.unif[48] = 0.0
         slide.unif[49] = 0.0
         kb_up = not kb_up
 
-    if config.KENBURNS:
+    if cfg['KENBURNS']:
       t_factor = nexttm - tm
       if kb_up:
-        t_factor = config.TIME_DELAY - t_factor
+        t_factor = cfg['TIME_DELAY'] - t_factor
       slide.unif[48] = xstep * t_factor
       slide.unif[49] = ystep * t_factor
 
@@ -338,17 +338,17 @@ def start_picframe():
         next_monitor_check_tm = tm + 60 # check every minute
       if monitor_status.startswith("ON"):
         if tm > next_check_tm: # time to check picture directory
-          if pcache.refresh_cache() or (config.SHUFFLE and num_run_through >= config.RESHUFFLE_NUM): # refresh file list required
-            if config.RECENT_DAYS > 0: # reset data_from to reflect time is proceeding
-              date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)
+          if pcache.refresh_cache() or (cfg['SHUFFLE'] and num_run_through >= cfg['RESHUFFLE_NUM']): # refresh file list required
+            if cfg['RECENT_DAYS'] > 0 and not cfg['DATE_FROM']: # reset data_from to reflect that time is proceeding
+              date_from = datetime.datetime.now() - datetime.timedelta(cfg['RECENT_DAYS'])
               date_from = (date_from.year, date_from.month, date_from.day)
             iFiles, nFi = get_files(date_from, date_to)
             num_run_through = 0
             next_pic_num = 0
-          next_check_tm = tm + config.CHECK_DIR_TM # next check
+          next_check_tm = tm + cfg['CHECK_DIR_TM'] # next check
         if tm > next_weather_tm: # refresh weather info
           weatherscreen.weather_refresh( weatherobj )
-          next_weather_tm = tm + config.W_REFRESH_DELAY # next check
+          next_weather_tm = tm + cfg['W_REFRESH_DELAY'] # next check
 
     if monitor_status.startswith("ON"):
       slide.draw()
@@ -358,7 +358,7 @@ def start_picframe():
         next_check_tm = tm + 5.0
       elif tm < name_tm and weather_interstitial != 'ON':
         # this sets alpha for the TextBlock from 0 to 1 then back to 0
-        dt = (config.INFO_TXT_TIME - name_tm + tm + 0.1) / config.INFO_TXT_TIME
+        dt = (cfg['INFO_TXT_TIME'] - name_tm + tm + 0.1) / cfg['INFO_TXT_TIME']
         alpha = max(0.0, min(1.0, 3.0 - abs(3.0 - 6.0 * dt)))
         for item in textlines:
           item.colouring.set_colour(alpha=alpha)
@@ -373,7 +373,7 @@ def start_picframe():
     else: # monitor OFF -> minimize system activity to reduce power consumption
       time.sleep(10)
 
-    if config.KEYBOARD:
+    if cfg['KEYBOARD']:
       k = kbd.read()
       if k != -1:
         nexttm = time.time()
@@ -388,7 +388,7 @@ def start_picframe():
     if quit or show_camera: # set by MQTT
       break
 
-  if config.KEYBOARD:
+  if cfg['KEYBOARD']:
     kbd.close()
   DISPLAY.destroy()
 
@@ -425,14 +425,14 @@ def on_mqtt_message(mqttclient, userdata, message):
         date_to = None
       reselect = True
     elif message.topic.endswith("/recent_days"):
-      config.RECENT_DAYS = int(msg)  
-      if config.RECENT_DAYS > 0:
-        date_from = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
+      cfg['RECENT_DAYS'] = int(msg)  
+      if cfg['RECENT_DAYS'] > 0:
+        date_from = datetime.datetime.now() - datetime.timedelta(cfg['RECENT_DAYS'])  
         date_from = (date_from.year, date_from.month, date_from.day)
         date_to = None
         reselect = True
     elif message.topic.endswith("/time_delay"):
-      config.TIME_DELAY = float(msg)
+      cfg['TIME_DELAY'] = float(msg)
     elif message.topic.endswith("/quit"):
       quit = True
     elif message.topic.endswith("/shutdown"):
@@ -448,14 +448,14 @@ def on_mqtt_message(mqttclient, userdata, message):
     elif message.topic.endswith("/next"):
       nexttm = time.time() 
     elif message.topic.endswith("/w_skip_count"):
-      config.W_SKIP_CNT = int(msg)
+      cfg['W_SKIP_CNT'] = int(msg)
     elif message.topic.endswith("/subdirectory"):
-      config.SUBDIRECTORY = msg
+      cfg['SUBDIRECTORY'] = msg
       date_from = date_to = None
       reselect = True
     elif message.topic.endswith("/camera"):
       show_camera = True
-      camera_end_tm = time.time() + config.CAMERA_THRESHOLD
+      camera_end_tm = time.time() + cfg['CAMERA_THRESHOLD']
       if monitor_status.startswith('OFF'): 
         monitor_status = "ON"
         switch_HDMI(monitor_status)
@@ -487,13 +487,13 @@ def on_mqtt_message(mqttclient, userdata, message):
 def mqtt_start(): 
   try: 
     client = mqttcl.Client()
-    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
-    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    client.subscribe(config.MQTT_TOPIC + "/cmd/+", qos=0)
+    client.username_pw_set(cfg['MQTT_LOGIN'], cfg['MQTT_PASSWORD']) 
+    client.connect(cfg['MQTT_SERVER'], cfg['MQTT_PORT'], 60) 
+    client.subscribe(cfg['MQTT_TOPIC'] + "/cmd/+", qos=0)
     client.on_connect = on_mqtt_connect
     client.on_message = on_mqtt_message
     client.loop_start()
-    logging.info('MQTT client started. topic={}'.format(config.MQTT_TOPIC))
+    logging.info('MQTT client started. topic={}'.format(cfg['MQTT_TOPIC']))
     return client
   except Exception as e:
     logging.warning("Couldn't start MQTT: {}".format(e))
@@ -511,20 +511,20 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   global iFiles, nFi, date_from, date_to, paused, monitor_status, start_date, pcache
   dfrom = datetime.datetime(*date_from).strftime("%d.%m.%Y %H:%M:%S") if date_from != None else "None" 
   dto = datetime.datetime(*date_to).strftime("%d.%m.%Y %H:%M:%S") if date_to != None else "None"
-  current_pic = iFiles[pic_num][0][len(config.PIC_DIR)+1:] if pic_num>=0 else "None"
+  current_pic = iFiles[pic_num][0][len(cfg['PIC_DIR'])+1:] if pic_num>=0 else "None"
   cpu_temp = subprocess.check_output( ["vcgencmd", "measure_temp"] ) if os.name == 'posix' else "-"
   fcache_t = pcache.get_cache_check_date()
   fcache_t = fcache_t.strftime("%d.%m.%Y %H:%M:%S") if fcache_t != None else "-"  
   info_data = {
     "status": status,
     "start_date": start_date.strftime("%d.%m.%Y %H:%M:%S"),
-    "subdirectory": config.SUBDIRECTORY,
+    "subdirectory": cfg['SUBDIRECTORY'],
     "date_from": dfrom,
     "date_to": dto,
-    "recent_days": config.RECENT_DAYS,
+    "recent_days": cfg['RECENT_DAYS'],
     "paused": str(paused), 
     "pic_num": str(pic_num+1) + " / " + str(nFi),
-    "w_skip_count": config.W_SKIP_CNT,
+    "w_skip_count": cfg['W_SKIP_CNT'],
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
     "current_pic": current_pic,
@@ -537,11 +537,11 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
   messages = []
   for key, val in info_data.items():
     if len(fields)==0 or key in fields:
-      topic = config.MQTT_TOPIC + "/stat/" + key
+      topic = cfg['MQTT_TOPIC'] + "/stat/" + key
       messages.append( { "topic": topic, "payload": val } )  
-  auth = { "username": config.MQTT_LOGIN, "password": config.MQTT_PASSWORD }
+  auth = { "username": cfg['MQTT_LOGIN'], "password": cfg['MQTT_PASSWORD'] }
   try:
-    mqttpub.multiple( messages, client_id="infotainment-server", hostname=config.MQTT_SERVER, port=config.MQTT_PORT, auth=auth)
+    mqttpub.multiple( messages, client_id="infotainment-server", hostname=cfg['MQTT_SERVER'], port=cfg['MQTT_PORT'], auth=auth)
   except Exception as e:
     logging.warning("Error while sending MQTT status: {}".format(e))
 
@@ -551,9 +551,9 @@ def cam_viewer_start():
   vlc_instance = vlc.Instance('--no-xlib')
   player = vlc_instance.media_player_new() 
   player.set_fullscreen(True)
-  media = vlc.Media(config.CAMERA_URL) 
+  media = vlc.Media(cfg['CAMERA_URL']) 
   player.set_media(media) 
-  player.video_set_scale(config.CAMERA_ZOOM)
+  player.video_set_scale(cfg['CAMERA_ZOOM'])
   player.play()
   return player
 
@@ -574,10 +574,10 @@ def cam_show():
     switch_HDMI("OFF") # switch monitor OFF again 
 
 def check_monitor_status( tm=time.time() ):
-  if len(config.MONITOR_SCHEDULE) == 0:
+  if len(cfg['MONITOR_SCHEDULE']) == 0:
     return "ON" # No schedule defined: Always ON
   tm_now = datetime.datetime.fromtimestamp(tm)
-  schedules = config.MONITOR_SCHEDULE.get(tm_now.weekday())
+  schedules = cfg['MONITOR_SCHEDULE'].get(tm_now.weekday())
   if schedules == None:
     return "OFF" # No schedule for this weekday: OFF for the whole day
   status = "OFF" 
@@ -617,12 +617,13 @@ def main():
 
   date_from = None
   date_to = None  
-  if config.DATE_FROM and len(config.DATE_FROM) == 3:
-    date_from = config.DATE_FROM
-  if config.DATE_TO and len(config.DATE_TO) == 3:
-    date_to = config.DATE_TO
-  if config.RECENT_DAYS > 0:
-    dfrom = datetime.datetime.now() - datetime.timedelta(config.RECENT_DAYS)  
+  if cfg['DATE_FROM'] and len(cfg['DATE_FROM']) == 3:
+    date_from = tuple(cfg['DATE_FROM'])
+    cfg['RECENT_DAYS'] = None # hard start date overwrites RECENT_DAYS setting
+  if cfg['DATE_TO'] and len(cfg['DATE_TO']) == 3:
+    date_to = tuple(cfg['DATE_TO'])
+  if cfg['RECENT_DAYS'] > 0:
+    dfrom = datetime.datetime.now() - datetime.timedelta(cfg['RECENT_DAYS'])  
     date_from = (dfrom.year, dfrom.month, dfrom.day)
 
   logging.info('Initial scan of image directory...')

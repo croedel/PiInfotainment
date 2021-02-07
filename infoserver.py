@@ -9,7 +9,7 @@ import urllib
 import html
 import datetime
 import os
-import config
+from config import cfg
 
 try:
   import paho.mqtt.client as mqttcl
@@ -35,7 +35,7 @@ def on_mqtt_message(mqttclient, userdata, message):
       tm = datetime.datetime.now()
       pic_history.append([tm, msg])
       pic_history.sort(key=lambda x: x[0], reverse=True)
-      if len(pic_history) > config.PIC_HISTORY:
+      if len(pic_history) > cfg['PIC_HISTORY']:
         pic_history.pop(len(pic_history)-1)
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(str(e)))
@@ -43,13 +43,13 @@ def on_mqtt_message(mqttclient, userdata, message):
 def mqtt_start(): 
   try: 
     client = mqttcl.Client()
-    client.username_pw_set(config.MQTT_LOGIN, config.MQTT_PASSWORD) 
-    client.connect(config.MQTT_SERVER, config.MQTT_PORT, 60) 
-    client.subscribe(config.MQTT_TOPIC + "/stat/+", qos=0)
+    client.username_pw_set(cfg['MQTT_LOGIN'], cfg['MQTT_PASSWORD']) 
+    client.connect(cfg['MQTT_SERVER'], cfg['MQTT_PORT'], 60) 
+    client.subscribe(cfg['MQTT_TOPIC'] + "/stat/+", qos=0)
     client.on_connect = on_mqtt_connect
     client.on_message = on_mqtt_message
     client.loop_start()
-    logging.info('MQTT client started. topic={}'.format(config.MQTT_TOPIC))
+    logging.info('MQTT client started. topic={}'.format(cfg['MQTT_TOPIC']))
     return client
   except Exception as e:
     logging.warning("Couldn't start MQTT: {}".format(str(e)))
@@ -63,12 +63,12 @@ def mqtt_stop(client):
 
 def mqtt_publish( topic, payload ):  
   auth = {
-    'username': config.MQTT_LOGIN,
-    'password': config.MQTT_PASSWORD 
+    'username': cfg['MQTT_LOGIN'],
+    'password': cfg['MQTT_PASSWORD'] 
   }  
   logging.debug("Publish MQTT command {}: {} {}".format(topic, payload, str(auth)))
   try:
-    publish.single(topic, payload=payload, hostname=config.MQTT_SERVER, port=config.MQTT_PORT, keepalive=10, auth=auth)
+    publish.single(topic, payload=payload, hostname=cfg['MQTT_SERVER'], port=cfg['MQTT_PORT'], keepalive=10, auth=auth)
   except Exception as e:
     logging.error("Could't send MQTT command: {}".format(str(e)))
 
@@ -89,7 +89,7 @@ class Handler(BaseHTTPRequestHandler):
   def _publish_MQTT( self, params ):
     # publish command to MQTT
     if 'topic' in params:
-      topic = config.MQTT_TOPIC + '/cmd/' + params['topic'][0]   
+      topic = cfg['MQTT_TOPIC'] + '/cmd/' + params['topic'][0]   
       if 'data' in params:
         data = params['data'][0]
       else:
@@ -136,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
 
   def _get_srv_info(self):
     global server_address
-    srv_info = "host: {:s}:{:d}, MQTT topic: {:s}".format( server_address[0], server_address[1], config.MQTT_TOPIC)
+    srv_info = "host: {:s}:{:d}, MQTT topic: {:s}".format( server_address[0], server_address[1], cfg['MQTT_TOPIC'])
     return srv_info
 
   def _get_dynamic_content( self, content ):
@@ -166,7 +166,7 @@ class Handler(BaseHTTPRequestHandler):
       params = urllib.parse.parse_qs(parts[1])
     else:
       params = ''
-    fname = os.path.join( config.SRV_ROOT, ressource )
+    fname = os.path.join( cfg['SRV_ROOT'], ressource )
     logging.debug("GET request, Ressource: {}, fname: {}, Params: {}".format(ressource, fname, str(params)) )  
     if ressource == "index.html":
       self._publish_MQTT( params )

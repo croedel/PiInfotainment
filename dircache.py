@@ -10,7 +10,7 @@ import random
 import logging
 import pickle  
 import yaml
-import config
+from config import cfg
   
 class DirCache:
   dir_cache = {}
@@ -18,7 +18,7 @@ class DirCache:
   dirty = False
 
   # ------- private core functionalities -----------------
-  def __init__(self, fname=config.DIR_CACHE_FILE):
+  def __init__(self, fname=cfg['DIR_CACHE_FILE']):
     self.fname = fname
     self._read_dir_cache()
 
@@ -61,7 +61,7 @@ class DirCache:
       self.dir_cache['statistics']['checked'] = tm
     if not self.dir_cache['statistics'].get('checked'):
       self.dir_cache['statistics']['checked'] = self.dir_cache['statistics']['created'] 
-    if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=config.CHECK_DIR_TM):  
+    if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=cfg['CHECK_DIR_TM']):  
       logging.info('Refresh of directory cache not necessary: Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
       return False
     else:
@@ -71,9 +71,9 @@ class DirCache:
     for dir_item, val in self.dir_cache['dir'].items():
       val['meta'][3] = False    
 
-    picture_dir = os.path.normpath( config.PIC_DIR )
+    picture_dir = os.path.normpath( cfg['PIC_DIR'] )
     for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
-      subdirs[:] = [d for d in subdirs if d not in config.IGNORE_DIRS] # prune irrelevant subdirs
+      subdirs[:] = [d for d in subdirs if d not in cfg['IGNORE_DIRS']] # prune irrelevant subdirs
       mtime = os.stat(root).st_mtime 
       ctime = os.stat(root).st_ctime
       yaml_fname = os.path.join(root, ".INFOTAINMENT.yaml")
@@ -102,7 +102,7 @@ class DirCache:
         yaml_cfg = self._parse_yaml_file( os.path.join(root, yaml_fname) )
       for filename in filenames:
         ext = os.path.splitext(filename)[1].lower()
-        if ext in config.PIC_EXT and not filename.startswith('.') and self._yaml_permits(yaml_cfg, filename):
+        if ext in cfg['PIC_EXT'] and not filename.startswith('.') and self._yaml_permits(yaml_cfg, filename):
           file_path_name = os.path.join(root, filename)
           mtime = os.path.getmtime(file_path_name)        
           orientation = 1 # this is default - unrotated
@@ -164,8 +164,8 @@ class DirCache:
   def get_exif_info(self, file_path_name):
     exif_data = {}
     file_path_name = os.path.normpath( file_path_name )
-    if not file_path_name.startswith(config.PIC_DIR):
-      file_path_name = os.path.join(config.PIC_DIR, file_path_name)
+    if not file_path_name.startswith(cfg['PIC_DIR']):
+      file_path_name = os.path.join(cfg['PIC_DIR'], file_path_name)
     path, fname = os.path.split( file_path_name )
     exif_data['path'] = path
     exif_data['file'] = fname
@@ -194,8 +194,8 @@ class DirCache:
     if isinstance(dt_to, tuple):  
       dt_to = time.mktime(dt_to + (0, 0, 0, 0, 0, 0))
     path_restrict = False  
-    if config.SUBDIRECTORY and config.SUBDIRECTORY != "": 
-      path_restrict = os.path.normpath( os.path.join( config.PIC_DIR, config.SUBDIRECTORY ) )
+    if cfg['SUBDIRECTORY'] and cfg['SUBDIRECTORY'] != "": 
+      path_restrict = os.path.normpath( os.path.join( cfg['PIC_DIR'], cfg['SUBDIRECTORY'] ) )
  
     # create file_list
     file_list=[]
@@ -207,25 +207,29 @@ class DirCache:
             distance_from = max(0, dt_from-ftime) if dt_from is not None else 0
             distance_to = max(0, ftime-dt_to) if dt_to is not None else 0
             distance = max(distance_from, distance_to) / (3600*24) # days
-            propability = 1 - (distance * 1/config.PROP_SLOPE)   
-            propability = max( config.OUTDATED_FILE_PROP, propability ) # set minimum to config value 
+            if cfg['PROP_SLOPE'] and cfg['PROP_SLOPE'] > 0:
+              propability = 1 - (distance * 1/cfg['PROP_SLOPE'])
+            else:
+              propability = 0     
+            if cfg['OUTDATED_FILE_PROP']:  
+              propability = max( cfg['OUTDATED_FILE_PROP'], propability ) # set minimum to config value 
             if random.random() <= propability:
               fpath = os.path.join(path, item)
               # [file_path, orientation, file_changed_date, exif_date, exif_info]
               file_list.append( [ fpath, attr[0], attr[1], attr[2], attr[3] ] ) 
 
-    if config.SHUFFLE:
-      if config.RECENT_N == 0:
+    if cfg['SHUFFLE']:
+      if cfg['RECENT_N'] == 0:
         random.shuffle(file_list)
       else:
         file_list.sort(key=lambda x: x[2]) # will be later files last
-        temp_list_first = file_list[-config.RECENT_N:]
-        temp_list_last = file_list[:-config.RECENT_N]
+        temp_list_first = file_list[-cfg['RECENT_N']:]
+        temp_list_last = file_list[:-cfg['RECENT_N']]
         random.shuffle(temp_list_first)
         random.shuffle(temp_list_last)
         file_list = temp_list_first + temp_list_last
     else:
-      file_list.sort() # if not config.SHUFFLEd; sort by name
+      file_list.sort() # if not cfg['SHUFFLEd']; sort by name
         
     logging.info("New file list created: {} images".format(len(file_list)))
     return file_list

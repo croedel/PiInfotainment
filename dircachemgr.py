@@ -4,10 +4,10 @@
 import argparse
 import datetime
 import logging
-import config
 import dircache
 import GPSlookup
 import displaymsg
+from config import cfg
 
 #-----------------------------
 def do_summary(cache, args): 
@@ -28,7 +28,7 @@ def do_list(cache, args):
     print( "{:s}: {:d} files".format(dir_item[0], dir_item[1]) )
 
 def do_list_long(cache, args):
-  path_trunc = len(config.PIC_DIR) + 1
+  path_trunc = len(cfg['PIC_DIR']) + 1
   do_summary(cache, args)
   dirlist = cache.get_dirlist_full()
   for dir_item in dirlist:
@@ -91,7 +91,7 @@ def parse_options():
   clear_exif:           Clear all cached EXIF infos(!) from cache. 
   """
   parser = argparse.ArgumentParser(description='PI Infotainment dircache manager utility', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
-  parser.add_argument('--file', '-f', default=config.DIR_CACHE_FILE, help='cache file')
+  parser.add_argument('--file', '-f', default=cfg['DIR_CACHE_FILE'], help='cache file')
   parser.add_argument('command', choices=["summary", "list", "list_long", "refresh", "clear_exif", "get_exif"], nargs='?', default="summary" )
   parser.add_argument('param', nargs='?', help="parameter" )
   return parser.parse_args()

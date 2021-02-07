@@ -95,10 +95,10 @@ Now let's install the PIInfotainment system:
 cd /home/pi/infotainment && wget https://github.com/croedel/PiInfotainment/archive/main.zip && unzip main.zip && rm main.zip
 ```
 
-In a next step, you need to copy the `config-template.py` to `config.py`. Within this, you need to config e.g. your picture directory, your geo-location, API key etc. (See below for more details on configuration)
+In a next step, you need to copy `templates/config-template.yaml` to `config.yaml`. Within this, you need to config e.g. your picture directory, your geo-location, API key etc. (See below for more details on configuration)
 
 ```
-cd /home/pi/infotainment && cp config-template.py config.py
+cd /home/pi/infotainment && cp templates/config-template.yaml config.yaml
 ```
 
 ### Auto start using systemd
@@ -149,8 +149,8 @@ IGNORE_DIRS   # Ignore images if they are in one of those directories
 If you have a huge pohoto archive, you might want to limit the timerange for the fotos you want to show.
 
 ```
-DATE_FROM    # Sets start date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
-DATE_TO      # Sets end date (y,m,d) of the timerange for the fotos you want to show (None=unlimited)
+DATE_FROM    # Sets start date [y,m,d] of the timerange for the fotos you want to show (None=unlimited)
+DATE_TO      # Sets end date [y,m,d] of the timerange for the fotos you want to show (None=unlimited)
 ```
 
 Static dates can be good, but I personally like that the Infotainment system should display the most recent photos:
@@ -187,24 +187,30 @@ INFO_TXT_TIME   # duration for showing text overlay over image
 ### Scheduled switching of the monitor
 For convenience and energy saving purposes you can schedule to switch you PI's monitor ON and OFF at certain times. You can schedule this very fine grain an a weekday basis. 
 
-`MONITOR_SCHEDULE` allows to define an array of start-stop time pairs for each weekday.
+`MONITOR_SCHEDULE` allows to define multiple pairs of start-stop time for each weekday.
 - Weekdays are numbered from 0 to 6: 0=Monday ... 6=Sunday
 - Each weekday may contain as many start-stop time pairs as you need
-- Each start-stop time pair consists of tuples (hour, minute)
+- Times are defined as `[HH,MM]`
 
 ```
-# Monitor schedule
-# One line per day: 0=Monday ... 6=Sunday
-# For each day you can define an array of start-stop time pairs, each of them consists of hour and minute 
-MONITOR_SCHEDULE = {
-  0: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
-  1: [ [(7,15), (10,30)], [(16,0), (22,0)] ], 
-  2: [ [(7,0), (18,0)] ], 
-  3: [ [(7,0), (10,0)], [(16,0), (18,0), [(10,0), (22,30)]] ], 
-  4: [ [(7,0), (10,0)], [(16,0), (22,0)] ], 
-  5: [ [(8,0), (23,30)] ], 
-  6: [ [(8,0), (23,30)] ] 
-}
+MONITOR_SCHEDULE : 
+  0: 
+    - [[07,00], [11,00]] 
+    - [[16,00], [22,00]] 
+  1: 
+    - [[07,00], [11,00]] 
+    - [[16,00], [22,00]] 
+  2: 
+    - [[07,00], [11,00]] 
+    - [[16,00], [22,00]] 
+  3: 
+    - [[08,00], [22,30]] 
+  4: 
+    - [[08,00], [22,30]] 
+  5: 
+    - [[08,00], [22,30]] 
+  6:
+    - [[08,00], [22,30]]  
 ```
 If you switch the monitor manually (e.g. by using the Webserver), the manually set status has precedence and "wins" over the automated scheduling.
 
@@ -320,7 +326,7 @@ Additionally following EXIF metadata tags are supported
 The project assumes you have a surveillance camera which can be accessed via e.g rtsp protocol.
 This then gets displayed by VLC.
 
-Add this to config.py e.g. as
+Add this to config.yaml e.g. as
 
 ```
 CAMERA_URL    # URL of webcam stream
