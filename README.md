@@ -214,7 +214,7 @@ MONITOR_SCHEDULE :
 ```
 If you switch the monitor manually (e.g. by using the Webserver), the manually set status has precedence and "wins" over the automated scheduling.
 
-### YAML file
+### Magic YAML file
 Per default, all pictures within the `PIC_DIR` directory tree get included. For a more fine grain control of which files shall get included in a certain directory, you can create a "magic file" named `.INFOTAINMENT.yaml` within a directory. 
 
 This YAML formatted file contains an `exclude` and and `include` section. Both can contain list of filenames or wildcard patterns. It supports UNIX shell-style wildcards (e.g. `*` and `?`) (see https://docs.python.org/3/library/fnmatch.html). 
@@ -285,12 +285,11 @@ Pi Infotainment offers 4 text lines to show customizable metadata of the shown i
 The content can be configures within the config file:
 
 ``` 
-TEXT_FORMAT = [
-  "<flen> (<flen35>) <exp> <fnum> <iso> <artist>",  # Header line 1 
-  "<rating> <desc>",                                # Header line 2
-  "<date> (<num>/<total>) <gps>",                   # Footer line 1
-  "<path>/<file>"                                   # Footer line 2
-]
+TEXT_FORMAT : 
+  - "<flen> (<flen35>) <exp> <fnum> <iso> <artist>"  # Header line 1 
+  - "<rating> <desc>"                                # Header line 2
+  - "<date> <gps>"                                   # Footer line 1
+  - "<path>/<file>"                                  # Footer line 2
 ```
 
 The format supports following variables which will be dynamically replaced with image data:
