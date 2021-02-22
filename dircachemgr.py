@@ -4,6 +4,7 @@
 import argparse
 import datetime
 import logging
+import os
 import dircache
 import GPSlookup
 import displaymsg
@@ -80,6 +81,23 @@ def do_get_exif(cache, args):
         val = displaymsg.item2str(val)  
       print( "  {:25s}: {:s}".format( key, str(val) ) )
 
+def do_refresh_exif(cache, args):
+  do_refresh(cache, args)
+  print("Refreshing cached EXIF info...")
+  filecount = cache.get_filecount()
+  curfile = 0
+  dirname = None
+  dirlist = cache.get_dirlist_full()
+  for dir_item in dirlist:
+    if dir_item[0] == "d": # file
+      dirname = dir_item[1]
+      print( "{:3.0f}% - scanning directory: {:s}".format( curfile/filecount*100, dirname) )  
+    else:
+      fname = os.path.join(dirname, dir_item[1])
+      cache.read_exif_info(fname)
+      curfile += 1
+  do_summary(cache, args)
+
 #-----------------------------
 def parse_options():
   epilog = """commands:
@@ -87,12 +105,13 @@ def parse_options():
   list:                 List all directories plus the no. of files. 
   list_long:            List all directories and all files. 
   refresh:              Refreshe the directory cache.
+  refresh_exif:         Refresh EXIF infos. 
   get_exif <filepath>:  Show cached EXIF info for given <filepath>.
   clear_exif:           Clear all cached EXIF infos(!) from cache. 
   """
   parser = argparse.ArgumentParser(description='PI Infotainment dircache manager utility', epilog=epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
   parser.add_argument('--file', '-f', default=cfg['DIR_CACHE_FILE'], help='cache file')
-  parser.add_argument('command', choices=["summary", "list", "list_long", "refresh", "clear_exif", "get_exif"], nargs='?', default="summary" )
+  parser.add_argument('command', choices=["summary", "list", "list_long", "refresh", "clear_exif", "get_exif", "refresh_exif"], nargs='?', default="summary" )
   parser.add_argument('param', nargs='?', help="parameter" )
   return parser.parse_args()
 
@@ -111,6 +130,8 @@ def main():
     do_list(cache, args)
   elif args.command == "list_long": 
     do_list_long(cache, args)
+  elif args.command == "refresh_exif": 
+    do_refresh_exif(cache, args)
 
 #-------------------------------
 if __name__ == '__main__':

@@ -12,7 +12,6 @@ import sys
 import logging
 import time
 import datetime
-import random
 import math
 import subprocess
 import pi3d
@@ -55,6 +54,7 @@ w_show_now = False
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
+  global pcache
   if type(pic_num) is int:
     fname =       iFiles[pic_num][0]
     orientation = iFiles[pic_num][1]
@@ -71,7 +71,7 @@ def tex_load(pic_num, iFiles, size=None):
       im = Image.open(fname)      
     if cfg['DELAY_EXIF'] and type(pic_num) is int: # don't do this if passed a file name
       if dt is None: # exif info ot yet available
-        (orientation, dt, exif_info) = get_exif_info(fname, im)
+        (orientation, dt, exif_info) = pcache.read_exif_info(fname, im)
         iFiles[pic_num][1] = orientation
         iFiles[pic_num][3] = dt
         iFiles[pic_num][4] = exif_info
@@ -137,31 +137,6 @@ def get_files(dt_from=None, dt_to=None, refresh=True):
   logging.info('File list refreshed: {} images found'.format(len(file_list)) )
   return file_list, len(file_list) # tuple of file list, number of pictures
 
-def get_exif_info(file_path_name, im=None):
-  global pcache
-  exif_info = {}
-  dt = None
-  orientation = None
-  try:
-    if im is None:
-      im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
-    exif_data = im._getexif() # TODO check if/when this becomes proper function
-    dt = time.mktime(
-        time.strptime(exif_data[cfg['EXIF_DICT']['DateTimeOriginal']], '%Y:%m:%d %H:%M:%S'))
-    orientation = int(exif_data[cfg['EXIF_DICT']['Orientation']])
-    # assemble exif_info
-    for tag, val in cfg['EXIF_DICT'].items():
-      data = exif_data.get(val)
-      if data:
-        exif_info[tag] = data
-    pcache.set_exif_info( file_path_name, orientation, dt, exif_info ) # write back to cache
-  except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
-    logging.debug('Exception while trying to read EXIF: {}'.format(str(e)) )
-    if dt == None:
-      dt = os.path.getmtime(file_path_name) # so use file last modified date
-    if orientation == None:
-      orientation = 1
-  return (orientation, dt, exif_info)
 
 def convert_heif(fname):
   try:

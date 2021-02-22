@@ -18,7 +18,7 @@ By the way: If you're new to the topic, I can definitively recommend to read htt
 Following sections explain the 3 core functionalities.
 
 ### Picture Frame
-The major enhancements of RaspiInfotainment vs PictureFrame2020.py are:
+The major enhancements of RaspiInfotainment vs. PictureFrame2020.py are:
 
 - Optimized for direct mounting of image directory via WIFI (e.g. from a NAS) - no copying required!
 - Fast startup time - even if image directory contains a huge number of sub-directories and pictures by implementing a directory cache

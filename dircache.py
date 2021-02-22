@@ -10,6 +10,7 @@ import random
 import logging
 import pickle  
 import yaml
+from PIL import Image
 from config import cfg
   
 class DirCache:
@@ -59,13 +60,14 @@ class DirCache:
       self.dir_cache['statistics'] = {}
       self.dir_cache['statistics']['created'] = tm
       self.dir_cache['statistics']['checked'] = tm
-    if not self.dir_cache['statistics'].get('checked'):
-      self.dir_cache['statistics']['checked'] = self.dir_cache['statistics']['created'] 
-    if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=cfg['CHECK_DIR_TM']):  
-      logging.info('Refresh of directory cache not necessary: Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
-      return False
-    else:
-      logging.info('Refreshing directory cache. Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
+    else:  
+      if not self.dir_cache['statistics'].get('checked'):
+        self.dir_cache['statistics']['checked'] = self.dir_cache['statistics']['created'] 
+      if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=cfg['CHECK_DIR_TM']):  
+        logging.info('Refresh of directory cache not necessary: Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
+        return False
+      else:
+        logging.info('Refreshing directory cache. Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
 
     # mark all directories in cache
     for dir_item, val in self.dir_cache['dir'].items():
@@ -176,6 +178,32 @@ class DirCache:
     except Exception as err:
       logging.warning("Couldn't get EXIF info for: {} - {}".format(file_path_name, str(err)))
     return exif_data  
+
+  def read_exif_info(self, file_path_name, im=None):
+    exif_info = {}
+    dt = None
+    orientation = None
+    try:
+      if im is None:
+        im = Image.open(file_path_name) # lazy operation so shouldn't load (better test though)
+      exif_data = im._getexif() # TODO check if/when this becomes proper function
+      dt = time.mktime(
+          time.strptime(exif_data[cfg['EXIF_DICT']['DateTimeOriginal']], '%Y:%m:%d %H:%M:%S'))
+      orientation = int(exif_data[cfg['EXIF_DICT']['Orientation']])
+      # assemble exif_info
+      for tag, val in cfg['EXIF_DICT'].items():
+        data = exif_data.get(val)
+        if data:
+          exif_info[tag] = data
+      self.set_exif_info( file_path_name, orientation, dt, exif_info ) # write back to cache
+    except Exception as e: # NB should really check error here but it's almost certainly due to lack of exif data
+      logging.debug('Exception while trying to read EXIF: {}'.format(str(e)) )
+      if dt == None:
+        dt = os.path.getmtime(file_path_name) # so use file last modified date
+      if orientation == None:
+        orientation = 1
+    return (orientation, dt, exif_info)
+
 
   # refreshes the cache, if needed
   def refresh_cache(self):
