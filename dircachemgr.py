@@ -16,6 +16,7 @@ def do_summary(cache, args):
   exifcount = cache.get_exifcount() 
   exifrate = exifcount / filecount * 100 if filecount>0 else 0 
   print( "Cache file:       {:s}".format( args.file ))
+  print( "Image path:       {:s}".format( str(cache.get_cache_path())) )
   print( "Created:          {:s}".format( str(cache.get_cache_create_date())) )
   print( "Last check:       {:s}".format( str(cache.get_cache_check_date())) )
   print( "#Directories:     {:d}".format( cache.get_dircount()) )
@@ -91,7 +92,7 @@ def do_refresh_exif(cache, args):
   for dir_item in dirlist:
     if dir_item[0] == "d": # file
       dirname = dir_item[1]
-      print( "{:3.0f}% - scanning directory: {:s}".format( curfile/filecount*100, dirname) )  
+      print( "{:3.0f}% - scanning files in directory: {:s}".format( curfile/filecount*100, dirname) )  
     else:
       fname = os.path.join(dirname, dir_item[1])
       cache.read_exif_info(fname)

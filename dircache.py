@@ -52,28 +52,34 @@ class DirCache:
   def _update_dir_cache(self):
     tm = datetime.datetime.now()
     updated = False
+    picture_dir = os.path.normpath( cfg['PIC_DIR'] )
 
     if len(self.dir_cache) < 2: # invalid - create new one
       logging.info('Refreshing directory cache. No valid pickle file found - creating new one')
       self.dir_cache.clear()
       self.dir_cache['dir'] = {}
       self.dir_cache['statistics'] = {}
+      self.dir_cache['statistics']['path'] = picture_dir 
       self.dir_cache['statistics']['created'] = tm
       self.dir_cache['statistics']['checked'] = tm
     else:  
-      if not self.dir_cache['statistics'].get('checked'):
-        self.dir_cache['statistics']['checked'] = self.dir_cache['statistics']['created'] 
-      if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=cfg['CHECK_DIR_TM']):  
-        logging.info('Refresh of directory cache not necessary: Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
-        return False
+      if not self.dir_cache['statistics'].get('path'):
+        self.dir_cache['statistics']['path'] = picture_dir # migration only - TODO: remove
+      if self.dir_cache['statistics']['path'] == picture_dir:  
+        if tm < self.dir_cache['statistics']['checked'] + datetime.timedelta(seconds=cfg['CHECK_DIR_TM']):  
+          logging.info('Refresh of directory cache not necessary: Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
+          return False
+        else:
+          logging.info('Refreshing directory cache. Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
       else:
-        logging.info('Refreshing directory cache. Last check: {}'.format(str(self.dir_cache['statistics']['checked'])))
-
+          logging.info('Refreshing directory cache. Image directory changed.')
+          self.dir_cache['statistics']['path'] = picture_dir 
+          updated = True
+          
     # mark all directories in cache
     for dir_item, val in self.dir_cache['dir'].items():
       val['meta'][3] = False    
 
-    picture_dir = os.path.normpath( cfg['PIC_DIR'] )
     for root, subdirs, filenames in os.walk(picture_dir, topdown=True):
       subdirs[:] = [d for d in subdirs if d not in cfg['IGNORE_DIRS']] # prune irrelevant subdirs
       mtime = os.stat(root).st_mtime 
@@ -274,6 +280,12 @@ class DirCache:
     if len(self.dir_cache) > 0:
       date = self.dir_cache['statistics']['checked']
     return date  
+
+  def get_cache_path(self):
+    path=None
+    if len(self.dir_cache) > 0:
+      path = self.dir_cache['statistics']['path']
+    return path  
 
   def get_dircount(self):
     count=0
