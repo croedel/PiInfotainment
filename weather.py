@@ -5,6 +5,7 @@ import time
 import datetime
 import locale
 from config import cfg
+import rki_covid
 import logging
 
 last_refresh = 0.0
@@ -159,6 +160,8 @@ def get_weather_info( lat, lon, units, lang, appid ):
   raw_data = _request_openweathermap( lat, lon, units, lang, appid )
   if isinstance(raw_data, dict):
     w_dict = _normalize_weather(raw_data, lang)
+    covid_data = rki_covid.get_covid_info( cfg['RKI_ID'] )
+    w_dict['current']['cases7_per_100k'] = '{:.0f}'.format(covid_data.get('cases7_per_100k'),'-') 
   return w_dict
 
 #############################################################################

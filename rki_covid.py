@@ -1,5 +1,5 @@
 #!/usr/bin/python
-''' RKI Corona
+''' Retrieve RKI Corona data 
 '''
 
 import requests
@@ -25,8 +25,11 @@ def _request_rki_data( id ):  # get data from RKI API
 
 def _normalize_rki_data( raw_data ):
   covid_data = {}
-  covid_data['name'] = raw_data['features'][0]['attributes']['BEZ'] + ' ' + raw_data['features'][0]['attributes']['GEN']
-  covid_data['cases7_per_100k'] = raw_data['features'][0]['attributes']['cases7_per_100k']
+  try:
+    covid_data['name'] = raw_data['features'][0]['attributes']['BEZ'] + ' ' + raw_data['features'][0]['attributes']['GEN']
+    covid_data['cases7_per_100k'] = raw_data['features'][0]['attributes']['cases7_per_100k']
+  except Exception as e:
+    logging.error( "Error while normalizing RKI data: Exception {:s}".format(str(e)) ) 
   return covid_data
 
 #------------------------------------------------------------------    

@@ -15,9 +15,10 @@ def weather_obj_create( width, height ):
   # So the ranges are ==> x +/-960 ; y +/-540
   # You might need to adjust for other display dimensions
   y_top = height*0.5 - cfg['W_MARGIN_TOP']
-  x_sunrise = -width*0.5 + cfg['W_POINT_SIZE']*11
+  x_sunrise = -width*0.5 + cfg['W_POINT_SIZE']*10
   x_sunset = x_sunrise + cfg['W_STATIC_SIZE']*3
-  x_uvi = x_sunset + cfg['W_STATIC_SIZE']*4 
+  x_uvi = x_sunset + cfg['W_STATIC_SIZE']*4  
+  x_cases7 = x_uvi + cfg['W_STATIC_SIZE']*5 
   weatherobj['static'] = {}
   weatherobj['static']['sunrise'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'sunrise.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
                           x=x_sunrise, y=y_top, z=1.0) 
@@ -25,9 +26,11 @@ def weather_obj_create( width, height ):
                           x=x_sunset, y=y_top, z=1.0) 
   weatherobj['static']['uvidx'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'uvidx.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
                           x=x_uvi, y=y_top, z=1.0) 
+  weatherobj['static']['corona'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'corona.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
+                          x=x_cases7, y=y_top, z=1.0) 
 
   x = -width*0.5 + cfg['W_MARGIN_LEFT'] + cfg['W_STATIC_SIZE']*0.5
-  x_dt = -width*0.5 + cfg['W_MARGIN_LEFT'] + cfg['W_STATIC_SIZE']*0.5
+  x_dt = -width*0.5 + cfg['W_MARGIN_LEFT']
   y_date = y_top - cfg['W_STATIC_SIZE']*1.5
   y_icon = y_date - cfg['W_ICON_SIZE']*0.9
   y_temp = 0
@@ -55,6 +58,8 @@ def weather_obj_create( width, height ):
   weatherobj['current']['sunset'] = pi3d.TextBlock(x=x_sunset+cfg['W_STATIC_SIZE']*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=10, size=0.6, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
   weatherobj['current']['uvi'] = pi3d.TextBlock(x=x_uvi+cfg['W_STATIC_SIZE']*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.6, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  weatherobj['current']['cases7_per_100k'] = pi3d.TextBlock(x=x_cases7+cfg['W_STATIC_SIZE']*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
   w_item_cnt = int( (width-cfg['W_MARGIN_LEFT']) / (cfg['W_ICON_SIZE'] + cfg['W_SPACING']))

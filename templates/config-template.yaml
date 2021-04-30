@@ -89,6 +89,9 @@ W_MARGIN_LEFT : 30          # left margin
 W_MARGIN_TOP : 75           # top margin
 W_SPACING : 80              # spacing between the weather columns
 
+#RKI COVID
+RKI_ID : 00000              # RKI region ID; you can find out here: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data
+
 # CAMERA
 CAMERA_ZOOM : 0.75          # zoom level for vlc player (e.g. shrink or enlarge video)
 CAMERA_URL : "URL"          # URL of webcam stream, e.g. "rtsp://<user>:<pw>@<ip-address>:<port>/<path>"

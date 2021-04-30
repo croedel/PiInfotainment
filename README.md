@@ -341,6 +341,14 @@ And add following URL as Web Hook:
 ```
 http://<IP Address of you RasperryPi>/index.html?topic=camera
 ```
+### RKI COVID Incidence
+Nowadays the COVIC 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
+To define the location for which you want to display the figure, you should go to https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data. Search for your "Landkreis" and look for the "AGS" id.
+This id then sould be added to config.yaml: 
+
+```
+RKI_ID : 09179          # RKI region ID
+```
 
 -------------------------
 
