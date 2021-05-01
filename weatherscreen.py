@@ -89,12 +89,29 @@ def weather_obj_create( width, height ):
     weatherobj['forecast'].append( item )
   return weatherobj
 
+def set_corona_colour(weather_info, weatherobj):
+  cases7 = int(weather_info['current']['cases7_per_100k'])
+  if cases7 <= 25:
+    colour = (0.0, 0.7, 0.0, 1.0) 
+  elif cases7 <= 50:
+    colour = (1.0, 1.0, 0.2, 1.0) 
+  elif cases7 <= 100:
+    colour = (1.0, 0.6, 0.1, 1.0) 
+  elif cases7 <= 250:
+    colour = (1.0, 0.0, 0.0, 1.0) 
+  elif cases7 <= 500:
+    colour = (1.0, 0.0, 1.0, 1.0) 
+  else:
+    colour = (0.8, 0.3, 1.0, 1.0) 
+  weatherobj['current']['cases7_per_100k'].colouring.set_colour( colour=colour )         
+
 def weather_refresh(weatherobj):
   weather_info = weather.get_weather_info( cfg['W_LATITUDE'], cfg['W_LONGITUDE'], cfg['W_UNIT'], cfg['W_LANGUAGE'], cfg['W_API_KEY'] )
   try:
     for key, val in weather_info['current'].items():
       if key in weatherobj['current']:
         weatherobj['current'][key].set_text(text_format=val)
+    set_corona_colour(weather_info, weatherobj)    
     for i in range( min(len(weather_info['forecast']), len(weatherobj['forecast'])) ):
       for key, val in weather_info['forecast'][i].items():
         if key in weatherobj['forecast'][i]:
@@ -103,7 +120,7 @@ def weather_refresh(weatherobj):
                   blend=True, automatic_resize=True, free_after_load=True)
             weatherobj['forecast'][i][key].set_textures( [w_tex] )
           else:  
-            weatherobj['forecast'][i][key].set_text(text_format=val) 
+            weatherobj['forecast'][i][key].set_text(text_format=val)
   except Exception as e:
     logging.error("Couldn't update weather object. error: {}".format(str(e)))
 
