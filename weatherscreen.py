@@ -90,19 +90,22 @@ def weather_obj_create( width, height ):
   return weatherobj
 
 def set_corona_colour(weather_info, weatherobj):
-  cases7 = int(weather_info['current']['cases7_per_100k'])
-  if cases7 <= 25:
-    colour = (0.0, 0.7, 0.0, 1.0) 
-  elif cases7 <= 50:
-    colour = (1.0, 1.0, 0.2, 1.0) 
-  elif cases7 <= 100:
-    colour = (1.0, 0.6, 0.1, 1.0) 
-  elif cases7 <= 250:
-    colour = (1.0, 0.0, 0.0, 1.0) 
-  elif cases7 <= 500:
-    colour = (1.0, 0.0, 1.0, 1.0) 
-  else:
-    colour = (0.8, 0.3, 1.0, 1.0) 
+  try:
+    cases7 = int(weather_info['current']['cases7_per_100k'])
+    if cases7 <= 25:
+      colour = (0.0, 0.7, 0.0, 1.0) 
+    elif cases7 <= 50:
+      colour = (1.0, 1.0, 0.2, 1.0) 
+    elif cases7 <= 100:
+      colour = (1.0, 0.6, 0.1, 1.0) 
+    elif cases7 <= 250:
+      colour = (1.0, 0.0, 0.0, 1.0) 
+    elif cases7 <= 500:
+      colour = (1.0, 0.0, 1.0, 1.0) 
+    else:
+      colour = (0.8, 0.3, 1.0, 1.0)
+  except:
+    colour = (1.0, 1.0, 1.0, 1.0)       
   weatherobj['current']['cases7_per_100k'].colouring.set_colour( colour=colour )         
 
 def weather_refresh(weatherobj):
