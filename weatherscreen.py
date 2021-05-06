@@ -92,15 +92,15 @@ def weather_obj_create( width, height ):
 def set_corona_colour(weather_info, weatherobj):
   try:
     cases7 = int(weather_info['current']['cases7_per_100k'])
-    if cases7 <= 25:
+    if cases7 < 25:
       colour = (0.0, 0.7, 0.0, 1.0) 
-    elif cases7 <= 50:
+    elif cases7 < 50:
       colour = (1.0, 1.0, 0.2, 1.0) 
-    elif cases7 <= 100:
+    elif cases7 < 100:
       colour = (1.0, 0.6, 0.1, 1.0) 
-    elif cases7 <= 250:
+    elif cases7 < 250:
       colour = (1.0, 0.0, 0.0, 1.0) 
-    elif cases7 <= 500:
+    elif cases7 < 500:
       colour = (1.0, 0.0, 1.0, 1.0) 
     else:
       colour = (0.8, 0.3, 1.0, 1.0)

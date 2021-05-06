@@ -25,6 +25,7 @@ def _request_rki_data( id ):  # get data from RKI API
 
 def _normalize_rki_data( raw_data ):
   covid_data = {}
+  covid_data['cases7_per_100k'] = -1
   try:
     covid_data['name'] = raw_data['features'][0]['attributes']['BEZ'] + ' ' + raw_data['features'][0]['attributes']['GEN']
     covid_data['cases7_per_100k'] = raw_data['features'][0]['attributes']['cases7_per_100k']

@@ -4,6 +4,7 @@ import requests
 import time
 import datetime
 import locale
+import math
 from config import cfg
 import rki_covid
 import logging
@@ -161,7 +162,8 @@ def get_weather_info( lat, lon, units, lang, appid ):
   if isinstance(raw_data, dict):
     w_dict = _normalize_weather(raw_data, lang)
     covid_data = rki_covid.get_covid_info( cfg['RKI_ID'] )
-    w_dict['current']['cases7_per_100k'] = '{:.0f}'.format(covid_data.get('cases7_per_100k'),'-') 
+    cases7 = math.floor(covid_data.get('cases7_per_100k', -1))
+    w_dict['current']['cases7_per_100k'] = '{:.0f}'.format(cases7) 
   return w_dict
 
 #############################################################################
