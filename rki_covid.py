@@ -38,8 +38,7 @@ def _normalize_rki_data( raw_data ):
 def get_covid_info( id ): 
   logging.info('Refreshing COVID info')
   raw_data = _request_rki_data( id )
-  if isinstance(raw_data, dict):
-    covid_data = _normalize_rki_data(raw_data)
+  covid_data = _normalize_rki_data(raw_data)
   return covid_data
 
 #############################################################################
