@@ -26,7 +26,7 @@ def weather_obj_create( width, height ):
                           x=x_sunset, y=y_top, z=1.0) 
   weatherobj['static']['uvidx'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'uvidx.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
                           x=x_uvi, y=y_top, z=1.0) 
-  weatherobj['static']['corona'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'corona.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
+  weatherobj['static']['corona'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'corona_g.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
                           x=x_cases7, y=y_top, z=1.0) 
 
   x = -width*0.5 + cfg['W_MARGIN_LEFT'] + cfg['W_STATIC_SIZE']*0.5
@@ -94,19 +94,26 @@ def set_corona_colour(weather_info, weatherobj):
     cases7 = int(weather_info['current']['cases7_per_100k'])
     if cases7 < 25:
       colour = (0.0, 0.7, 0.0, 1.0) 
+      icon = "corona_g.png"
     elif cases7 < 50:
       colour = (1.0, 1.0, 0.2, 1.0) 
+      icon = "corona_l.png"
     elif cases7 < 100:
       colour = (1.0, 0.6, 0.1, 1.0) 
+      icon = "corona_y.png"
     elif cases7 < 250:
       colour = (1.0, 0.0, 0.0, 1.0) 
+      icon = "corona_p.png"
     elif cases7 < 500:
-      colour = (1.0, 0.0, 1.0, 1.0) 
+      colour = (1.0, 0.0, 1.0, 1.0)
+      icon = "corona_v.png"
     else:
       colour = (0.8, 0.3, 1.0, 1.0)
   except:
     colour = (1.0, 1.0, 1.0, 1.0)       
   weatherobj['current']['cases7_per_100k'].colouring.set_colour( colour=colour )         
+  tex = pi3d.Texture(os.path.join(cfg['W_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
+  weatherobj['static']['corona'].set_textures( [tex] )
 
 def weather_refresh(weatherobj):
   weather_info = weather.get_weather_info( cfg['W_LATITUDE'], cfg['W_LONGITUDE'], cfg['W_UNIT'], cfg['W_LANGUAGE'], cfg['W_API_KEY'] )
