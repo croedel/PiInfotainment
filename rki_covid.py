@@ -11,7 +11,7 @@ def _request_rki_data( id ):  # get data from RKI API
   url = 'https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/RKI_Landkreisdaten/FeatureServer/0/query'
   payload = { 'where':'AGS='+id, 'outFields':'*', 'outSR':'4326', 'f':'json' }
   try:
-    response = requests.get( url, payload )
+    response = requests.get( url, payload, timeout=3 )
   except requests.exceptions.RequestException as err:
     logging.error( "Couldn't request RKI API: Exception {:s}".format(str(err)) )
   else:

@@ -38,7 +38,7 @@ def _request_openweathermap( lat, lon, units, lang, appid ):  # get weather info
     url = 'https://api.openweathermap.org/data/2.5/onecall'
     payload = { 'lat': lat, 'lon': lon, 'units': units, 'lang': lang, 'appid': appid }
     try:
-      response = requests.get( url, payload )
+      response = requests.get( url, payload, timeout=3 )
     except requests.exceptions.RequestException as err:
       logging.error( "Couldn't request openweathermap API: Exception {:s}".format(str(err)) )
     else:

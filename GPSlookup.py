@@ -9,7 +9,7 @@ def reverse_lookup(lat, lon):
   headers = { 'User-Agent': 'pi3d RaspiPicFrame' }
   ret='ERROR'
   try:
-    response = requests.get( url, payload, headers=headers )
+    response = requests.get( url, payload, headers=headers, timeout=3 )
   except requests.exceptions.RequestException as err:
     logging.error( "Couldn't request openstreetmap API: Exception {:s}".format(err) )
   else:
