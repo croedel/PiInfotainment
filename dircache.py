@@ -155,6 +155,7 @@ class DirCache:
     except OSError as err:
       logging.info("Couldn't read directory cache from pickle file: {}".format(str(err)))
       self.dir_cache = {}
+      self.refresh_cache()
   
   # ----------- public functions --------------------
   # update cache: set exif data for given file
