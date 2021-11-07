@@ -102,13 +102,14 @@ def set_corona_colour(weather_info, weatherobj):
       colour = (1.0, 0.6, 0.1, 1.0) 
       icon = "corona_y.png"
     elif cases7 < 100:
-      colour = (1.0, 0.0, 0.0, 1.0) 
+      colour = (1.0, 0.1, 0.0, 1.0) 
       icon = "corona_p.png"
     elif cases7 < 150:
       colour = (1.0, 0.0, 1.0, 1.0)
       icon = "corona_v.png"
     else:
       colour = (0.8, 0.3, 1.0, 1.0)
+      icon = "corona_x.png"
   except:
     colour = (1.0, 1.0, 1.0, 1.0)       
   weatherobj['current']['cases7_per_100k'].colouring.set_colour( colour=colour )         
