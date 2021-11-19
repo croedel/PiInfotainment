@@ -91,6 +91,7 @@ W_SPACING : 80              # spacing between the weather columns
 
 #RKI COVID
 RKI_ID : 00000              # RKI region ID; you can find out here: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data
+RKI_REGION : "Bayern"       # Bundesland
 
 # CAMERA
 CAMERA_ZOOM : 0.75          # zoom level for vlc player (e.g. shrink or enlarge video)

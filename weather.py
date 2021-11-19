@@ -161,9 +161,11 @@ def get_weather_info( lat, lon, units, lang, appid ):
   raw_data = _request_openweathermap( lat, lon, units, lang, appid )
   if isinstance(raw_data, dict):
     w_dict = _normalize_weather(raw_data, lang)
-    covid_data = rki_covid.get_covid_info( cfg['RKI_ID'] )
+    covid_data = rki_covid.get_covid_info( cfg['RKI_ID'], cfg['RKI_REGION'] )
     cases7 = math.floor(covid_data.get('cases7_per_100k', -1))
-    w_dict['current']['cases7_per_100k'] = '{:.0f}'.format(cases7) 
+    hospitalization = float(covid_data.get('hospitalization', '-1'))
+    w_dict['current']['cases7_per_100k'] = '{:.0f}'.format(cases7)
+    w_dict['current']['hospitalization_idx'] = '{:.2f}'.format(hospitalization)
   return w_dict
 
 #############################################################################

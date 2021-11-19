@@ -87,6 +87,7 @@ pip3 install python-vlc
 pip3 install paho-mqtt
 pip3 install pyyaml
 pip3 install pyheif
+pip3 install requests
 ```
 
 Now let's install the PIInfotainment system:
@@ -342,12 +343,17 @@ And add following URL as Web Hook:
 http://<IP Address of you RasperryPi>/index.html?topic=camera
 ```
 ### RKI COVID Incidence
-Nowadays the COVIC 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
+Nowadays the COVID 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
 To define the location for which you want to display the figure, you should go to https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data. Search for your "Landkreis" and look for the "AGS" id.
-This id then sould be added to config.yaml: 
+
+The second important figure is the 7-day hospitalization index. It is retrieved from the RKI GitHub Repository (https://github.com/robert-koch-institut)
+[Robert Koch-Institut (2021): COVID-19-Hospitalisierungen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.5519056.]
+
+This location id as well as the region name then sould be added to config.yaml: 
 
 ```
 RKI_ID : 09179          # RKI region ID
+RKI_REGION : "Bayern"   # Bundesland
 ```
 
 -------------------------
