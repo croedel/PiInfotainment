@@ -90,6 +90,11 @@ pip3 install pyheif
 pip3 install requests
 ```
 
+if pyheif is not working correctly, you might want to try this:
+```
+apt-get remove libde265-0 -y && sudo apt-get remove libheif1 -y && sudo apt-get remove libheif-dev -y && sudo apt-get remove libde265-dev -y && sudo apt install autotools-dev automake libtool texinfo x265 -y && git clone https://github.com/strukturag/libde265.git && cd libde265 && ./autogen.sh && ./configure --disable-dec265 --disable-sherlock265 --prefix /usr && make && sudo make install && cd .. && git clone https://github.com/strukturag/libheif.git && cd libheif && ./autogen.sh && ./configure --prefix /usr && make && sudo make install && cd .. && git clone https://github.com/libffi/libffi.git && cd libffi && ./autogen.sh && ./configure --prefix /usr && make && sudo make install && cd .. && pip3 install git+https://github.com/carsales/pyheif.git && sudo pip3 install pyheif
+```
+
 Now let's install the PIInfotainment system:
 
 ```
