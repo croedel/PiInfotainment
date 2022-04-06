@@ -123,3 +123,7 @@ MONITOR_SCHEDULE :
 # Infoserver (Webserver) config
 SRV_ROOT : "srvroot"
 PIC_HISTORY : 15     # Length of the picture history to be shown in web UI
+
+# RCT Power device
+RCT_SERVER : "192.168.178.32"
+RCT_PORT : 8899
