@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 from locale import format_string
+from config import cfg
+import logging
+
 import socket, select, sys
 import json
 from telnetlib import RCTE
@@ -67,60 +70,66 @@ def connect_to_server( server, port ):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((server, port))
     except OSError as msg:
-        print("Couldn't connect to server {}:{} -> {}".format(server, port, msg))
+        logging.error("Couldn't connect to server {}:{} -> {}".format(server, port, msg))
         return "ERROR"
     return sock    
 
 #---------------------------------------------
+def get_RCT_device_data():
+    # Defines which data to retrieve from the device
+    data_array = [
+        # (Field, Category, Scale, Format)
+        ( "battery.soc",                        "now", 1,       "Battery: {:.1f} %" ),
+        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "now", 1,       "Generator A power: {:.0f} W" ),
+        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "now", 1,       "Generator B power: {:.0f} W" ),
+        ( "g_sync.p_acc_lp",                    "now", 1,       "Battery charge: {:.0f} W" ),
+        ( "g_sync.p_ac_load_sum_lp",            "now", 1,       "House consumption: {:.0f} W" ),
+        ( "g_sync.p_ac_grid_sum_lp",            "now", 1,       "Grid power: {:.0f} W" ),
 
-server = '192.168.178.32'
-port = 8899
+        ( "energy.e_ext_day",                   "day", 1000,    "External consumption: {:.1f} kWh" ),
+        ( "energy.e_ac_day",                    "day", 1000,    "Total consumption: {:.1f} kWh" ),
+        ( "energy.e_grid_load_day",             "day", 1000,    "Grid consumption: {:.1f} kWh" ),
+        ( "energy.e_grid_feed_day",             "day", 1000,    "Grid feed: {:.1f} kWh" ),
+        ( "energy.e_dc_day[0]",                 "day", 1000,    "Generator A: {:.1f} kWh" ),
+        ( "energy.e_dc_day[1]",                 "day", 1000,    "Generator B: {:.1f} kWh" ),
+        ( "energy.e_load_day",                  "day", 1000,    "Household: {:.1f} kWh" ),
 
-data_array = [
-    # (Field, Category, Scale, Format)
-    ( "battery.soc",                        "now", 1,       "Battery: {:.1f} %" ),
-    ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "now", 1,       "Generator A power: {:.0f} W" ),
-    ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "now", 1,       "Generator B power: {:.0f} W" ),
-    ( "g_sync.p_acc_lp",                    "now", 1,       "Battery charge: {:.0f} W" ),
-    ( "g_sync.p_ac_load_sum_lp",            "now", 1,       "House consumption: {:.0f} W" ),
-    ( "g_sync.p_ac_grid_sum_lp",            "now", 1,       "Grid power: {:.0f} W" ),
+        ( "energy.e_ext_month",                 "month", 1000,  "External consumption: {:.0f} kWh" ),
+        ( "energy.e_ac_month",                  "month", 1000,  "Total consumption: {:.0f} kWh" ),
+        ( "energy.e_grid_load_month",           "month", 1000,  "Grid consumption: {:.0f} kWh" ),
+        ( "energy.e_grid_feed_month",           "month", 1000,  "Grid feed: {:.0f} kWh" ),
+        ( "energy.e_dc_month[0]",               "month", 1000,  "Generator A: {:.0f} kWh" ),
+        ( "energy.e_dc_month[1]",               "month", 1000,  "Generator B: {:.0f} kWh" ),
+        ( "energy.e_load_month",                "month", 1000,  "Household: {:.0f} kWh" ),
 
-    ( "energy.e_ext_day",                   "day", 1000,    "External consumption: {:.1f} kWh" ),
-    ( "energy.e_ac_day",                    "day", 1000,    "Total consumption: {:.1f} kWh" ),
-    ( "energy.e_grid_load_day",             "day", 1000,    "Grid consumption: {:.1f} kWh" ),
-    ( "energy.e_grid_feed_day",             "day", 1000,    "Grid feed: {:.1f} kWh" ),
-    ( "energy.e_dc_day[0]",                 "day", 1000,    "Generator A: {:.1f} kWh" ),
-    ( "energy.e_dc_day[1]",                 "day", 1000,    "Generator B: {:.1f} kWh" ),
-    ( "energy.e_load_day",                  "day", 1000,    "Household: {:.1f} kWh" ),
+        ( "energy.e_ext_year",                  "year", 1000,   "External consumption: {:.0f} kWh" ),
+        ( "energy.e_ac_year",                   "year", 1000,   "Total consumption: {:.0f} kWh" ),
+        ( "energy.e_grid_load_year",            "year", 1000,   "Grid consumption: {:.0f} kWh" ),
+        ( "energy.e_grid_feed_year",            "year", 1000,   "Grid feed: {:.0f} kWh" ),
+        ( "energy.e_dc_year[0]",                "year", 1000,   "Generator A: {:.0f} kWh" ),
+        ( "energy.e_dc_year[1]",                "year", 1000,   "Generator B: {:.0f} kWh" ),
+        ( "energy.e_load_year",                 "year", 1000,   "Household: {:.0f} kWh" ),
 
-    ( "energy.e_ext_month",                 "month", 1000,  "External consumption: {:.0f} kWh" ),
-    ( "energy.e_ac_month",                  "month", 1000,  "Total consumption: {:.0f} kWh" ),
-    ( "energy.e_grid_load_month",           "month", 1000,  "Grid consumption: {:.0f} kWh" ),
-    ( "energy.e_grid_feed_month",           "month", 1000,  "Grid feed: {:.0f} kWh" ),
-    ( "energy.e_dc_month[0]",               "month", 1000,  "Generator A: {:.0f} kWh" ),
-    ( "energy.e_dc_month[1]",               "month", 1000,  "Generator B: {:.0f} kWh" ),
-    ( "energy.e_load_month",                "month", 1000,  "Household: {:.0f} kWh" ),
+        ( "energy.e_ext_total",                 "total", 1000,  "External consumption: {:.0f} kWh" ),
+        ( "energy.e_ac_total",                  "total", 1000,  "Total consumption: {:.0f} kWh" ),
+        ( "energy.e_grid_load_total",           "total", 1000,  "Grid consumption: {:.0f} kWh" ),
+        ( "energy.e_grid_feed_total",           "total", 1000,  "Grid feed: {:.0f} kWh" ),
+        ( "energy.e_dc_total[0]",               "total", 1000,  "Generator A: {:.0f} kWh" ),
+        ( "energy.e_dc_total[1]",               "total", 1000,  "Generator B: {:.0f} kWh" ),
+        ( "energy.e_load_total",                "total", 1000,  "Household: {:.0f} kWh" )
+    ]
 
-    ( "energy.e_ext_year",                  "year", 1000,   "External consumption: {:.0f} kWh" ),
-    ( "energy.e_ac_year",                   "year", 1000,   "Total consumption: {:.0f} kWh" ),
-    ( "energy.e_grid_load_year",            "year", 1000,   "Grid consumption: {:.0f} kWh" ),
-    ( "energy.e_grid_feed_year",            "year", 1000,   "Grid feed: {:.0f} kWh" ),
-    ( "energy.e_dc_year[0]",                "year", 1000,   "Generator A: {:.0f} kWh" ),
-    ( "energy.e_dc_year[1]",                "year", 1000,   "Generator B: {:.0f} kWh" ),
-    ( "energy.e_load_year",                 "year", 1000,   "Household: {:.0f} kWh" ),
+    rctdata = None
+    sock = connect_to_server( cfg['RCT_SERVER'], cfg['RCT_PORT'] )
+    if sock != "ERROR":
+        rctdata = retrieve_data( sock, data_array )    
+    return rctdata
 
-    ( "energy.e_ext_total",                 "total", 1000,  "External consumption: {:.0f} kWh" ),
-    ( "energy.e_ac_total",                  "total", 1000,  "Total consumption: {:.0f} kWh" ),
-    ( "energy.e_grid_load_total",           "total", 1000,  "Grid consumption: {:.0f} kWh" ),
-    ( "energy.e_grid_feed_total",           "total", 1000,  "Grid feed: {:.0f} kWh" ),
-    ( "energy.e_dc_total[0]",               "total", 1000,  "Generator A: {:.0f} kWh" ),
-    ( "energy.e_dc_total[1]",               "total", 1000,  "Generator B: {:.0f} kWh" ),
-    ( "energy.e_load_total",                "total", 1000,  "Household: {:.0f} kWh" )
-]
+#-------------------------------------------------
+if __name__ == "__main__":
+    logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
 
-sock = connect_to_server( server, port )
-if sock != "ERROR":
-    rctdata = retrieve_data( sock, data_array )    
-    print(json.dumps(rctdata, indent=4))
-
+    rctdata = get_RCT_device_data()
+    if rctdata != None:
+        logging.info(json.dumps(rctdata, indent=4))
 
