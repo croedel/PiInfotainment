@@ -48,7 +48,7 @@ def retrieve_data( sock, data_array ):
     last_category = ""
     node = None
 
-    for( field, category, scale, sformat ) in data_array:
+    for( field, category, scale, title, sformat ) in data_array:
         value = query_object( sock, field )
         if value != None:
             if category != last_category:
@@ -57,7 +57,10 @@ def retrieve_data( sock, data_array ):
                 node = {}
                 node["category"] = category
                 node["data"] = {}
-            node["data"][field] = sformat.format( value/scale )
+            if scale:
+                node["data"][title] = sformat.format( value/scale )
+            else:
+                node["data"][title] = sformat.format( value )
             last_category = category
     if node != None:
         rctdata.append(node)        
@@ -78,45 +81,50 @@ def connect_to_server( server, port ):
 def get_RCT_device_data():
     # Defines which data to retrieve from the device
     data_array = [
-        # (Field, Category, Scale, Format)
-        ( "battery.soc",                        "now", 1,       "Speicher Ladung: {:.1f} %" ),
-        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "now", 1,       "PV Leistung Strang A: {:.0f} W" ),
-        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "now", 1,       "PV Leistung Strang B: {:.0f} W" ),
-        ( "g_sync.p_acc_lp",                    "now", 1,       "Speicher Ladestrom: {:.0f} W" ),
-        ( "g_sync.p_ac_load_sum_lp",            "now", 1,       "Haus Verbrauch: {:.0f} W" ),
-        ( "g_sync.p_ac_grid_sum_lp",            "now", 1,       "Netz Bezug: {:.0f} W" ),
+        # (Field, Category, Scale, Title, Format)
+        ( "android_description",                "now", None,    "Name",     	        "{}" ),
+        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "now", 1,       "PV Leistung Strang A", "{:.2f} W" ),
+        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "now", 1,       "PV Leistung Strang B", "{:.2f} W" ),
+        ( "g_sync.p_acc_lp",                    "now", 1,       "Speicher Ladestrom",   "{:.2f} W" ),
+        ( "battery.soc",                        "now", 1,       "Speicher Ladestatus",  "{:.2f} %" ),
+        ( "g_sync.p_ac_load_sum_lp",            "now", 1,       "Haus Verbrauch",       "{:.2f} W" ),
+        ( "g_sync.p_ac_grid_sum_lp",            "now", 1,       "Netz Bezug",           "{:.2f} W" ),
+        ( "rb485.u_l_grid[0]",                  "now", 1,       "Netz Spannung (1)",    "{:.2f} V" ),
+        ( "rb485.u_l_grid[1]",                  "now", 1,       "Netz Spannung (2)",    "{:.2f} V" ),
+        ( "rb485.u_l_grid[2]",                  "now", 1,       "Netz Spannung (3)",    "{:.2f} V" ),
+        ( "prim_sm.island_flag",                "now", None,    "Inselmodus",           "{}" ),
+        
+        ( "energy.e_dc_day[0]",                 "day", 1000,    "PV Leistung Strang A", "{:.1f} kWh" ),
+        ( "energy.e_dc_day[1]",                 "day", 1000,    "PV Leistung Strang B", "{:.1f} kWh" ),
+        ( "energy.e_ext_day",                   "day", 1000,    "Externer Bezug",       "{:.1f} kWh" ),
+        ( "energy.e_ac_day",                    "day", 1000,    "Gesamtverbrauch",      "{:.1f} kWh" ),
+        ( "energy.e_grid_load_day",             "day", 1000,    "Netz Bezug",           "{:.1f} kWh" ),
+        ( "energy.e_grid_feed_day",             "day", 1000,    "Netz Einspeisung",     "{:.1f} kWh" ),
+        ( "energy.e_load_day",                  "day", 1000,    "Haus Verbrauch",       "{:.1f} kWh" ),
 
-        ( "energy.e_ext_day",                   "day", 1000,    "Externer Bezug: {:.1f} kWh" ),
-        ( "energy.e_ac_day",                    "day", 1000,    "Gesamtverbrauch: {:.1f} kWh" ),
-        ( "energy.e_grid_load_day",             "day", 1000,    "Netz Bezug: {:.1f} kWh" ),
-        ( "energy.e_grid_feed_day",             "day", 1000,    "Netz Einspeisung: {:.1f} kWh" ),
-        ( "energy.e_dc_day[0]",                 "day", 1000,    "PV Leistung Strang A: {:.1f} kWh" ),
-        ( "energy.e_dc_day[1]",                 "day", 1000,    "PV Leistung Strang B: {:.1f} kWh" ),
-        ( "energy.e_load_day",                  "day", 1000,    "Haus Verbrauch: {:.1f} kWh" ),
+        ( "energy.e_dc_month[0]",               "month", 1000,  "PV Leistung Strang A", "{:.0f} kWh" ),
+        ( "energy.e_dc_month[1]",               "month", 1000,  "PV Leistung Strang B", "{:.0f} kWh" ),
+        ( "energy.e_ext_month",                 "month", 1000,  "Externer Bezug",       "{:.0f} kWh" ),
+        ( "energy.e_ac_month",                  "month", 1000,  "Gesamtverbrauch",      "{:.0f} kWh" ),
+        ( "energy.e_grid_load_month",           "month", 1000,  "Netz Bezug",           "{:.0f} kWh" ),
+        ( "energy.e_grid_feed_month",           "month", 1000,  "Netz Einspeisung",     "{:.0f} kWh" ),
+        ( "energy.e_load_month",                "month", 1000,  "Haus Verbrauch",       "{:.0f} kWh" ),
 
-        ( "energy.e_ext_month",                 "month", 1000,  "Externer Bezug: {:.0f} kWh" ),
-        ( "energy.e_ac_month",                  "month", 1000,  "Gesamtverbrauch: {:.0f} kWh" ),
-        ( "energy.e_grid_load_month",           "month", 1000,  "Netz Bezug: {:.0f} kWh" ),
-        ( "energy.e_grid_feed_month",           "month", 1000,  "Netz Einspeisung: {:.0f} kWh" ),
-        ( "energy.e_dc_month[0]",               "month", 1000,  "PV Leistung Strang A: {:.0f} kWh" ),
-        ( "energy.e_dc_month[1]",               "month", 1000,  "PV Leistung Strang B: {:.0f} kWh" ),
-        ( "energy.e_load_month",                "month", 1000,  "Haus Verbrauch: {:.0f} kWh" ),
+        ( "energy.e_dc_year[0]",                "year", 1000,   "PV Leistung Strang A", "{:.0f} kWh" ),
+        ( "energy.e_dc_year[1]",                "year", 1000,   "PV Leistung Strang B", "{:.0f} kWh" ),
+        ( "energy.e_ext_year",                  "year", 1000,   "Externer Bezug",       "{:.0f} kWh" ),
+        ( "energy.e_ac_year",                   "year", 1000,   "Gesamtverbrauch",      "{:.0f} kWh" ),
+        ( "energy.e_grid_load_year",            "year", 1000,   "Netz Bezug",           "{:.0f} kWh" ),
+        ( "energy.e_grid_feed_year",            "year", 1000,   "Netz Einspeisung",     "{:.0f} kWh" ),
+        ( "energy.e_load_year",                 "year", 1000,   "Haus Verbrauch",       "{:.0f} kWh" ),
 
-        ( "energy.e_ext_year",                  "year", 1000,   "Externer Bezug: {:.0f} kWh" ),
-        ( "energy.e_ac_year",                   "year", 1000,   "Gesamtverbrauch: {:.0f} kWh" ),
-        ( "energy.e_grid_load_year",            "year", 1000,   "Netz Bezug: {:.0f} kWh" ),
-        ( "energy.e_grid_feed_year",            "year", 1000,   "Netz Einspeisung: {:.0f} kWh" ),
-        ( "energy.e_dc_year[0]",                "year", 1000,   "PV Leistung Strang A: {:.0f} kWh" ),
-        ( "energy.e_dc_year[1]",                "year", 1000,   "PV Leistung Strang B: {:.0f} kWh" ),
-        ( "energy.e_load_year",                 "year", 1000,   "Haus Verbrauch: {:.0f} kWh" ),
-
-        ( "energy.e_ext_total",                 "total", 1000,  "Externer Bezug: {:.0f} kWh" ),
-        ( "energy.e_ac_total",                  "total", 1000,  "Gesamtverbrauch: {:.0f} kWh" ),
-        ( "energy.e_grid_load_total",           "total", 1000,  "Netz Bezug: {:.0f} kWh" ),
-        ( "energy.e_grid_feed_total",           "total", 1000,  "Grid feed: {:.0f} kWh" ),
-        ( "energy.e_dc_total[0]",               "total", 1000,  "PV Leistung Strang A: {:.0f} kWh" ),
-        ( "energy.e_dc_total[1]",               "total", 1000,  "PV Leistung Strang B: {:.0f} kWh" ),
-        ( "energy.e_load_total",                "total", 1000,  "Haus Verbrauch: {:.0f} kWh" )
+        ( "energy.e_dc_total[0]",               "total", 1000,  "PV Leistung Strang A", "{:.0f} kWh" ),
+        ( "energy.e_dc_total[1]",               "total", 1000,  "PV Leistung Strang B", "{:.0f} kWh" ),
+        ( "energy.e_ext_total",                 "total", 1000,  "Externer Bezug",       "{:.0f} kWh" ),
+        ( "energy.e_ac_total",                  "total", 1000,  "Gesamtverbrauch",      "{:.0f} kWh" ),
+        ( "energy.e_grid_load_total",           "total", 1000,  "Netz Bezug",           "{:.0f} kWh" ),
+        ( "energy.e_grid_feed_total",           "total", 1000,  "Grid feed",            "{:.0f} kWh" ),
+        ( "energy.e_load_total",                "total", 1000,  "Haus Verbrauch",       "{:.0f} kWh" )
     ]
 
     rctdata = None
