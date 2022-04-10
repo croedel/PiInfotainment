@@ -9,7 +9,6 @@ from config import cfg
 import logging
 
 import socket, select, sys
-import json
 from telnetlib import RCTE
 from rctclient.frame import ReceiveFrame, make_frame
 from rctclient.registry import REGISTRY as R
@@ -88,30 +87,29 @@ def get_RCT_device_data():
     # Defines which data to retrieve from the device    
     field_array = [
         # (Field, Device-data, Title, Scale, Format)
-        ( "android_description",                True ,  "Name",     	        None,   "{}" ),
-        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  True ,  "PV Leistung Strang A", 1,      "{:.2f}W" ),
-        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  True ,  "PV Leistung Strang B", 1,      "{:.2f}W" ),
-        ( "g_sync.p_acc_lp",                    True ,  "Speicher Ladestrom",   1,      "{:.2f}W" ),
-        ( "battery.soc",                        True ,  "Speicher Ladestatus",  1,      "{:.0f}%" ),
-        ( "g_sync.p_ac_load_sum_lp",            True ,  "Haus Verbrauch",       1,      "{:.2f}W" ),
-        ( "g_sync.p_ac_grid_sum_lp",            True ,  "Netz Bezug",           1,      "{:.2f}W" ),
-        ( "prim_sm.island_flag",                True ,  "Inselmodus",           None,   "{}" ),
+        ( "android_description",                True,  "Name",     	            None,   "{}" ),
+        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  True,  "PV Leistung Strang A",  1,      "{:.2f}W" ),
+        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  True,  "PV Leistung Strang B",  1,      "{:.2f}W" ),
+        ( "g_sync.p_acc_lp",                    True,  "Speicher Ladestrom",    1,      "{:.2f}W" ),
+        ( "battery.soc",                        True,  "Speicher Ladestatus",   1,      "{:.0f}%" ),
+        ( "g_sync.p_ac_load_sum_lp",            True,  "Haus Verbrauch",        1,      "{:.2f}W" ),
+        ( "g_sync.p_ac_grid_sum_lp",            True,  "Netz Bezug",            1,      "{:.2f}W" ),
+        ( "prim_sm.island_flag",                True,  "Inselmodus",            None,   "{}" ),
    
-        ( "energy.e_dc_day[0]",                 True ,  "PV Leistung Strang A", 1000,   "{:.1f}kWh" ),
-        ( "energy.e_dc_day[1]",                 True ,  "PV Leistung Strang B", 1000,   "{:.1f}kWh" ),
-        ( "energy.e_ext_day",                   True ,  "Externer Bezug",       1000,   "{:.1f}kWh" ),
-        ( "energy.e_ac_day",                    True ,  "Gesamtverbrauch",      1000,   "{:.1f}kWh" ),
-        ( "energy.e_grid_load_day",             True ,  "Netz Bezug",           1000,   "{:.1f}kWh" ),
-        ( "energy.e_grid_feed_day",             True ,  "Netz Einspeisung",     1000,   "{:.1f}kWh" ),
-        ( "energy.e_load_day",                  True ,  "Haus Verbrauch",       1000,   "{:.1f}kWh" ),
+        ( "energy.e_dc_day[0]",                 True,  "PV Leistung Strang A",  1000,   "{:.1f}kWh" ),
+        ( "energy.e_dc_day[1]",                 True,  "PV Leistung Strang B",  1000,   "{:.1f}kWh" ),
+        ( "energy.e_ext_day",                   True,  "Externer Bezug",        1000,   "{:.1f}kWh" ),
+        ( "energy.e_ac_day",                    True,  "Gesamtverbrauch",       1000,   "{:.1f}kWh" ),
+        ( "energy.e_grid_load_day",             True,  "Netz Bezug",            1000,   "{:.1f}kWh" ),
+        ( "energy.e_grid_feed_day",             True,  "Netz Einspeisung",      1000,   "{:.1f}kWh" ),
+        ( "energy.e_load_day",                  True,  "Haus Verbrauch",        1000,   "{:.1f}kWh" ),
   
         # calculated data (device-data = False)
-        ( "energy.e_dc_day",                    False , "PV Leistung",          1000,   "{:.1f}kWh" ),
-        ( "energy.e_autarky_day",               False,  "Autarkie",             1,      "{:.0%}" ),
-        ( "energy.e_balance_day",               False,  "Energiebilanz",        1,      "{:.0%}" )
+        ( "energy.e_dc_day",                    False, "PV Leistung",           1000,   "{:.1f}kWh" ),
+        ( "energy.e_autarky_day",               False, "Autarkie",              1,      "{:.0%}" ),
+        ( "energy.e_balance_day",               False, "Energiebilanz",         1,      "{:.0%}" )
     ]
 
-    rawdata = None
     rctdata = None
     # Connect to server
     sock = connect_to_server( cfg['RCT_SERVER'], cfg['RCT_PORT'] )
@@ -124,7 +122,7 @@ def get_RCT_device_data():
         rawdata["energy.e_autarky_day"] = 1 - (rawdata["energy.e_ext_day"] / rawdata["energy.e_ac_day"]) if rawdata["energy.e_ac_day"] else 1
         rawdata["energy.e_balance_day"] = (rawdata["energy.e_grid_feed_day"] - rawdata["energy.e_grid_load_day"]) / rawdata["energy.e_ac_day"] if rawdata["energy.e_ac_day"] else 0
 
-        # Format result
+        # format rawdata to get result
         rctdata = format_data( rawdata, field_array )
     return rctdata
 
