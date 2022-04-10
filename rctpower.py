@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+Reads parameters from a RCT Power GmbH device. 
+This module uses heavily the great project https://github.com/svalouch/python-rctclient 
+"""
 
 from locale import format_string
 from config import cfg
@@ -43,25 +47,29 @@ def query_object( sock, parameter ):
     return value
 
 #---------------------------------------------
-def retrieve_data( sock, field_list ):
+def retrieve_data( sock, field_array ):
     rawdata = {} 
-
-    for field in field_list:
-        value = query_object( sock, field )        
-        if value != None:
-            rawdata[field] = value
+    for field, devicedata, title, scale, sformat in field_array:
+        if devicedata == True:    
+            value = query_object( sock, field )        
+            if value != None:
+                rawdata[field] = value
     return rawdata
 
 #---------------------------------------------
-def format_data( rawdata, field_formatting ):
+def format_data( rawdata, field_array ):
     rctdata = {}
-    for field, title, scale, sformat in field_formatting:
+    for field, devicedata, title, scale, sformat in field_array:
         value = rawdata[field]
         if value != None:       
-            if scale != None:    
-                rctdata[field] = sformat.format(value/scale)
+            node = {}
+            node["title"] = title
+            node["format"] = sformat
+            if scale != None and isinstance(scale, int):    
+                node["value"] = value/scale
             else:
-                rctdata[field] = sformat.format(value)
+                node["value"] = value
+            rctdata[field] = node
     return rctdata
 
 #---------------------------------------------
@@ -77,60 +85,47 @@ def connect_to_server( server, port ):
 
 #---------------------------------------------
 def get_RCT_device_data():
-    # Defines which data to retrieve from the device
-    field_list = [
-        "android_description",              
-        "dc_conv.dc_conv_struct[0].p_dc_lp",
-        "dc_conv.dc_conv_struct[1].p_dc_lp",
-        "g_sync.p_acc_lp",                  
-        "battery.soc",                      
-        "g_sync.p_ac_load_sum_lp",          
-        "g_sync.p_ac_grid_sum_lp",          
-        "prim_sm.island_flag",              
-    
-        "energy.e_dc_day[0]",               
-        "energy.e_dc_day[1]",               
-        "energy.e_ext_day",                 
-        "energy.e_ac_day",                  
-        "energy.e_grid_load_day",           
-        "energy.e_grid_feed_day",           
-        "energy.e_load_day",                
-    ]
-    
-    field_formatting = [
-        # (Field, Title, Scale, Format)
-        ( "android_description",                "Name",     	        None,   "{}" ),
-        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "PV Leistung Strang A", 1,      "{:.2f} W" ),
-        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "PV Leistung Strang B", 1,      "{:.2f} W" ),
-        ( "g_sync.p_acc_lp",                    "Speicher Ladestrom",   1,      "{:.2f} W" ),
-        ( "battery.soc",                        "Speicher Ladestatus",  1,      "{:.2f} %" ),
-        ( "g_sync.p_ac_load_sum_lp",            "Haus Verbrauch",       1,      "{:.2f} W" ),
-        ( "g_sync.p_ac_grid_sum_lp",            "Netz Bezug",           1,      "{:.2f} W" ),
-        ( "prim_sm.island_flag",                "Inselmodus",           None,   "{}" ),
-        
-        ( "energy.e_dc_day[0]",                 "PV Leistung Strang A", 1000,   "{:.1f} kWh" ),
-        ( "energy.e_dc_day[1]",                 "PV Leistung Strang B", 1000,   "{:.1f} kWh" ),
-        ( "energy.e_ext_day",                   "Externer Bezug",       1000,   "{:.1f} kWh" ),
-        ( "energy.e_ac_day",                    "Gesamtverbrauch",      1000,   "{:.1f} kWh" ),
-        ( "energy.e_grid_load_day",             "Netz Bezug",           1000,   "{:.1f} kWh" ),
-        ( "energy.e_grid_feed_day",             "Netz Einspeisung",     1000,   "{:.1f} kWh" ),
-        ( "energy.e_load_day",                  "Haus Verbrauch",       1000,   "{:.1f} kWh" ),
-
-        # calculated data
-        ( "energy.e_dc_day",                    "PV Leistung",          1000,   "{:.1f} kWh" ),
-
+    # Defines which data to retrieve from the device    
+    field_array = [
+        # (Field, Device-data, Title, Scale, Format)
+        ( "android_description",                True ,  "Name",     	        None,   "{}" ),
+        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  True ,  "PV Leistung Strang A", 1,      "{:.2f}W" ),
+        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  True ,  "PV Leistung Strang B", 1,      "{:.2f}W" ),
+        ( "g_sync.p_acc_lp",                    True ,  "Speicher Ladestrom",   1,      "{:.2f}W" ),
+        ( "battery.soc",                        True ,  "Speicher Ladestatus",  1,      "{:.0f}%" ),
+        ( "g_sync.p_ac_load_sum_lp",            True ,  "Haus Verbrauch",       1,      "{:.2f}W" ),
+        ( "g_sync.p_ac_grid_sum_lp",            True ,  "Netz Bezug",           1,      "{:.2f}W" ),
+        ( "prim_sm.island_flag",                True ,  "Inselmodus",           None,   "{}" ),
+   
+        ( "energy.e_dc_day[0]",                 True ,  "PV Leistung Strang A", 1000,   "{:.1f}kWh" ),
+        ( "energy.e_dc_day[1]",                 True ,  "PV Leistung Strang B", 1000,   "{:.1f}kWh" ),
+        ( "energy.e_ext_day",                   True ,  "Externer Bezug",       1000,   "{:.1f}kWh" ),
+        ( "energy.e_ac_day",                    True ,  "Gesamtverbrauch",      1000,   "{:.1f}kWh" ),
+        ( "energy.e_grid_load_day",             True ,  "Netz Bezug",           1000,   "{:.1f}kWh" ),
+        ( "energy.e_grid_feed_day",             True ,  "Netz Einspeisung",     1000,   "{:.1f}kWh" ),
+        ( "energy.e_load_day",                  True ,  "Haus Verbrauch",       1000,   "{:.1f}kWh" ),
+  
+        # calculated data (device-data = False)
+        ( "energy.e_dc_day",                    False , "PV Leistung",          1000,   "{:.1f}kWh" ),
+        ( "energy.e_autarky_day",               False,  "Autarkie",             1,      "{:.0%}" ),
+        ( "energy.e_balance_day",               False,  "Energiebilanz",        1,      "{:.0%}" )
     ]
 
     rawdata = None
     rctdata = None
+    # Connect to server
     sock = connect_to_server( cfg['RCT_SERVER'], cfg['RCT_PORT'] )
     if sock != "ERROR":
-        rawdata = retrieve_data( sock, field_list )
+        # read data from RCT data device
+        rawdata = retrieve_data( sock, field_array )
 
         # calculate some custom data 
         rawdata["energy.e_dc_day"] = rawdata["energy.e_dc_day[0]"] + rawdata["energy.e_dc_day[1]"]
+        rawdata["energy.e_autarky_day"] = 1 - (rawdata["energy.e_ext_day"] / rawdata["energy.e_ac_day"]) if rawdata["energy.e_ac_day"] else 1
+        rawdata["energy.e_balance_day"] = (rawdata["energy.e_grid_feed_day"] - rawdata["energy.e_grid_load_day"]) / rawdata["energy.e_ac_day"] if rawdata["energy.e_ac_day"] else 0
 
-        rctdata = format_data( rawdata, field_formatting )
+        # Format result
+        rctdata = format_data( rawdata, field_array )
     return rctdata
 
 #-------------------------------------------------
@@ -139,6 +134,6 @@ if __name__ == "__main__":
 
     rctdata = get_RCT_device_data()
     if rctdata:
-        for field, value in rctdata.items():
-            logging.info( field + ": " + str(value) )
+        for field, data in rctdata.items():
+            logging.info( field + " (" + data["title"] + "): " + data["format"].format(data["value"]) )
 

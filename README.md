@@ -9,6 +9,7 @@ This is a hobby project for Raspberry Pi which combines following core functiona
 - Surveillance camera viewer: Show live picture of a surveillance camera when it detects motion  
 - Simple webserver: Enables you to remotely control the Infotainment System
 - Enable to integrate into almost any home automation system which supports HTTP hooks 
+- Reads and displays data from a photovoltaic device from RCT Power 
 
 The Picture Frame functionality of RaspiInfotainment uses the pi3d (https://pi3d.github.io/) project and is heavily based on PictureFrame2020.py from https://github.com/pi3d/pi3d_demos. Kudos to these awsome projects!
 
@@ -54,6 +55,10 @@ This fuctionality is meant to display e.g. a frontdoor surveillance camera. It g
 
 This functionality automatically switches the monitor ON even if it was scheduled to be OFF at this point in time.
 
+### PV device data from RCT Power
+This module enables to read interesting parameters from a RCT Power GmbH device. 
+This module is based on the great project https://github.com/svalouch/python-rctclient 
+
 --------------------------------------
 
 ## Installation
@@ -88,6 +93,7 @@ pip3 install paho-mqtt
 pip3 install pyyaml
 pip3 install pyheif
 pip3 install requests
+pip3 install rctclient
 ```
 
 if pyheif is not working correctly, you might want to try this:
@@ -347,6 +353,15 @@ And add following URL as Web Hook:
 ```
 http://<IP Address of you RasperryPi>/index.html?topic=camera
 ```
+
+### RCT Power device
+In order to connect to your RCT Power device, you need to set the correct IP address and port.
+
+```
+RCT_SERVER    # Device IP address 
+RCT_PORT      # Device port
+```
+
 ### RKI COVID Incidence
 Nowadays the COVID 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
 To define the location for which you want to display the figure, you should go to https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data. Search for your "Landkreis" and look for the "AGS" id.
