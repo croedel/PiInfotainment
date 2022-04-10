@@ -43,26 +43,25 @@ def query_object( sock, parameter ):
     return value
 
 #---------------------------------------------
-def retrieve_data( sock, data_array ):
-    rctdata = {} 
-    last_category = ""
-    node = None
+def retrieve_data( sock, field_list ):
+    rawdata = {} 
 
-    for( field, category, scale, title, sformat ) in data_array:
+    for field in field_list:
         value = query_object( sock, field )        
         if value != None:
-            if category != last_category:
-                if node != None:
-                    rctdata[last_category] = node        
-                node = {}
-            if scale:
-                node[title] = sformat.format(value/scale)
-            else:
-                node[title] = sformat.format(value)
-            last_category = category
-    if node != None:
-        rctdata[last_category] = node        
+            rawdata[field] = value
+    return rawdata
 
+#---------------------------------------------
+def format_data( rawdata, field_formatting ):
+    rctdata = {}
+    for field, title, scale, sformat in field_formatting:
+        value = rawdata[field]
+        if value != None:       
+            if scale != None:    
+                rctdata[field] = sformat.format(value/scale)
+            else:
+                rctdata[field] = sformat.format(value)
     return rctdata
 
 #---------------------------------------------
@@ -79,30 +78,59 @@ def connect_to_server( server, port ):
 #---------------------------------------------
 def get_RCT_device_data():
     # Defines which data to retrieve from the device
-    data_array = [
-        # (Field, Category, Scale, Title, Format)
-        ( "android_description",                "now", None,    "Name",     	        "{}" ),
-        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "now", 1,       "PV Leistung Strang A", "{:.2f} W" ),
-        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "now", 1,       "PV Leistung Strang B", "{:.2f} W" ),
-        ( "g_sync.p_acc_lp",                    "now", 1,       "Speicher Ladestrom",   "{:.2f} W" ),
-        ( "battery.soc",                        "now", 1,       "Speicher Ladestatus",  "{:.2f} %" ),
-        ( "g_sync.p_ac_load_sum_lp",            "now", 1,       "Haus Verbrauch",       "{:.2f} W" ),
-        ( "g_sync.p_ac_grid_sum_lp",            "now", 1,       "Netz Bezug",           "{:.2f} W" ),
-        ( "prim_sm.island_flag",                "now", None,    "Inselmodus",           "{}" ),
+    field_list = [
+        "android_description",              
+        "dc_conv.dc_conv_struct[0].p_dc_lp",
+        "dc_conv.dc_conv_struct[1].p_dc_lp",
+        "g_sync.p_acc_lp",                  
+        "battery.soc",                      
+        "g_sync.p_ac_load_sum_lp",          
+        "g_sync.p_ac_grid_sum_lp",          
+        "prim_sm.island_flag",              
+    
+        "energy.e_dc_day[0]",               
+        "energy.e_dc_day[1]",               
+        "energy.e_ext_day",                 
+        "energy.e_ac_day",                  
+        "energy.e_grid_load_day",           
+        "energy.e_grid_feed_day",           
+        "energy.e_load_day",                
+    ]
+    
+    field_formatting = [
+        # (Field, Title, Scale, Format)
+        ( "android_description",                "Name",     	        None,   "{}" ),
+        ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "PV Leistung Strang A", 1,      "{:.2f} W" ),
+        ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "PV Leistung Strang B", 1,      "{:.2f} W" ),
+        ( "g_sync.p_acc_lp",                    "Speicher Ladestrom",   1,      "{:.2f} W" ),
+        ( "battery.soc",                        "Speicher Ladestatus",  1,      "{:.2f} %" ),
+        ( "g_sync.p_ac_load_sum_lp",            "Haus Verbrauch",       1,      "{:.2f} W" ),
+        ( "g_sync.p_ac_grid_sum_lp",            "Netz Bezug",           1,      "{:.2f} W" ),
+        ( "prim_sm.island_flag",                "Inselmodus",           None,   "{}" ),
         
-        ( "energy.e_dc_day[0]",                 "day", 1000,    "PV Leistung Strang A", "{:.1f} kWh" ),
-        ( "energy.e_dc_day[1]",                 "day", 1000,    "PV Leistung Strang B", "{:.1f} kWh" ),
-        ( "energy.e_ext_day",                   "day", 1000,    "Externer Bezug",       "{:.1f} kWh" ),
-        ( "energy.e_ac_day",                    "day", 1000,    "Gesamtverbrauch",      "{:.1f} kWh" ),
-        ( "energy.e_grid_load_day",             "day", 1000,    "Netz Bezug",           "{:.1f} kWh" ),
-        ( "energy.e_grid_feed_day",             "day", 1000,    "Netz Einspeisung",     "{:.1f} kWh" ),
-        ( "energy.e_load_day",                  "day", 1000,    "Haus Verbrauch",       "{:.1f} kWh" )
+        ( "energy.e_dc_day[0]",                 "PV Leistung Strang A", 1000,   "{:.1f} kWh" ),
+        ( "energy.e_dc_day[1]",                 "PV Leistung Strang B", 1000,   "{:.1f} kWh" ),
+        ( "energy.e_ext_day",                   "Externer Bezug",       1000,   "{:.1f} kWh" ),
+        ( "energy.e_ac_day",                    "Gesamtverbrauch",      1000,   "{:.1f} kWh" ),
+        ( "energy.e_grid_load_day",             "Netz Bezug",           1000,   "{:.1f} kWh" ),
+        ( "energy.e_grid_feed_day",             "Netz Einspeisung",     1000,   "{:.1f} kWh" ),
+        ( "energy.e_load_day",                  "Haus Verbrauch",       1000,   "{:.1f} kWh" ),
+
+        # calculated data
+        ( "energy.e_dc_day",                    "PV Leistung",          1000,   "{:.1f} kWh" ),
+
     ]
 
+    rawdata = None
     rctdata = None
     sock = connect_to_server( cfg['RCT_SERVER'], cfg['RCT_PORT'] )
     if sock != "ERROR":
-        rctdata = retrieve_data( sock, data_array )    
+        rawdata = retrieve_data( sock, field_list )
+
+        # calculate some custom data 
+        rawdata["energy.e_dc_day"] = rawdata["energy.e_dc_day[0]"] + rawdata["energy.e_dc_day[1]"]
+
+        rctdata = format_data( rawdata, field_formatting )
     return rctdata
 
 #-------------------------------------------------
@@ -110,6 +138,7 @@ if __name__ == "__main__":
     logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
 
     rctdata = get_RCT_device_data()
-    if rctdata != None:
-        logging.info(json.dumps(rctdata, indent=4))
+    if rctdata:
+        for field, value in rctdata.items():
+            logging.info( field + ": " + str(value) )
 
