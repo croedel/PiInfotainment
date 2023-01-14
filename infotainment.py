@@ -50,7 +50,7 @@ camera_end_tm = 0.0
 monitor_status = "ON"
 pcache = None  
 start_date = None
-w_show_now = False
+info_show_now = False
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -157,7 +157,7 @@ def set_text_overlay(iFiles, pic_num, textlines):
 
 # start the picture frame
 def start_picframe():
-  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache, w_show_now
+  global date_from, date_to, quit, paused, nexttm, next_pic_num, iFiles, nFi, monitor_status, pcache, info_show_now
   if cfg['KENBURNS']:
     kb_up = True
     cfg['FIT'] = False
@@ -198,18 +198,19 @@ def start_picframe():
   for item in textlines:
     text.add_text_block(item)
 
-  # prepare to display weather info
-  weather_interstitial = 'OFF'
-  next_weather_tm = 0.0
+  # prepare to display info screens
+  info_interstitial = 'OFF'
+  next_info_tm = 0.0
+  # weather screen
   weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=cfg['W_POINT_SIZE'])
-  weatherobj =  weatherscreen.weather_obj_create(DISPLAY.width, DISPLAY.height)
+  weatherobj =  weatherscreen.obj_create(DISPLAY.width, DISPLAY.height)
   for _, obj in weatherobj['current'].items():
     weatherinfo.add_text_block( obj )
   for item in weatherobj['forecast']:
     for key, obj in item.items():
       if key != 'icon':
         weatherinfo.add_text_block( obj )
-  weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=0)
+  weatherscreen.set_alpha(weatherobj=weatherobj, alpha=0)
 
   next_check_tm = time.time() + cfg['CHECK_DIR_TM'] # check for new files or directory in image dir every n seconds
   next_monitor_check_tm = 0.0
@@ -224,18 +225,18 @@ def start_picframe():
         sbg = sfg
         sfg = None
 
-        if (w_show_now or (cfg['W_SKIP_CNT'] > 0 and next_pic_num > 0 and (next_pic_num % cfg['W_SKIP_CNT'] == 0))) and weather_interstitial == 'OFF':  
-          # show weather interstitial
-          weather_interstitial = 'ON'
+        if (info_show_now or (cfg['INFO_SKIP_CNT'] > 0 and next_pic_num > 0 and (next_pic_num % cfg['INFO_SKIP_CNT'] == 0))) and info_interstitial == 'OFF':  
+          # show infoscreen interstitial
+          info_interstitial = 'ON'
           sfg = tex_load(cfg['W_BACK_IMG'], 1, (DISPLAY.width, DISPLAY.height))
-          if w_show_now:
-            w_show_now = False
+          if info_show_now:
+            info_show_now = False
             for item in textlines:
               item.colouring.set_colour(alpha=0)
         else: 
           # continue with next picture
-          if weather_interstitial == 'ON':
-            weather_interstitial = 'FADE'
+          if info_interstitial == 'ON':
+            info_interstitial = 'FADE'
           
           start_pic_num = next_pic_num
           while sfg is None: # keep going through until a usable picture is found  
@@ -299,22 +300,22 @@ def start_picframe():
         if a > 1.0:
           a = 1.0
         slide.unif[44] = a * a * (3.0 - 2.0 * a)
-        if weather_interstitial == 'ON': # fade in weather
-          weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=a)
+        if info_interstitial == 'ON': # fade in infoscreen
+          weatherscreen.set_alpha(weatherobj=weatherobj, alpha=a)
         else: # fade in picture -> fade in text
           for item in textlines:
             item.colouring.set_colour(alpha=a)
-          if weather_interstitial == 'FADE': # fade out weather
-            weatherscreen.weather_set_alpha(weatherobj=weatherobj, alpha=1-a)
+          if info_interstitial == 'FADE': # fade out infoscreen
+            weatherscreen.set_alpha(weatherobj=weatherobj, alpha=1-a)
             if a==1:
-              weather_interstitial = 'OFF'
+              info_interstitial = 'OFF'
 
       if nFi <= 0:
         textlines[0].set_text("NO IMAGES SELECTED")
         textlines[0].colouring.set_colour(alpha=1.0)
         next_check_tm = tm + 10.0
         text.regen()
-      elif tm > name_tm and tm < name_tm + 2.0 and weather_interstitial != 'ON':  # fade out text
+      elif tm > name_tm and tm < name_tm + 2.0 and info_interstitial != 'ON':  # fade out text
         alpha = 1- (tm - name_tm)/2.0
         for item in textlines:
           item.colouring.set_colour(alpha=alpha)
@@ -324,7 +325,7 @@ def start_picframe():
       slide.draw()
       text.draw()
 
-      if weather_interstitial != 'OFF':
+      if info_interstitial != 'OFF':
         weatherinfo.regen()
         weatherinfo.draw()
         for item in weatherobj['forecast']:
@@ -352,10 +353,10 @@ def start_picframe():
             iFiles, nFi = get_files(date_from, date_to)
             num_run_through = 0
             next_pic_num = 0
-          next_check_tm = tm + cfg['CHECK_DIR_TM'] # next check
-        if tm > next_weather_tm: # refresh weather info
-          weatherscreen.weather_refresh( weatherobj )
-          next_weather_tm = tm + cfg['W_REFRESH_DELAY'] # next check
+          next_check_tm = tm s+ cfg['CHECK_DIR_TM'] # next check
+        if tm > next_info_tm: # refresh weather info
+          weatherscreen.refresh( weatherobj )
+          next_info_tm = tm + cfg['W_REFRESH_DELAY'] # next check
 
     if cfg['KEYBOARD']:
       k = kbd.read()
@@ -383,7 +384,7 @@ def on_mqtt_connect(mqttclient, userdata, flags, rc):
 def on_mqtt_message(mqttclient, userdata, message):
   try:
     # TODO not ideal to have global but probably only reasonable way to do it
-    global next_pic_num, iFiles, nFi, date_from, date_to, w_show_now 
+    global next_pic_num, iFiles, nFi, date_from, date_to, info_show_now 
     global quit, shutdown, paused, nexttm, show_camera, camera_end_tm, monitor_status
     msg = message.payload.decode("utf-8")
     reselect = False
@@ -431,8 +432,8 @@ def on_mqtt_message(mqttclient, userdata, message):
       nexttm = time.time() 
     elif message.topic.endswith("/next"):
       nexttm = time.time() 
-    elif message.topic.endswith("/w_skip_count"):
-      cfg['W_SKIP_CNT'] = int(msg)
+    elif message.topic.endswith("/info_skip_count"):
+      cfg['INFO_SKIP_CNT'] = int(msg)
     elif message.topic.endswith("/subdirectory"):
       cfg['SUBDIRECTORY'] = msg
       date_from = date_to = None
@@ -443,8 +444,8 @@ def on_mqtt_message(mqttclient, userdata, message):
       if monitor_status.startswith('OFF'): 
         monitor_status = "ON"
         switch_HDMI(monitor_status)
-    elif message.topic.endswith("/w_show_now"):
-      w_show_now = True
+    elif message.topic.endswith("/info_show_now"):
+      info_show_now = True
       nexttm = time.time() 
     elif message.topic.endswith("/monitor"):
       if msg == "ON":
@@ -508,7 +509,7 @@ def mqtt_publish_status( fields=[], status="-", pic_num=-1 ):
     "recent_days": cfg['RECENT_DAYS'],
     "paused": str(paused), 
     "pic_num": str(pic_num+1) + " / " + str(nFi),
-    "w_skip_count": cfg['W_SKIP_CNT'],
+    "info_skip_count": cfg['INFO_SKIP_CNT'],
     "monitor_status": monitor_status,
     "status_date": datetime.datetime.now().strftime("%d.%m.%Y %H:%M:%S"),
     "current_pic": current_pic,

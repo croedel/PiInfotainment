@@ -85,6 +85,7 @@ Some prerequisites we need to install:
 ```
 apt-get install vlc
 apt-get install mosquitto mosquitto-clients
+apt-get install influxdb-client
 pip3 install exifread
 pip3 install --upgrade pil
 pip3 install --upgrade Pillow

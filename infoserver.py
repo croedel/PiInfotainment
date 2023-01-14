@@ -109,7 +109,7 @@ class Handler(BaseHTTPRequestHandler):
       "Picture": srvstat.get("pic_num", "-"),
       "Current picture": srvstat.get("current_pic", "-"),
       "Picture dir refreshed": srvstat.get("pic_dir_refresh", "-"),
-      "Weather skip count": srvstat.get("w_skip_count", "-"),
+      "Info skip count": srvstat.get("info_skip_count", "-"),
       "Monitor status": srvstat.get("monitor_status", "-"),
       "Infotainment system started": srvstat.get("start_date", "-"),
       "System load": srvstat.get("load", "-"),

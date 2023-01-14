@@ -72,8 +72,10 @@ MQTT_LOGIN  : " "           # Just change if you want to use a different MQTT se
 MQTT_PASSWORD : ""          # Just change if you want to use a different MQTT server  
 MQTT_TOPIC : "screen"       # MQTT topic name (top-level); just change if you e.g. run multiple infotainment screens  
 
-# Weather
-W_SKIP_CNT : 15             # show weather info after each N pictures (=0 disables weather info)
+# Infotainment
+INFO_SKIP_CNT : 15          # show infotainment screen after each N pictures (=0 disables infotainment sceen)
+
+# Infotainment - Weather
 W_REFRESH_DELAY : 300       # refresh weather info every N seconds
 W_LATITUDE : 48.9           # latitude of your location (decimal degrees, e.g. 48.12345)
 W_LONGITUDE : 12.1          # longitude of your location (decimal degrees, e.g. 11.98765)
@@ -92,6 +94,14 @@ W_SPACING : 80              # spacing between the weather columns
 #RKI COVID
 RKI_ID : 00000              # RKI region ID; you can find out here: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data
 RKI_REGION : "Bayern"       # Bundesland
+
+# Infotainment - RCT Power
+RCT_REFRESH_DELAY : 300      # refresh RCT info every N seconds
+RCT_ICON_DIR : "icons"       # RCT icon directory
+RCT_BACK_IMG : "PV_background_16_9.png"   # background image for RCT info 
+RCT_POINT_SIZE : 80          # RCT text size
+RCT_MARGIN_LEFT : 30         # left margin 
+RCT_MARGIN_TOP : 75          # top margin
 
 # CAMERA
 CAMERA_ZOOM : 0.75          # zoom level for vlc player (e.g. shrink or enlarge video)

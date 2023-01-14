@@ -7,7 +7,7 @@ import pi3d
 from config import cfg
 import weather
 
-def weather_obj_create( width, height ):
+def obj_create( width, height ):
   icon_shader = pi3d.Shader("uv_flat")
   weatherobj = {}
 
@@ -146,7 +146,7 @@ def set_corona_colour(weather_info, weatherobj):
   weatherobj['static']['hospitalization'].set_textures( [tex] )
 
 
-def weather_refresh(weatherobj):
+def refresh(weatherobj):
   weather_info = weather.get_weather_info( cfg['W_LATITUDE'], cfg['W_LONGITUDE'], cfg['W_UNIT'], cfg['W_LANGUAGE'], cfg['W_API_KEY'] )
   try:
     for key, val in weather_info['current'].items():
@@ -165,7 +165,7 @@ def weather_refresh(weatherobj):
   except Exception as e:
     logging.error("Couldn't update weather object. error: {}".format(str(e)))
 
-def weather_set_alpha(weatherobj, alpha):
+def set_alpha(weatherobj, alpha):
   try:
     for _, obj in weatherobj['static'].items():
       obj.set_alpha(alpha)
