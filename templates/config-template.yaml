@@ -95,13 +95,15 @@ W_SPACING : 80              # spacing between the weather columns
 RKI_ID : 00000              # RKI region ID; you can find out here: https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data
 RKI_REGION : "Bayern"       # Bundesland
 
-# Infotainment - RCT Power
-RCT_REFRESH_DELAY : 300      # refresh RCT info every N seconds
-RCT_ICON_DIR : "icons"       # RCT icon directory
-RCT_BACK_IMG : "PV_background_16_9.png"   # background image for RCT info 
-RCT_POINT_SIZE : 80          # RCT text size
-RCT_MARGIN_LEFT : 30         # left margin 
-RCT_MARGIN_TOP : 75          # top margin
+# Infotainment - PV Info
+PV_SERVER : "192.168.178.32" # PV server IP
+PV_PORT : 8899               # PV server port
+PV_REFRESH_DELAY : 300      # refresh PV info every N seconds
+PV_ICON_DIR : "icons"       # PV icon directory
+PV_BACK_IMG : "PV_background_16_9.png"   # background image for PV info 
+PV_POINT_SIZE : 80          # PV text size
+PV_MARGIN_LEFT : 30         # left margin 
+PV_MARGIN_TOP : 75          # top margin
 
 # CAMERA
 CAMERA_ZOOM : 0.75          # zoom level for vlc player (e.g. shrink or enlarge video)

@@ -83,7 +83,7 @@ def connect_to_server( server, port ):
     return sock    
 
 #---------------------------------------------
-def get_RCT_device_data():
+def get_PV_device_data():
     # Defines which data to retrieve from the device    
     field_array = [
         # (Field, Device-data, Title, Scale, Format)
@@ -114,7 +114,7 @@ def get_RCT_device_data():
 
     rctdata = None
     # Connect to server
-    sock = connect_to_server( cfg['RCT_SERVER'], cfg['RCT_PORT'] )
+    sock = connect_to_server( cfg['PV_SERVER'], cfg['PV_PORT'] )
     if sock != "ERROR":
         # read data from RCT data device
         rawdata = retrieve_data( sock, field_array )
@@ -133,7 +133,7 @@ def get_RCT_device_data():
 if __name__ == "__main__":
     logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
 
-    rctdata = get_RCT_device_data()
+    rctdata = get_PV_device_data()
     if rctdata:
         for field, data in rctdata.items():
             logging.info( field + " (" + data["title"] + "): " + data["format"].format(data["value"]) )
