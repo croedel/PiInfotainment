@@ -355,12 +355,12 @@ And add following URL as Web Hook:
 http://<IP Address of you RasperryPi>/index.html?topic=camera
 ```
 
-### RCT Power device
-In order to connect to your RCT Power device, you need to set the correct IP address and port.
+### PV Information
+In order to connect to your Photo Voltaic device, you need to set the correct IP address and port.
 
 ```
-RCT_SERVER    # Device IP address 
-RCT_PORT      # Device port
+PV_SERVER    # Device IP address 
+PV_PORT      # Device port
 ```
 
 ### RKI COVID Incidence

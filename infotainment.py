@@ -353,7 +353,7 @@ def start_picframe():
             iFiles, nFi = get_files(date_from, date_to)
             num_run_through = 0
             next_pic_num = 0
-          next_check_tm = tm s+ cfg['CHECK_DIR_TM'] # next check
+          next_check_tm = tm + cfg['CHECK_DIR_TM'] # next check
         if tm > next_info_tm: # refresh weather info
           weatherscreen.refresh( weatherobj )
           next_info_tm = tm + cfg['W_REFRESH_DELAY'] # next check
