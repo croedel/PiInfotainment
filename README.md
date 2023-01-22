@@ -266,6 +266,20 @@ include:
   - "DCP_001*.jpg"
 ```
 
+### General info screen options
+The infotainment system supports showing 2 types of info screens:
+- Weather forecast screen
+- Photo Voltaic (PV) info screen
+
+Both screens are shown alternating.
+
+WIth the following options you can adjust how often the info screens appear and how often the informatio shall get refreshed.
+
+```
+INFO_SKIP_CNT : 15          # show infotainment screen after each N pictures (=0 disables infotainment sceen)
+INFO_REFRESH_DELAY : 300    # refresh infotainment info every N seconds
+```
+
 ### Weather forecast
 For the weather forecast feature you need to create a free account on https://openweathermap.org/
 Then please create an API key for https://openweathermap.org/api/one-call-api
@@ -273,7 +287,6 @@ Then please create an API key for https://openweathermap.org/api/one-call-api
 Now you might want to have a look on following config entries:
 
 ```
-W_SKIP_CNT      # show weather info after each N pictures (=0 disables weather info)
 W_LATITUDE      # latitude of your location
 W_LONGITUDE     # longitude of your location
 W_API_KEY       # put your API key here       
@@ -292,6 +305,43 @@ W_SPACING        # spacing between the weather columns
 ```
 
 If this shouldn't give you the desired results, you can think about changing the sizing calculation within `weatherscreen.py`
+
+### RKI COVID Incidence
+Nowadays the COVID 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
+To define the location for which you want to display the figure, you should go to https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data. Search for your "Landkreis" and look for the "AGS" id.
+
+The second important figure is the 7-day hospitalization index. It is retrieved from the RKI GitHub Repository (https://github.com/robert-koch-institut)
+[Robert Koch-Institut (2021): COVID-19-Hospitalisierungen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.5519056.]
+
+This location id as well as the region name then sould be added to config.yaml: 
+
+```
+RKI_ID : 09179          # RKI region ID
+RKI_REGION : "Bayern"   # Bundesland
+```
+
+### PV Information
+The Infotainment System supports showing some information about a potentially installed Photo Voltaic (PV) System.
+Unfortunately, there is no standard for PV system. Each one supports their own proprietary API's. Therefore you probably need to adjust to your system.
+
+Currently you can find implementations for RCT-power devices in "PVinverter.py"
+
+In order to connect to your PV device, you need to set the correct IP address and port.
+If you don't own a PV or want to disable the functionaity, set PV_SERVER to "" (empty).
+
+```
+PV_SERVER : "192.168.178.xxx"   # Device IP address. Set to "" (empty) if you want to disable this functionality
+PV_PORT : 1234                  # Device port
+```
+
+Additionally supported parameters are:
+```
+PV_ICON_DIR : "icons"       # PV icon directory
+PV_BACK_IMG : "PV_background_16_9.png"   # background image for PV info 
+PV_POINT_SIZE : 80          # PV text size
+PV_MARGIN_LEFT : 30         # left margin 
+PV_MARGIN_TOP : 75          # top margin
+```
 
 ### Metadata display
 Pi Infotainment offers 4 text lines to show customizable metadata of the shown image: 2 footer lines and 2 header lines.
@@ -353,28 +403,6 @@ And add following URL as Web Hook:
 
 ```
 http://<IP Address of you RasperryPi>/index.html?topic=camera
-```
-
-### PV Information
-In order to connect to your Photo Voltaic device, you need to set the correct IP address and port.
-
-```
-PV_SERVER    # Device IP address 
-PV_PORT      # Device port
-```
-
-### RKI COVID Incidence
-Nowadays the COVID 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
-To define the location for which you want to display the figure, you should go to https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data. Search for your "Landkreis" and look for the "AGS" id.
-
-The second important figure is the 7-day hospitalization index. It is retrieved from the RKI GitHub Repository (https://github.com/robert-koch-institut)
-[Robert Koch-Institut (2021): COVID-19-Hospitalisierungen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.5519056.]
-
-This location id as well as the region name then sould be added to config.yaml: 
-
-```
-RKI_ID : 09179          # RKI region ID
-RKI_REGION : "Bayern"   # Bundesland
 ```
 
 -------------------------

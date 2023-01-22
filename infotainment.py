@@ -21,6 +21,7 @@ from PIL import Image, ImageFilter # these are needed for getting exif data from
 from config import cfg
 import dircache
 import weatherscreen
+import PVscreen
 import displaymsg
 
 try:
@@ -198,10 +199,11 @@ def start_picframe():
   for item in textlines:
     text.add_text_block(item)
 
-  # prepare to display info screens
+  # prepare to display info screens (0) weather, (1) PVinfo
   info_interstitial = 'OFF'
   next_info_tm = 0.0
-  # weather screen
+  info_index = 0 # defines which info screen to show (0)weather, (1)PVinfo
+  # (0) weather screen
   weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=cfg['W_POINT_SIZE'])
   weatherobj =  weatherscreen.obj_create(DISPLAY.width, DISPLAY.height)
   for _, obj in weatherobj['current'].items():
@@ -212,9 +214,18 @@ def start_picframe():
         weatherinfo.add_text_block( obj )
   weatherscreen.set_alpha(weatherobj=weatherobj, alpha=0)
 
+  # (1) PV info screen
+  PVinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=cfg['PV_POINT_SIZE'])
+  PVobj =  PVscreen.obj_create(DISPLAY.width, DISPLAY.height)
+  for key, obj in PVobj.items():
+    if not key.endswith('icon'):
+      PVinfo.add_text_block( obj )
+  PVscreen.set_alpha(pvobj=PVobj, alpha=0)
+
   next_check_tm = time.time() + cfg['CHECK_DIR_TM'] # check for new files or directory in image dir every n seconds
   next_monitor_check_tm = 0.0
   num_run_through = 0
+  
   
   # here comes the main loop
   while DISPLAY.loop_running():
@@ -228,7 +239,10 @@ def start_picframe():
         if (info_show_now or (cfg['INFO_SKIP_CNT'] > 0 and next_pic_num > 0 and (next_pic_num % cfg['INFO_SKIP_CNT'] == 0))) and info_interstitial == 'OFF':  
           # show infoscreen interstitial
           info_interstitial = 'ON'
-          sfg = tex_load(cfg['W_BACK_IMG'], 1, (DISPLAY.width, DISPLAY.height))
+          if info_index == 0:
+            sfg = tex_load(cfg['W_BACK_IMG'], 1, (DISPLAY.width, DISPLAY.height))
+          else:
+            sfg = tex_load(cfg['PV_BACK_IMG'], 1, (DISPLAY.width, DISPLAY.height))
           if info_show_now:
             info_show_now = False
             for item in textlines:
@@ -301,14 +315,24 @@ def start_picframe():
           a = 1.0
         slide.unif[44] = a * a * (3.0 - 2.0 * a)
         if info_interstitial == 'ON': # fade in infoscreen
-          weatherscreen.set_alpha(weatherobj=weatherobj, alpha=a)
+          if info_index == 0:
+            weatherscreen.set_alpha(weatherobj=weatherobj, alpha=a)
+          else:
+            PVscreen.set_alpha(pvobj=PVobj, alpha=a)
         else: # fade in picture -> fade in text
           for item in textlines:
             item.colouring.set_colour(alpha=a)
           if info_interstitial == 'FADE': # fade out infoscreen
-            weatherscreen.set_alpha(weatherobj=weatherobj, alpha=1-a)
+            if info_index == 0:
+              weatherscreen.set_alpha(weatherobj=weatherobj, alpha=1-a)
+            else:
+              PVscreen.set_alpha(pvobj=PVobj, alpha=1-a)
             if a==1:
               info_interstitial = 'OFF'
+              if info_index == 0 and len(cfg['PV_SERVER']) > 1:
+                info_index = 1 # PV info next
+              elif info_index == 1:
+                info_index = 0 # Weather info next
 
       if nFi <= 0:
         textlines[0].set_text("NO IMAGES SELECTED")
@@ -326,12 +350,19 @@ def start_picframe():
       text.draw()
 
       if info_interstitial != 'OFF':
-        weatherinfo.regen()
-        weatherinfo.draw()
-        for item in weatherobj['forecast']:
-          item['icon'].draw()
-        for _, obj in weatherobj['static'].items():  
-          obj.draw()
+        if info_index == 0:
+          weatherinfo.regen()
+          weatherinfo.draw()
+          for item in weatherobj['forecast']:
+            item['icon'].draw()
+          for _, obj in weatherobj['static'].items():  
+            obj.draw()
+        else:
+          PVinfo.regen()
+          PVinfo.draw()
+          PVobj['battery_icon'].draw()
+          PVobj['island_mode_icon'].draw()
+
     else: # monitor OFF -> minimize system activity to reduce power consumption
       time.sleep(10)
 
@@ -354,9 +385,10 @@ def start_picframe():
             num_run_through = 0
             next_pic_num = 0
           next_check_tm = tm + cfg['CHECK_DIR_TM'] # next check
-        if tm > next_info_tm: # refresh weather info
+        if tm > next_info_tm: # refresh info screen data
           weatherscreen.refresh( weatherobj )
-          next_info_tm = tm + cfg['W_REFRESH_DELAY'] # next check
+          PVscreen.refresh( PVobj )
+          next_info_tm = tm + cfg['INFO_REFRESH_DELAY'] # next check
 
     if cfg['KEYBOARD']:
       k = kbd.read()

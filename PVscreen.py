@@ -5,7 +5,7 @@ import logging
 import os
 import pi3d
 from config import cfg
-import rctpower
+import PVinverter
 
 def obj_create( width, height ):
   icon_shader = pi3d.Shader("uv_flat")
@@ -82,7 +82,7 @@ def set_island_mode(pv_info, pvobj):
 
 
 def refresh(pvobj):
-  pv_info = rctpower.get_PV_device_data()
+  pv_info = PVinverter.get_PV_device_data()
   try:
     for key, data in pv_info.items():
       if data["title"] in pvobj:

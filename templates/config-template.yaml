@@ -74,9 +74,9 @@ MQTT_TOPIC : "screen"       # MQTT topic name (top-level); just change if you e.
 
 # Infotainment
 INFO_SKIP_CNT : 15          # show infotainment screen after each N pictures (=0 disables infotainment sceen)
+INFO_REFRESH_DELAY : 300    # refresh infotainment info every N seconds
 
 # Infotainment - Weather
-W_REFRESH_DELAY : 300       # refresh weather info every N seconds
 W_LATITUDE : 48.9           # latitude of your location (decimal degrees, e.g. 48.12345)
 W_LONGITUDE : 12.1          # longitude of your location (decimal degrees, e.g. 11.98765)
 W_UNIT : "metric"           # metric 
@@ -96,9 +96,8 @@ RKI_ID : 00000              # RKI region ID; you can find out here: https://npge
 RKI_REGION : "Bayern"       # Bundesland
 
 # Infotainment - PV Info
-PV_SERVER : "192.168.178.32" # PV server IP
+PV_SERVER : "192.168.178.32" # PV server IP. Set to "" (empty) if you want to disable this functionality
 PV_PORT : 8899               # PV server port
-PV_REFRESH_DELAY : 300      # refresh PV info every N seconds
 PV_ICON_DIR : "icons"       # PV icon directory
 PV_BACK_IMG : "PV_background_16_9.png"   # background image for PV info 
 PV_POINT_SIZE : 80          # PV text size
