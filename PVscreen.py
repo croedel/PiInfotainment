@@ -7,6 +7,7 @@ import pi3d
 from config import cfg
 import PVinverter
 
+#---------------------------------------------
 def obj_create( width, height ):
   icon_shader = pi3d.Shader("uv_flat")
   pvobj = {}
@@ -51,7 +52,7 @@ def obj_create( width, height ):
                 x=200, y=-30, z=1.0)
   return pvobj
 
-
+#---------------------------------------------
 def set_battery_soc(pv_info, pvobj):
   try:
     soc = int(pv_info['current_battery_soc']['value'])
@@ -70,7 +71,7 @@ def set_battery_soc(pv_info, pvobj):
   tex = pi3d.Texture(os.path.join(cfg['PV_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
   pvobj['icon']['battery_icon'].set_textures( [tex] )
 
-
+#---------------------------------------------
 def set_island_mode(pv_info, pvobj):
   try:
     val = int(pv_info['current_island_mode']['value'])
@@ -83,7 +84,7 @@ def set_island_mode(pv_info, pvobj):
   tex = pi3d.Texture(os.path.join(cfg['PV_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
   pvobj['icon']['island_mode_icon'].set_textures( [tex] )
 
-
+#---------------------------------------------
 def set_data_colours(pv_info, pvobj):
   # colour codes
   c_green = (0.0, 0.7, 0.0, 1.0)
@@ -118,7 +119,7 @@ def set_data_colours(pv_info, pvobj):
   else:
     pvobj['data']['day_balance'].colouring.set_colour(c_red)
 
-
+#---------------------------------------------
 def refresh(pvobj):
   pv_info = PVinverter.get_PV_device_data()
   try:
@@ -132,7 +133,7 @@ def refresh(pvobj):
   except Exception as e:
     logging.error("Couldn't update PV object. error: {}".format(str(e)))
 
-
+#---------------------------------------------
 def set_alpha(pvobj, alpha):
   try:
     for _, obj in pvobj['icon'].items():
@@ -141,4 +142,3 @@ def set_alpha(pvobj, alpha):
         obj.colouring.set_colour(alpha=alpha)  
   except Exception as e:
     logging.error("Couldn't set alpha for PV object. error: {}".format(str(e)))
-
