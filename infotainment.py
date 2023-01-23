@@ -217,9 +217,8 @@ def start_picframe():
   # (1) PV info screen
   PVinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=cfg['PV_POINT_SIZE'])
   PVobj =  PVscreen.obj_create(DISPLAY.width, DISPLAY.height)
-  for key, obj in PVobj.items():
-    if not key.endswith('icon'):
-      PVinfo.add_text_block( obj )
+  for key, obj in PVobj['data'].items():
+    PVinfo.add_text_block( obj )
   PVscreen.set_alpha(pvobj=PVobj, alpha=0)
 
   next_check_tm = time.time() + cfg['CHECK_DIR_TM'] # check for new files or directory in image dir every n seconds
@@ -360,8 +359,8 @@ def start_picframe():
         else:
           PVinfo.regen()
           PVinfo.draw()
-          PVobj['battery_icon'].draw()
-          PVobj['island_mode_icon'].draw()
+          for _, obj in PVobj['icon'].items():
+            obj.draw()
 
     else: # monitor OFF -> minimize system activity to reduce power consumption
       time.sleep(10)

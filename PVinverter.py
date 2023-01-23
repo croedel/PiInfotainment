@@ -86,7 +86,7 @@ def connect_to_server( server, port ):
 def get_PV_device_data():
     # Defines which data to retrieve from the device    
     field_array = [
-        # (Field, Device-data, Title, Scale, Format)
+        # (Device-id, Device-data, Title, Scale, Format)
         ( "android_description",                True,  "name",     	                None,   "{}" ),
         ( "dc_conv.dc_conv_struct[0].p_dc_lp",  True,  "current_string_a",          1,      "{:.2f}W" ),
         ( "dc_conv.dc_conv_struct[1].p_dc_lp",  True,  "current_string_b",          1,      "{:.2f}W" ),
