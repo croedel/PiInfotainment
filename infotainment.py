@@ -328,7 +328,7 @@ def start_picframe():
               PVscreen.set_alpha(pvobj=PVobj, alpha=1-a)
             if a==1:
               info_interstitial = 'OFF'
-              if info_index == 0 and len(cfg['PV_SERVER']) > 1:
+              if info_index == 0 and len(cfg['PV_TYPE']) > 1:
                 info_index = 1 # PV info next
               elif info_index == 1:
                 info_index = 0 # Weather info next

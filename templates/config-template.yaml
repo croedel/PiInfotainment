@@ -96,6 +96,7 @@ RKI_ID : 00000              # RKI region ID; you can find out here: https://npge
 RKI_REGION : "Bayern"       # Bundesland
 
 # Infotainment - PV Info
+PV_TYPE : "RCTpower"         # Defines the which PV API implementation shall be used 
 PV_SERVER : "192.168.178.32" # PV server IP. Set to "" (empty) if you want to disable this functionality
 PV_PORT : 8899               # PV server port
 PV_ICON_DIR : "icons"       # PV icon directory

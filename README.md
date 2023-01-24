@@ -324,13 +324,15 @@ RKI_REGION : "Bayern"   # Bundesland
 The Infotainment System supports showing some information about a potentially installed Photo Voltaic (PV) System.
 Unfortunately, there is no standard for PV system. Each one supports their own proprietary API's. Therefore you probably need to adjust to your system.
 
-Currently you can find implementations for RCT-power devices in "PVinverter.py"
-
+Currently you can find two implementations which you can choose from:
+- REST API
+- RCTpower
+If you don't own a PV or want to disable the functionaity, set PV_TYPE to "" (empty).
 In order to connect to your PV device, you need to set the correct IP address and port.
-If you don't own a PV or want to disable the functionaity, set PV_SERVER to "" (empty).
 
 ```
-PV_SERVER : "192.168.178.xxx"   # Device IP address. Set to "" (empty) if you want to disable this functionality
+PV_TYPE : "RCTpower"            # Defines the which PV API implementation shall be used (RCTpower or REST). Set to "" (empty) if you want to disable this functionality
+PV_SERVER : "192.168.178.xxx"   # Device IP address. 
 PV_PORT : 1234                  # Device port
 ```
 
