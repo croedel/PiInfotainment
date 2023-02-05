@@ -51,12 +51,6 @@ def get_PV_device_data():
     # calculate useful rates
     autarky_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
     pvdata["day_autarky_rate"] = { "value": "{:.1f}".format(autarky_rate), "unit": "%" }
-#    own_usage_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_system_production"]["value"] if pvdata["day_system_production"]["value"]>0 else 0
-#    pvdata["day_own_usage_rate"] = { "value": "{:.1f}".format(own_usage_rate), "unit": "%" }
-#    pv_balance = pvdata["day_grid_feed"]["value"] - pvdata["day_grid_load"]["value"]
-#    pv_balance_rate = 100 * pv_balance / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
-#    pvdata["day_pv_balance"] = { "value": "{:.1f}".format(pv_balance), "unit": pvdata["day_grid_load"]["unit"] }
-#    pvdata["day_pv_balance_rate"] = { "value": "{:.1f}".format(pv_balance_rate), "unit": "%" }
 
     return pvdata
 
