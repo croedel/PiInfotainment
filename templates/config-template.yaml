@@ -96,14 +96,22 @@ RKI_ID : 00000              # RKI region ID; you can find out here: https://npge
 RKI_REGION : "Bayern"       # Bundesland
 
 # Infotainment - PV Info
-PV_TYPE : "RCTpower"         # Defines the which PV API implementation shall be used 
-PV_SERVER : "192.168.178.32" # PV server IP. Set to "" (empty) if you want to disable this functionality
-PV_PORT : 8899               # PV server port
-PV_ICON_DIR : "icons"       # PV icon directory
+PV_INFO_ENABLE : False      # Enable / disable PV info screen
+PV_ICON_DIR : "icons"       # PV icon director
 PV_BACK_IMG : "PV_background_16_9.png"   # background image for PV info 
 PV_POINT_SIZE : 80          # PV text size
 PV_MARGIN_LEFT : 30         # left margin 
 PV_MARGIN_TOP : 75          # top margin
+
+# M-TEC API config
+PV_EMAIL : ""               # e-mail address you used to register at M-TEC portal
+PV_PASSWORD : ""            # password you used to register at M-TEC portal
+PV_STATION_ID : ""          # Your individual MCT power stationId
+PV_TIMEOUT : 3              # Timeout (seconds) for querying the API
+PV_MAX_LOGIN_RETRY : 3      # No. of retries for login
+PV_BASE_URL : "https://energybutler.mtec-portal.com/api/sys/"  # Base URL of API
+PV_DEMO_ACCOUNT : "2312942037@qq.com"       # e-mail adress of Demo account
+PV_DEMO_STATION_ID : "1587705243920052226"  # Demo stationId
 
 # CAMERA
 CAMERA_ZOOM : 0.75          # zoom level for vlc player (e.g. shrink or enlarge video)

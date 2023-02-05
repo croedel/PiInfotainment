@@ -321,19 +321,19 @@ RKI_REGION : "Bayern"   # Bundesland
 ```
 
 ### PV Information
-The Infotainment System supports showing some information about a potentially installed Photo Voltaic (PV) System.
-Unfortunately, there is no standard for PV system. Each one supports their own proprietary API's. Therefore you probably need to adjust to your system.
+The Infotainment System supports showing some information about a potentially installed Photo Voltaic (PV) system.
+If you don't own a PV or want to disable the functionality, set `PV_INFO_ENABLE` to `False`.
 
-Currently you can find two implementations which you can choose from:
-- REST API
-- RCTpower
-If you don't own a PV or want to disable the functionaity, set PV_TYPE to "" (empty).
-In order to connect to your PV device, you need to set the correct IP address and port.
+Unfortunately, there is no standard for PV systems. Each one supports their own proprietary API's. Therefore you probably will have to adjust the implementation according to your system. If you want to adapt the PV info to your PV system, you might want to have a look to `PVinverter.py`. Here the data from the PV inverter is fetched and mapped to a normalized data structure. You hopefully can change that quite easily to map your PV inverter's data. 
+
+I personally own an M-TEC Energybutler system. For that one I created an API which retrieves the necessary data. You can find it with the project `MTEC_energybutler_API`. In order to use it, please install it in a sub-folder of this project.
+In order to connect to your PV device, you need to set e-mail adress, password and your individual stationId.
 
 ```
-PV_TYPE : "RCTpower"            # Defines the which PV API implementation shall be used (RCTpower or REST). Set to "" (empty) if you want to disable this functionality
-PV_SERVER : "192.168.178.xxx"   # Device IP address. 
-PV_PORT : 1234                  # Device port
+PV_INFO_ENABLE : True       # Enable / disable PV Info
+PV_EMAIL : ""               # e-mail address you used to register at M-TEC portal
+PV_PASSWORD : ""            # password you used to register at M-TEC portal
+PV_STATION_ID : ""          # Your individual MCT power stationId
 ```
 
 Additionally supported parameters are:
