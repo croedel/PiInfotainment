@@ -95,12 +95,12 @@ def set_data_colours(pvdata, pvobj):
 
   # set text colours
   if pvdata['current_battery']["value"] > 0:
-    pvobj['data']['current_battery'].colouring.set_colour(c_red)
+    pvobj['data']['current_battery'].colouring.set_colour(c_yellow)
   else:
     pvobj['data']['current_battery'].colouring.set_colour(c_green)
 
   if pvdata['current_grid']["value"] > 0:
-    pvobj['data']['current_grid'].colouring.set_colour(c_red)
+    pvobj['data']['current_grid'].colouring.set_colour(c_yellow)
   else:
     pvobj['data']['current_grid'].colouring.set_colour(c_green)
 
