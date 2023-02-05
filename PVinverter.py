@@ -12,22 +12,36 @@ from MTEC_energybutler_API import MTECapi
 #---------------------------------------------
 def get_PV_device_data():
     pvdata = {}
+    # retrieve data from PV device and store it in normalized format
+    # you hopefully can change that quite easily to map your PV inverter's data
+    # result should be "pvdata" being a dict of dicts which looks like that:   
+    #    {
+    #        'dt': {'value': '05.02.2023 14:55:02', 'unit': ''}, 
+    #        'day_production': {'value': 20.1, 'unit': 'kWh'}, 
+    #        'total_production': {'value': 630.4, 'unit': 'kWh'}, 
+    #        ...
+    #    }    
+    station_id = cfg["PV_STATION_ID"]
+    if len(station_id)<15:
+        station_id = cfg["PV_DEMO_STATION_ID"]
+
     now = time.localtime() # "now" = time of data refresh
     pvdata["dt"] = { "value": time.strftime("%d.%m.%Y %H:%M:%S", now), "unit": "" }
 
-    # retrieve data from PV device and store it in normalized format
-    # you hopefully can change that quite easily to map your PV inverter's data
     api = MTECapi.MTECapi()
-    data = api.query_station_data(cfg["PV_STATION_ID"])
+    data = api.query_station_data(station_id)
     pvdata["day_production"] = data["todayEnergy"]
+    pvdata["month_production"] = data["monthEnergy"]    
+    pvdata["year_production"] = data["yearEnergy"]    
     pvdata["total_production"] = data["totalEnergy"]    
     pvdata["current_PV"] = data["PV"] 
     pvdata["current_grid"] = data["grid"] 
     pvdata["current_battery"] = data["battery"] 
     pvdata["current_battery_SOC"] = { "value": data["battery"]["SOC"], "unit": "%" }  
     pvdata["current_load"] = data["load"] 
+    pvdata["grid_interrupt"] = { "value": data["lackMaster"], "unit": "" }
 
-    data = api.query_grid_connected_data(cfg["PV_STATION_ID"])
+    data = api.query_grid_connected_data(station_id)
     pvdata["day_grid_load"] = data["eMeterTotalBuy"]
     pvdata["day_grid_feed"] = data["eMeterTotalSell"] 
     pvdata["day_usage"] = data["eUse"]
@@ -36,9 +50,13 @@ def get_PV_device_data():
 
     # calculate useful rates
     autarky_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
-    own_usage_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_system_production"]["value"] if pvdata["day_system_production"]["value"]>0 else 0
     pvdata["day_autarky_rate"] = { "value": "{:.1f}".format(autarky_rate), "unit": "%" }
-    pvdata["day_own_usage_rate"] = { "value": "{:.1f}".format(own_usage_rate), "unit": "%" }
+#    own_usage_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_system_production"]["value"] if pvdata["day_system_production"]["value"]>0 else 0
+#    pvdata["day_own_usage_rate"] = { "value": "{:.1f}".format(own_usage_rate), "unit": "%" }
+#    pv_balance = pvdata["day_grid_feed"]["value"] - pvdata["day_grid_load"]["value"]
+#    pv_balance_rate = 100 * pv_balance / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
+#    pvdata["day_pv_balance"] = { "value": "{:.1f}".format(pv_balance), "unit": pvdata["day_grid_load"]["unit"] }
+#    pvdata["day_pv_balance_rate"] = { "value": "{:.1f}".format(pv_balance_rate), "unit": "%" }
 
     return pvdata
 

@@ -19,37 +19,42 @@ def obj_create( width, height ):
   x_left = -width*0.5 + cfg['W_MARGIN_LEFT']
   pvobj['data'] = {}
   pvobj['data']['dt'] = pi3d.TextBlock(x=x_left, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['current_string_a'] = pi3d.TextBlock(x=x_left+60, y=-20, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['current_string_b'] = pi3d.TextBlock(x=x_left+150, y=40, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['current_battery_power'] = pi3d.TextBlock(x=-200, y=-height*0.5+200, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['total_production'] = pi3d.TextBlock(x=x_left+60, y=-20, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['current_battery'] = pi3d.TextBlock(x=-200, y=-height*0.5+200, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
   pvobj['data']['current_battery_soc'] = pi3d.TextBlock(x=0, y=-height*0.5+100, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['current_house_ext_power'] = pi3d.TextBlock(x=200, y=300, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['current_grid_power'] = pi3d.TextBlock(x=400, y=30, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['day_energy'] = pi3d.TextBlock(x=x_left+100, y=400, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['total_energy'] = pi3d.TextBlock(x=x_left+100, y=200, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)                    
-  pvobj['data']['day_house_usage'] = pi3d.TextBlock(x=300, y=-250, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['day_autarky_rate'] = pi3d.TextBlock(x=width*0.3, y=-height*0.5+400, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['day_balance_rate'] = pi3d.TextBlock(x=width*0.3, y=-height*0.5+200, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
-  pvobj['data']['day_balance'] = pi3d.TextBlock(x=width*0.3, y=-height*0.5+100, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0), justify=1.0)
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['current_load'] = pi3d.TextBlock(x=200, y=300, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['current_grid'] = pi3d.TextBlock(x=400, y=30, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+
+  pvobj['data']['day_production'] = pi3d.TextBlock(x=x_left+200, y=-100, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['month_production'] = pi3d.TextBlock(x=x_left+200, y=-200, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['year_production'] = pi3d.TextBlock(x=x_left+200, y=-300, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['total_production'] = pi3d.TextBlock(x=x_left+200, y=-400, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+
+  pvobj['data']['day_usage'] = pi3d.TextBlock(x=500, y=400, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['day_autarky_rate'] = pi3d.TextBlock(x=500, y=400, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+
+  pvobj['data']['day_grid_load'] = pi3d.TextBlock(x=500, y=-200, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
+  pvobj['data']['day_grid_feed'] = pi3d.TextBlock(x=500, y=-300, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
+                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
   pvobj['icon'] = {}
-  pvobj['icon']['battery_icon'] = pi3d.ImageSprite(os.path.join(cfg['PV_ICON_DIR'], 'battery_5.png'), icon_shader, w=width/7, h=height/5, 
+  pvobj['icon']['battery_icon'] = pi3d.ImageSprite(os.path.join(cfg['PV_ICON_DIR'], 'battery_5.png'), icon_shader, w=width/7, 
                 x=0, y=-height*0.5+50, z=1.0) 
-  pvobj['icon']['island_mode_icon'] = pi3d.ImageSprite(os.path.join(cfg['PV_ICON_DIR'], 'grid_on.png'), icon_shader, w=width/7, h=height/5, 
-                x=200, y=-30, z=1.0)
+  pvobj['icon']['grid_interrupt_icon'] = pi3d.ImageSprite(os.path.join(cfg['PV_ICON_DIR'], 'grid_interrupt.png'), icon_shader, w=width/10, 
+                x=300, y=0, z=1.0)
   return pvobj
 
 #---------------------------------------------
@@ -73,16 +78,13 @@ def set_battery_soc(pvdata, pvobj):
 
 #---------------------------------------------
 def set_island_mode(pvdata, pvobj):
+  alpha = 0
   try:
-    val = int(pvdata['current_island_mode']['value'])
-    if val == 1:
-      icon = "grid_off.png"
-    else:
-      icon = "grid_on.png"
+    if pvdata['grid_interrupt']['value']:
+      alpha = 1
   except:
-      icon = "grid_on.png"
-  tex = pi3d.Texture(os.path.join(cfg['PV_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
-  pvobj['icon']['island_mode_icon'].set_textures( [tex] )
+    alpha = 0
+  pvobj['icon']['grid_interrupt_icon'].set_alpha(alpha)
 
 #---------------------------------------------
 def set_data_colours(pvdata, pvobj):
@@ -93,14 +95,14 @@ def set_data_colours(pvdata, pvobj):
 
   # set text colours
   if pvdata['current_battery_power']["value"] > 0:
-    pvobj['data']['current_battery_power'].colouring.set_colour(c_red)
+    pvobj['data']['current_battery'].colouring.set_colour(c_red)
   else:
-    pvobj['data']['current_battery_power'].colouring.set_colour(c_green)
+    pvobj['data']['current_battery'].colouring.set_colour(c_green)
 
-  if pvdata['current_grid_power']["value"] > 0:
-    pvobj['data']['current_grid_power'].colouring.set_colour(c_red)
+  if pvdata['current_grid']["value"] > 0:
+    pvobj['data']['current_grid'].colouring.set_colour(c_red)
   else:
-    pvobj['data']['current_grid_power'].colouring.set_colour(c_green)
+    pvobj['data']['current_grid'].colouring.set_colour(c_green)
 
   if pvdata['day_autarky_rate']["value"] > 80:
     pvobj['data']['day_autarky_rate'].colouring.set_colour(c_green)
@@ -108,16 +110,6 @@ def set_data_colours(pvdata, pvobj):
     pvobj['data']['day_autarky_rate'].colouring.set_colour(c_yellow)
   else:
     pvobj['data']['day_autarky_rate'].colouring.set_colour(c_red)
-
-  if pvdata['day_balance_rate']["value"] > 0:
-    pvobj['data']['day_balance_rate'].colouring.set_colour(c_green)
-  else:
-    pvobj['data']['day_balance_rate'].colouring.set_colour(c_red)
-
-  if pvdata['day_balance']["value"] > 0:
-    pvobj['data']['day_balance'].colouring.set_colour(c_green)
-  else:
-    pvobj['data']['day_balance'].colouring.set_colour(c_red)
 
 #---------------------------------------------
 def refresh(pvobj):
@@ -136,8 +128,7 @@ def refresh(pvobj):
 #---------------------------------------------
 def set_alpha(pvobj, alpha):
   try:
-    for _, obj in pvobj['icon'].items():
-        obj.set_alpha(alpha)
+    pvobj['icon']['battery_icon'].set_alpha(alpha)
     for _, obj in pvobj['data'].items():
         obj.colouring.set_colour(alpha=alpha)  
   except Exception as e:
