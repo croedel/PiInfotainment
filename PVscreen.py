@@ -94,7 +94,7 @@ def set_data_colours(pvdata, pvobj):
   c_red = (1.0, 0.0, 0.0, 1.0)
 
   # set text colours
-  if pvdata['current_battery_power']["value"] > 0:
+  if pvdata['current_battery']["value"] > 0:
     pvobj['data']['current_battery'].colouring.set_colour(c_red)
   else:
     pvobj['data']['current_battery'].colouring.set_colour(c_green)
@@ -117,7 +117,7 @@ def refresh(pvobj):
   try:
     for param, data in pvdata.items():
       if param in pvobj['data']:
-        text = data["format"].format(data["value"])
+        text = "{}{}".format( data["value"], data["unit"] )
         pvobj['data'][param].set_text(text_format=text)
     set_battery_soc(pvdata, pvobj)    
     set_island_mode(pvdata, pvobj)
