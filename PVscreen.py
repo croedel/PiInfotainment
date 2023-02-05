@@ -53,9 +53,9 @@ def obj_create( width, height ):
   return pvobj
 
 #---------------------------------------------
-def set_battery_soc(pv_info, pvobj):
+def set_battery_soc(pvdata, pvobj):
   try:
-    soc = int(pv_info['current_battery_soc']['value'])
+    soc = int(pvdata['current_battery_soc']['value'])
     if soc < 20:
       icon = "battery_1.png"
     elif soc < 40:
@@ -72,9 +72,9 @@ def set_battery_soc(pv_info, pvobj):
   pvobj['icon']['battery_icon'].set_textures( [tex] )
 
 #---------------------------------------------
-def set_island_mode(pv_info, pvobj):
+def set_island_mode(pvdata, pvobj):
   try:
-    val = int(pv_info['current_island_mode']['value'])
+    val = int(pvdata['current_island_mode']['value'])
     if val == 1:
       icon = "grid_off.png"
     else:
@@ -85,51 +85,51 @@ def set_island_mode(pv_info, pvobj):
   pvobj['icon']['island_mode_icon'].set_textures( [tex] )
 
 #---------------------------------------------
-def set_data_colours(pv_info, pvobj):
+def set_data_colours(pvdata, pvobj):
   # colour codes
   c_green = (0.0, 0.7, 0.0, 1.0)
   c_yellow = (1.0, 0.6, 0.1, 1.0)
   c_red = (1.0, 0.0, 0.0, 1.0)
 
   # set text colours
-  if pv_info['current_battery_power']["value"] > 0:
+  if pvdata['current_battery_power']["value"] > 0:
     pvobj['data']['current_battery_power'].colouring.set_colour(c_red)
   else:
     pvobj['data']['current_battery_power'].colouring.set_colour(c_green)
 
-  if pv_info['current_grid_power']["value"] > 0:
+  if pvdata['current_grid_power']["value"] > 0:
     pvobj['data']['current_grid_power'].colouring.set_colour(c_red)
   else:
     pvobj['data']['current_grid_power'].colouring.set_colour(c_green)
 
-  if pv_info['day_autarky_rate']["value"] > 80:
+  if pvdata['day_autarky_rate']["value"] > 80:
     pvobj['data']['day_autarky_rate'].colouring.set_colour(c_green)
-  elif pv_info['day_autarky_rate']["value"] > 50:
+  elif pvdata['day_autarky_rate']["value"] > 50:
     pvobj['data']['day_autarky_rate'].colouring.set_colour(c_yellow)
   else:
     pvobj['data']['day_autarky_rate'].colouring.set_colour(c_red)
 
-  if pv_info['day_balance_rate']["value"] > 0:
+  if pvdata['day_balance_rate']["value"] > 0:
     pvobj['data']['day_balance_rate'].colouring.set_colour(c_green)
   else:
     pvobj['data']['day_balance_rate'].colouring.set_colour(c_red)
 
-  if pv_info['day_balance']["value"] > 0:
+  if pvdata['day_balance']["value"] > 0:
     pvobj['data']['day_balance'].colouring.set_colour(c_green)
   else:
     pvobj['data']['day_balance'].colouring.set_colour(c_red)
 
 #---------------------------------------------
 def refresh(pvobj):
-  pv_info = PVinverter.get_PV_device_data()
+  pvdata = PVinverter.get_PV_device_data()
   try:
-    for key, data in pv_info.items():
-      if data["title"] in pvobj['data']:
+    for param, data in pvdata.items():
+      if param in pvobj['data']:
         text = data["format"].format(data["value"])
-        pvobj[key].set_text(text_format=text)
-    set_battery_soc(pv_info, pvobj)    
-    set_island_mode(pv_info, pvobj)
-    set_data_colours(pv_info, pvobj)    
+        pvobj['data'][param].set_text(text_format=text)
+    set_battery_soc(pvdata, pvobj)    
+    set_island_mode(pvdata, pvobj)
+    set_data_colours(pvdata, pvobj)    
   except Exception as e:
     logging.error("Couldn't update PV object. error: {}".format(str(e)))
 

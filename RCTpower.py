@@ -16,30 +16,24 @@ from rctclient.utils import decode_value
 
 parameter_map = [     
     # Defines mapping and normalization of device parameters       
-    # (parameter, normalized, scale, format)
-    ( "android_description",                "name",     	             None,   "{}" ),
-    ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "current_string_a",          1,      "{:.2f}W" ),
-    ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "current_string_b",          1,      "{:.2f}W" ),
-    ( "g_sync.p_acc_lp",                    "current_battery_power",     1,      "{:.2f}W" ),
-    ( "battery.soc",                        "current_battery_soc",       1,      "{:.0f}%" ),
-    ( "g_sync.p_ac_load_sum_lp",            "current_house_ext_power",   1,      "{:.2f}W" ),
-    ( "g_sync.p_ac_grid_sum_lp",            "current_grid_power",        1,      "{:.2f}W" ),
-    ( "prim_sm.island_flag",                "current_island_mode",       None,   "{}" ),
+    # (parameter, normalized)
+    ( "android_description",                "name" ),     	             
+    ( "dc_conv.dc_conv_struct[0].p_dc_lp",  "current_string_a" ),          
+    ( "dc_conv.dc_conv_struct[1].p_dc_lp",  "current_string_b" ),          
+    ( "g_sync.p_acc_lp",                    "current_battery_power" ),     
+    ( "battery.soc",                        "current_battery_soc" ),       
+    ( "g_sync.p_ac_load_sum_lp",            "current_house_ext_power" ),   
+    ( "g_sync.p_ac_grid_sum_lp",            "current_grid_power" ),        
+    ( "prim_sm.island_flag",                "current_island_mode" ),       
 
-    ( "energy.e_dc_day[0]",                 "day_string_a",              1000,   "{:.1f}kWh" ),
-    ( "energy.e_dc_day[1]",                 "day_string_b",              1000,   "{:.1f}kWh" ),
-    ( "energy.e_ext_day",                   "day_ext",                   1000,   "{:.1f}kWh" ),
-    ( "energy.e_ac_day",                    "day_energy",                1000,   "{:.1f}kWh" ),
-    ( "energy.e_grid_load_day",             "day_grid_load",             1000,   "{:.1f}kWh" ),
-    ( "energy.e_grid_feed_day",             "day_grid_feed",             1000,   "{:.1f}kWh" ),
-    ( "energy.e_load_day",                  "day_house_usage",           1000,   "{:.1f}kWh" ),
-    ( "energy.e_ac_total",                  "total_energy",              1000,   "{:.1f}kWh" ),
-
-    # calculated data 
-    ( "",                                   "day_production",            1000,   "{:.1f}kWh" ),
-    ( "",                                   "day_autarky_rate",             1,      "{:.0%}" ),
-    ( "",                                   "day_balance_rate",             1,      "{:.0%}" ),
-    ( "",                                   "day_balance",               1000,   "{:.1f}kWh" )
+    ( "energy.e_dc_day[0]",                 "day_string_a" ),              
+    ( "energy.e_dc_day[1]",                 "day_string_b" ),              
+    ( "energy.e_ext_day",                   "day_ext" ),                   
+    ( "energy.e_ac_day",                    "day_energy" ),                
+    ( "energy.e_grid_load_day",             "day_grid_load" ),             
+    ( "energy.e_grid_feed_day",             "day_grid_feed" ),             
+    ( "energy.e_load_day",                  "day_house_usage" ), 
+    ( "energy.e_ac_total",                  "total_energy" )    
 ]
 
 #---------------------------------------------
@@ -89,7 +83,7 @@ def retrieve_PV_data():
         sock.connect((server,port))
 
         # read data from RCT data device
-        for parameter, normalized, scale, sformat in parameter_map:
+        for parameter, normalized in parameter_map:
             if len(parameter) > 0: # exclude calculated data
                 value = query_object( sock, parameter )        
                 if value != None:
@@ -98,3 +92,13 @@ def retrieve_PV_data():
         logging.error("Couldn't connect to RCT server {}:{} -> {}".format(server, port, msg))
     
     return rawdata
+
+#-------------------------------------------------
+if __name__ == "__main__":
+    logging.basicConfig( level=logging.INFO, format="%(asctime)s : %(levelname)s : %(message)s" )
+
+    rawdata = retrieve_PV_data()
+    if rawdata:
+        for param, value in rawdata.items():
+            logging.info( "{}: {}".format(param, value))
+

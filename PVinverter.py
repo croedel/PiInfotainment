@@ -6,49 +6,39 @@ Reads parameters from a PV device.
 from locale import format_string
 from config import cfg
 import logging
-
-if cfg['PV_TYPE'] == "RCTpower":
-    import RCTpower
-
-#---------------------------------------------
-def format_rawdata( rawdata ):
-    pvdata = {}
-    parameter_map = []
-    if cfg['PV_TYPE'] == "RCTpower":
-        parameter_map = RCTpower.parameter_map
-
-    for parameter, normalized, scale, sformat in parameter_map:
-        value = rawdata.get(normalized)
-        if value != None:       
-            node = {}
-            if scale != None and isinstance(scale, int):    
-                node["value"] = value/scale
-            else:
-                node["value"] = value
-            node["format"] = sformat
-            pvdata[normalized] = node
-    return pvdata
+import time
+from MTEC_energybutler_API import MTECapi
  
 #---------------------------------------------
 def get_PV_device_data():
-    rawdata = {}
     pvdata = {}
+    now = time.localtime() # "now" = time of data refresh
+    pvdata["dt"] = { "value": time.strftime("%d.%m.%Y %H:%M:%S", now), "unit": "" }
 
-    # retrieve data from PV device
-    if cfg['PV_TYPE'] == "RCTpower":
-        rawdata = RCTpower.retrieve_PV_data()
+    # retrieve data from PV device and store it in normalized format
+    # you hopefully can change that quite easily to map your PV inverter's data
+    api = MTECapi.MTECapi()
+    data = api.query_station_data(cfg["PV_STATION_ID"])
+    pvdata["day_production"] = data["todayEnergy"]
+    pvdata["total_production"] = data["totalEnergy"]    
+    pvdata["current_PV"] = data["PV"] 
+    pvdata["current_grid"] = data["grid"] 
+    pvdata["current_battery"] = data["battery"] 
+    pvdata["current_battery_SOC"] = { "value": data["battery"]["SOC"], "unit": "%" }  
+    pvdata["current_load"] = data["load"] 
 
-    try:
-        # add some calculated data
-        rawdata["day_production"] = rawdata["day_string_a"] + rawdata["day_string_b"]
-        rawdata["day_autarky_rate"] = 1 - (rawdata["day_ext"] / rawdata["day_energy"]) if rawdata["day_energy"] else 1
-        rawdata["day_balance_rate"] = (rawdata["day_grid_feed"] - rawdata["day_grid_load"]) / rawdata["day_energy"] if rawdata["day_energy"] else 0
-        rawdata["day_balance"] = rawdata["day_grid_feed"] - rawdata["day_grid_load"]
-    except:
-        logging.error("Couldn't add calculated data")
+    data = api.query_grid_connected_data(cfg["PV_STATION_ID"])
+    pvdata["day_grid_load"] = data["eMeterTotalBuy"]
+    pvdata["day_grid_feed"] = data["eMeterTotalSell"] 
+    pvdata["day_usage"] = data["eUse"]
+    pvdata["day_usage_self"] = data["eUseSelf"]
+    pvdata["day_system_production"] = data["eDayTotal"]
 
-    # scale and add format
-    pvdata = format_rawdata( rawdata )
+    # calculate useful rates
+    autarky_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
+    own_usage_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_system_production"]["value"] if pvdata["day_system_production"]["value"]>0 else 0
+    pvdata["day_autarky_rate"] = { "value": "{:.1f}".format(autarky_rate), "unit": "%" }
+    pvdata["day_own_usage_rate"] = { "value": "{:.1f}".format(own_usage_rate), "unit": "%" }
 
     return pvdata
 
@@ -58,6 +48,6 @@ if __name__ == "__main__":
 
     pvdata = get_PV_device_data()
     if pvdata:
-        for parameter, data in pvdata.items():
-            logging.info( parameter + ": " + data["format"].format(data["value"]) )
+        for param, data in pvdata.items():
+            logging.info( "{}: {} {}".format(param, data["value"], data["unit"]) )
 
