@@ -8,7 +8,20 @@ from config import cfg
 import logging
 import time
 from MTEC_energybutler_API import MTECapi
- 
+
+#---------------------------------------------
+def format_data( data ):
+    value = float(data.get("value", 0))
+    unit = data.get("unit", "")
+
+    # do some formatting for nicer output
+    if unit == "kW" and value < 1: # Convert to W  
+        value = int(value*1000)
+        unit = "W"    
+    elif unit == "W": # Don't show decimal places for W
+        value = int(value)   
+    return { "value": value, "unit": unit }
+    
 #---------------------------------------------
 def get_PV_device_data():
     pvdata = {}
@@ -30,15 +43,19 @@ def get_PV_device_data():
 
     api = MTECapi.MTECapi()
     data = api.query_station_data(station_id)
-    pvdata["day_production"] = data["todayEnergy"]      # Energy produced by the PV today
-    pvdata["month_production"] = data["monthEnergy"]    # Energy produced by the PV this month
-    pvdata["year_production"] = data["yearEnergy"]      # Energy produced by the PV this year
-    pvdata["total_production"] = data["totalEnergy"]    # Energy produced by the PV in total
-    pvdata["current_PV"] = data["PV"]                   # Current PV production
-    pvdata["current_grid"] = data["grid"]               # Current flow from/to grid
-    pvdata["current_battery"] = data["battery"]         # Current flow from/to battery    
-    pvdata["current_battery_SOC"] = { "value": data["battery"]["SOC"], "unit": "%" }  # Current battery SOC
-    pvdata["current_load"] = data["load"]               # Current consumed energy
+    pvdata["day_production"] = data["todayEnergy"]              # Energy produced by the PV today
+    pvdata["month_production"] = data["monthEnergy"]            # Energy produced by the PV this month
+    pvdata["year_production"] = data["yearEnergy"]              # Energy produced by the PV this year
+    pvdata["total_production"] = data["totalEnergy"]            # Energy produced by the PV in total
+    pvdata["current_PV"] = format_data(data["PV"])              # Current flow from PV
+    pvdata["current_grid"] = format_data( data["grid"] )        # Current flow from/to grid
+    if data["grid"]["direction"] == 2: 
+        pvdata["current_grid"]["value"] = - pvdata["current_grid"]["value"]  # show "feed in" as negative value 
+    pvdata["current_battery"] = format_data( data["battery"] )  # Current flow from/to battery
+    if data["battery"]["direction"] == 2: 
+        pvdata["current_battery"]["value"] = - pvdata["current_battery"]["value"]  # show "feed in" as negative value 
+    pvdata["current_battery_SOC"] = { "value": data["battery"]["SOC"], "unit": "%" }   # Current battery SOC
+    pvdata["current_load"] = format_data( data["load"])          # Current consumed energy
     pvdata["grid_interrupt"] = { "value": data["lackMaster"], "unit": "" }  # Grid interrup flag
 
     data = api.query_grid_connected_data(station_id)
@@ -46,10 +63,13 @@ def get_PV_device_data():
     pvdata["day_grid_feed"] = data["eMeterTotalSell"]   # Today's energy fed into grid
     pvdata["day_usage"] = data["eUse"]                  # Today's total energy consumption
     pvdata["day_usage_self"] = data["eUseSelf"]         # Today's energy consumption originating from own PV or battery (i.e. not grid)
+    pvdata["day_total"] = data["eDayTotal"]             # Today's total energy production (PV + battery discharge)
 
     # calculate autarky rate
     autarky_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
     pvdata["day_autarky_rate"] = { "value": "{:.1f}".format(autarky_rate), "unit": "%" }    # Today's independance rate from grid power
+    self_usage_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_total"]["value"] if pvdata["day_total"]["value"]>0 else 0
+    pvdata["day_self_usage_rate"] = { "value": "{:.1f}".format(self_usage_rate), "unit": "%" }    # Ratio of self used energy (vs. fed into grid)
 
     return pvdata
 

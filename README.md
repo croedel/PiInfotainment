@@ -9,7 +9,7 @@ This is a hobby project for Raspberry Pi which combines following core functiona
 - Surveillance camera viewer: Show live picture of a surveillance camera when it detects motion  
 - Simple webserver: Enables you to remotely control the Infotainment System
 - Enable to integrate into almost any home automation system which supports HTTP hooks 
-- Reads and displays data from a photovoltaic device from RCT Power 
+- Reads and displays data from a photovoltaic inverter (M-TEC)  
 
 The Picture Frame functionality of RaspiInfotainment uses the pi3d (https://pi3d.github.io/) project and is heavily based on PictureFrame2020.py from https://github.com/pi3d/pi3d_demos. Kudos to these awsome projects!
 

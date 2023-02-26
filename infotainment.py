@@ -350,17 +350,17 @@ def start_picframe():
 
       if info_interstitial != 'OFF':
         if info_index == 0:
-          weatherinfo.regen()
-          weatherinfo.draw()
           for item in weatherobj['forecast']:
             item['icon'].draw()
           for _, obj in weatherobj['static'].items():  
             obj.draw()
+          weatherinfo.regen()
+          weatherinfo.draw()
         else:
-          PVinfo.regen()
-          PVinfo.draw()
           for _, obj in PVobj['icon'].items():
             obj.draw()
+          PVinfo.regen()
+          PVinfo.draw()
 
     else: # monitor OFF -> minimize system activity to reduce power consumption
       time.sleep(10)
