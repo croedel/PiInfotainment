@@ -13,6 +13,7 @@ from MTEC_energybutler_API import MTECapi
 def format_data( data ):
     value = float(data.get("value", 0))
     unit = data.get("unit", "")
+    direction = data.get("direction")
 
     # do some formatting for nicer output
     if unit == "kW" and value < 1: # Convert to W  
@@ -20,7 +21,11 @@ def format_data( data ):
         unit = "W"    
     elif unit == "W": # Don't show decimal places for W
         value = int(value)   
-    return { "value": value, "unit": unit }
+
+    if direction:
+        return { "value": value, "unit": unit, "direction": direction }
+    else:
+        return { "value": value, "unit": unit }
     
 #---------------------------------------------
 def get_PV_device_data():
@@ -32,8 +37,15 @@ def get_PV_device_data():
     #        'dt': {'value': '05.02.2023 14:55:02', 'unit': ''}, 
     #        'day_production': {'value': 20.1, 'unit': 'kWh'}, 
     #        'total_production': {'value': 630.4, 'unit': 'kWh'}, 
+    #        'current_PV': {'value': 630.4, 'unit': 'kWh', 'direction': 1},    
     #        ...
-    #    }    
+    #    }
+    #     
+    # value and unit should be self explaining. direction indicated the flow direction:
+    #  1: "obtain"
+    #  2: "feed in" 
+    #  3: "idle"       
+
     station_id = cfg["PV_STATION_ID"]
     if len(station_id)<15:
         station_id = cfg["PV_DEMO_STATION_ID"]
@@ -49,11 +61,7 @@ def get_PV_device_data():
     pvdata["total_production"] = data["totalEnergy"]            # Energy produced by the PV in total
     pvdata["current_PV"] = format_data(data["PV"])              # Current flow from PV
     pvdata["current_grid"] = format_data( data["grid"] )        # Current flow from/to grid
-    if data["grid"]["direction"] == 2: 
-        pvdata["current_grid"]["value"] = - pvdata["current_grid"]["value"]  # show "feed in" as negative value 
     pvdata["current_battery"] = format_data( data["battery"] )  # Current flow from/to battery
-    if data["battery"]["direction"] == 2: 
-        pvdata["current_battery"]["value"] = - pvdata["current_battery"]["value"]  # show "feed in" as negative value 
     pvdata["current_battery_SOC"] = { "value": data["battery"]["SOC"], "unit": "%" }   # Current battery SOC
     pvdata["current_load"] = format_data( data["load"])          # Current consumed energy
     pvdata["grid_interrupt"] = { "value": data["lackMaster"], "unit": "" }  # Grid interrup flag
