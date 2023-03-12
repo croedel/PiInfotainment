@@ -73,17 +73,17 @@ def set_battery_soc(pvdata, pvobj):
     soc = float(pvdata['current_battery_SOC']['value'])
     if soc <= 20:
       icon = "battery_1.png"
-    elif soc < 40:
+    elif soc <= 40:
       icon = "battery_2.png"
-    elif soc < 60:
+    elif soc <= 60:
       icon = "battery_3.png"
-    elif soc < 80:
+    elif soc <= 80:
       icon = "battery_4.png"
     else:
       icon = "battery_5.png"
   except Exception as e:
     logging.error("Couldn't set battery icon. error: {}".format(str(e)))
-    icon = "battery_5.png"
+    icon = "battery_1.png"
 
   tex = pi3d.Texture(os.path.join(cfg['PV_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
   pvobj['icon']['battery_icon'].set_textures( [tex] )
@@ -103,25 +103,31 @@ def set_flow_arrows(pvdata, pvobj):
   try:
     if pvdata['current_grid']['direction'] == 1:
       pvobj['icon']['grid_flow_icon'].rotateToZ(180) 
+      pvobj['icon']['grid_flow_icon'].set_alpha(1)
     elif pvdata['current_grid']['direction'] == 2:
       pvobj['icon']['grid_flow_icon'].rotateToZ(0) 
+      pvobj['icon']['grid_flow_icon'].set_alpha(1)
     else:
       pvobj['icon']['grid_flow_icon'].set_alpha(0)
 
     if pvdata['current_battery']['direction'] == 1:
       pvobj['icon']['battery_flow_icon'].rotateToZ(90) 
+      pvobj['icon']['battery_flow_icon'].set_alpha(1)
     elif pvdata['current_battery']['direction'] == 2:
-      pvobj['icon']['battery_flow_icon'].rotateToZ(270) 
+      pvobj['icon']['battery_flow_icon'].rotateToZ(270)
+      pvobj['icon']['battery_flow_icon'].set_alpha(1)
     else:
       pvobj['icon']['battery_flow_icon'].set_alpha(0)
     
     if pvdata['current_PV']['direction'] == 1:
       pvobj['icon']['PV_flow_icon'].rotateToZ(0) 
+      pvobj['icon']['PV_flow_icon'].set_alpha(1)
     else:
       pvobj['icon']['PV_flow_icon'].set_alpha(0)
     
     if pvdata['current_load']['direction'] == 2:
       pvobj['icon']['load_flow_icon'].rotateToZ(90) 
+      pvobj['icon']['load_flow_icon'].set_alpha(1)
     else:
       pvobj['icon']['load_flow_icon'].set_alpha(0)
   except Exception as e:

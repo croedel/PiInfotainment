@@ -1,7 +1,5 @@
 # Raspi Infotainment system
 
-**This project is still work-in-progress!**
-
 Welcome to the Raspi Infotainment system project!  
 This is a hobby project for Raspberry Pi which combines following core functionalities:
 - Advanced digital picture frame: Enables to displays you digital images in a slideshow with smooth transitions 
