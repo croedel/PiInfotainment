@@ -66,12 +66,12 @@ def get_PV_device_data():
     pvdata["current_load"] = format_data( data["load"])          # Current consumed energy
     pvdata["grid_interrupt"] = { "value": data["lackMaster"], "unit": "" }  # Grid interrup flag
 
-    data = api.query_grid_connected_data(station_id)
-    pvdata["day_grid_load"] = data["eMeterTotalBuy"]    # Today's energy loaded from grid
-    pvdata["day_grid_feed"] = data["eMeterTotalSell"]   # Today's energy fed into grid
-    pvdata["day_usage"] = data["eUse"]                  # Today's total energy consumption
-    pvdata["day_usage_self"] = data["eUseSelf"]         # Today's energy consumption originating from own PV or battery (i.e. not grid)
-    pvdata["day_total"] = data["eDayTotal"]             # Today's total energy production (PV + battery discharge)
+    data = api.query_usage_data(station_id, "today")
+    pvdata["day_grid_load"] = data["day_grid_load"]     # Today's energy loaded from grid
+    pvdata["day_grid_feed"] = data["day_grid_feed"]     # Today's energy fed into grid
+    pvdata["day_usage"] = data["day_usage"]             # Today's total energy consumption
+    pvdata["day_usage_self"] = data["day_usage_self"]   # Today's energy consumption originating from own PV or battery (i.e. not grid)
+    pvdata["day_total"] = data["day_total"]             # Today's total energy production (PV + battery discharge)
 
     # calculate autarky rate
     autarky_rate = 100 * pvdata["day_usage_self"]["value"] / pvdata["day_usage"]["value"] if pvdata["day_usage"]["value"]>0 else 0
