@@ -324,7 +324,7 @@ If you don't own a PV or want to disable the functionality, set `PV_INFO_ENABLE`
 
 Unfortunately, there is no standard for PV systems. Each one supports their own proprietary API's. Therefore you probably will have to adjust the implementation according to your system. If you want to adapt the PV info to your PV system, you might want to have a look to `PVinverter.py`. Here the data from the PV inverter is fetched and mapped to a normalized data structure. You hopefully can change that quite easily to map your PV inverter's data. 
 
-I personally own an M-TEC Energybutler system. For that one I created an API which retrieves the necessary data. You can find it with the project `MTEC_energybutler_API`. In order to use it, please install it in a sub-folder of this project.
+I personally own an M-TEC Energybutler system. For that one I created an API which retrieves the necessary data. You can find it with the project `MTEC_API`. In order to use it, please install it in a sub-folder of this project.
 In order to connect to your PV device, you need to set e-mail adress, password and your individual stationId.
 
 ```

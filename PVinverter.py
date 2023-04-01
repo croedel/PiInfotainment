@@ -7,7 +7,7 @@ from locale import format_string
 from config import cfg
 import logging
 import time
-from MTEC_energybutler_API import MTECapi
+from MTEC_API import MTECapi
 
 #---------------------------------------------
 def format_data( data ):
