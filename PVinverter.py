@@ -66,7 +66,7 @@ def get_PV_device_data():
     pvdata["current_load"] = format_data( data["load"])          # Current consumed energy
     pvdata["grid_interrupt"] = { "value": data["lackMaster"], "unit": "" }  # Grid interrup flag
 
-    data = api.query_usage_data(station_id, "today")
+    data = api.query_usage_data(station_id, "day")
     pvdata["day_grid_load"] = data["day_grid_load"]     # Today's energy loaded from grid
     pvdata["day_grid_feed"] = data["day_grid_feed"]     # Today's energy fed into grid
     pvdata["day_usage"] = data["day_usage"]             # Today's total energy consumption
