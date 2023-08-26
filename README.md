@@ -304,20 +304,6 @@ W_SPACING        # spacing between the weather columns
 
 If this shouldn't give you the desired results, you can think about changing the sizing calculation within `weatherscreen.py`
 
-### RKI COVID Incidence
-Nowadays the COVID 7-day incidence is a very important figure. Therefore I added a functionality which retrieves this info from RKI and displays it on to the weather screen.
-To define the location for which you want to display the figure, you should go to https://npgeo-corona-npgeo-de.hub.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0/data. Search for your "Landkreis" and look for the "AGS" id.
-
-The second important figure is the 7-day hospitalization index. It is retrieved from the RKI GitHub Repository (https://github.com/robert-koch-institut)
-[Robert Koch-Institut (2021): COVID-19-Hospitalisierungen in Deutschland, Berlin: Zenodo. DOI:10.5281/zenodo.5519056.]
-
-This location id as well as the region name then sould be added to config.yaml: 
-
-```
-RKI_ID : 09179          # RKI region ID
-RKI_REGION : "Bayern"   # Bundesland
-```
-
 ### PV Information
 The Infotainment System supports showing some information about a potentially installed Photo Voltaic (PV) system.
 If you don't own a PV or want to disable the functionality, set `PV_INFO_ENABLE` to `False`.

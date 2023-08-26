@@ -18,7 +18,6 @@ def obj_create( width, height ):
   x_sunrise = -width*0.5 + cfg['W_POINT_SIZE']*10
   x_sunset = x_sunrise + cfg['W_STATIC_SIZE']*3
   x_uvi = x_sunset + cfg['W_STATIC_SIZE']*3.5  
-  x_cases7 = x_uvi + cfg['W_STATIC_SIZE']*5
   weatherobj['static'] = {}
   weatherobj['static']['sunrise'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'sunrise.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
                           x=x_sunrise, y=y_top, z=1.0) 
@@ -26,10 +25,6 @@ def obj_create( width, height ):
                           x=x_sunset, y=y_top, z=1.0) 
   weatherobj['static']['uvidx'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'uvidx.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
                           x=x_uvi, y=y_top, z=1.0) 
-  weatherobj['static']['corona'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'corona_g.png'), icon_shader, w=cfg['W_STATIC_SIZE'], h=cfg['W_STATIC_SIZE'], 
-                          x=x_cases7, y=y_top, z=1.0) 
-  weatherobj['static']['hospitalization'] = pi3d.ImageSprite(os.path.join(cfg['W_ICON_DIR'], 'hospitalization_g.png'), icon_shader, w=cfg['W_STATIC_SIZE']*0.7, h=cfg['W_STATIC_SIZE']*0.7, 
-                          x=x_cases7, y=y_top-cfg['W_STATIC_SIZE'], z=1.0) 
 
   x = -width*0.5 + cfg['W_MARGIN_LEFT'] + cfg['W_STATIC_SIZE']*0.5
   x_dt = -width*0.5 + cfg['W_MARGIN_LEFT']
@@ -61,10 +56,6 @@ def obj_create( width, height ):
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
   weatherobj['current']['uvi'] = pi3d.TextBlock(x=x_uvi+cfg['W_STATIC_SIZE']*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.6, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['cases7_per_100k'] = pi3d.TextBlock(x=x_cases7+cfg['W_STATIC_SIZE']*0.7, y=y_top, text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  weatherobj['current']['hospitalization_idx'] = pi3d.TextBlock(x=x_cases7+cfg['W_STATIC_SIZE']*0.7, y=y_top-cfg['W_STATIC_SIZE'], text_format=" ", z=0.0, rot=0.0, char_count=20, size=0.99, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
   w_item_cnt = int( (width-cfg['W_MARGIN_LEFT']) / (cfg['W_ICON_SIZE'] + cfg['W_SPACING']))
   weatherobj['forecast'] = []
@@ -93,66 +84,12 @@ def obj_create( width, height ):
     weatherobj['forecast'].append( item )
   return weatherobj
 
-def set_corona_colour(weather_info, weatherobj):
-  # Inzidenz
-  try:
-    cases7 = int(weather_info['current']['cases7_per_100k'])
-    if cases7 < 20:
-      colour = (0.0, 0.7, 0.0, 1.0) 
-      icon = "corona_g.png"
-    elif cases7 < 35:
-      colour = (1.0, 1.0, 0.2, 1.0) 
-      icon = "corona_l.png"
-    elif cases7 < 50:
-      colour = (1.0, 0.6, 0.1, 1.0) 
-      icon = "corona_y.png"
-    elif cases7 < 100:
-      colour = (1.0, 0.0, 0.0, 1.0) 
-      icon = "corona_r.png"
-    elif cases7 < 200:
-      colour = (1.0, 0.1, 0.5, 1.0) 
-      icon = "corona_p.png"
-    elif cases7 < 500:
-      colour = (1.0, 0.0, 1.0, 1.0)
-      icon = "corona_v.png"
-    else:
-      colour = (0.8, 0.3, 1.0, 1.0)
-      icon = "corona_x.png"
-  except:
-    colour = (1.0, 1.0, 1.0, 1.0)       
-  weatherobj['current']['cases7_per_100k'].colouring.set_colour( colour=colour )         
-  tex = pi3d.Texture(os.path.join(cfg['W_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
-  weatherobj['static']['corona'].set_textures( [tex] )
-
-  # Hospitalization rate
-  try:
-    hospitalization = float(weather_info['current']['hospitalization_idx'])
-    if hospitalization < 3:
-      colour = (0.0, 0.7, 0.0, 1.0) 
-      icon = "hospitalization_g.png"
-    elif hospitalization < 6:
-      colour = (1.0, 0.6, 0.1, 1.0) 
-      icon = "hospitalization_y.png"
-    elif hospitalization < 9:
-      colour = (1.0, 0.0, 0.0, 1.0) 
-      icon = "hospitalization_r.png"
-    else:
-      colour = (0.8, 0.3, 1.0, 1.0)
-      icon = "hospitalization_p.png"
-  except:
-    colour = (1.0, 1.0, 1.0, 1.0)       
-  weatherobj['current']['hospitalization_idx'].colouring.set_colour( colour=colour )         
-  tex = pi3d.Texture(os.path.join(cfg['W_ICON_DIR'], icon), blend=True, automatic_resize=True, free_after_load=True)
-  weatherobj['static']['hospitalization'].set_textures( [tex] )
-
-
 def refresh(weatherobj):
   weather_info = weather.get_weather_info( cfg['W_LATITUDE'], cfg['W_LONGITUDE'], cfg['W_UNIT'], cfg['W_LANGUAGE'], cfg['W_API_KEY'] )
   try:
     for key, val in weather_info['current'].items():
       if key in weatherobj['current']:
         weatherobj['current'][key].set_text(text_format=val)
-    set_corona_colour(weather_info, weatherobj)    
     for i in range( min(len(weather_info['forecast']), len(weatherobj['forecast'])) ):
       for key, val in weather_info['forecast'][i].items():
         if key in weatherobj['forecast'][i]:
