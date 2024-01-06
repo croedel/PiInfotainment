@@ -7,7 +7,6 @@ This project heavily inherited from PictureFrame2020.py, which is part of https:
 (c) by Christian Rödel, https://github.com/croedel/PiInfotainment
 '''
 import os
-import platform
 import sys
 import logging
 import time
@@ -23,6 +22,7 @@ import dircache
 import weatherscreen
 import PVscreen
 import displaymsg
+import PVmqtt
 
 try:
   import paho.mqtt.client as mqttcl
@@ -52,6 +52,7 @@ monitor_status = "ON"
 pcache = None  
 start_date = None
 info_show_now = False
+pvmqtt = None
 
 #####################################################
 def tex_load(pic_num, iFiles, size=None):
@@ -201,7 +202,8 @@ def start_picframe():
 
   # prepare to display info screens (0) weather, (1) PVinfo
   info_interstitial = 'OFF'
-  next_info_tm = 0.0
+  next_weather_tm = 0.0
+  next_pv_tm= 0.0
   info_index = 0 # defines which info screen to show (0)weather, (1)PVinfo
   # (0) weather screen
   weatherinfo = pi3d.PointText(font, CAMERA, max_chars=2000, point_size=cfg['W_POINT_SIZE'])
@@ -384,10 +386,12 @@ def start_picframe():
             num_run_through = 0
             next_pic_num = 0
           next_check_tm = tm + cfg['CHECK_DIR_TM'] # next check
-        if tm > next_info_tm: # refresh info screen data
+        if tm > next_weather_tm: # refresh weather data
           weatherscreen.refresh( weatherobj )
-          PVscreen.refresh( PVobj )
-          next_info_tm = tm + cfg['INFO_REFRESH_DELAY'] # next check
+          next_weather_tm = tm + cfg['WEATHER_REFRESH_DELAY'] # next check
+        if tm > next_pv_tm: # refresh PV data
+          PVscreen.refresh( PVobj, pvmqtt )
+          next_pv_tm = tm + cfg['PV_REFRESH_DELAY'] # next check
 
     if cfg['KEYBOARD']:
       k = kbd.read()
@@ -624,12 +628,18 @@ def system_shutdown():
 #-------------------------------------------
 def main():
   ret = 0
-  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache, start_date, shutdown
+  global nexttm, date_from, date_to, iFiles, nFi, quit, show_camera, pcache, start_date, shutdown, pvmqtt
   logging.info('Starting infotainment system...')
   start_date = datetime.datetime.now()
   pcache = dircache.DirCache()
   mqttclient = mqtt_start()
   mqtt_publish_status( status="initializing" )
+
+  # PV inverter data via MQTT
+  pvmqtt = PVmqtt.PVmqtt()
+  pvmqtt.connect( server=cfg['MQTT_PV_SERVER'], port=cfg['MQTT_PV_PORT'], 
+                  login=cfg['MQTT_PV_LOGIN'], password=cfg['MQTT_PV_PASSWORD'], 
+                  topic=cfg['MQTT_PV_TOPIC'] )
 
   date_from = None
   date_to = None  

@@ -5,7 +5,7 @@ import logging
 import os
 import pi3d
 from config import cfg
-import PVinverter
+import PVmqtt
 
 #---------------------------------------------
 def obj_create( width, height ):
@@ -33,11 +33,7 @@ def obj_create( width, height ):
 
   pvobj['data']['day_production'] = pi3d.TextBlock(x=x_left+200, y=-160, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  pvobj['data']['month_production'] = pi3d.TextBlock(x=x_left+200, y=-270, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.7, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  pvobj['data']['year_production'] = pi3d.TextBlock(x=x_left+200, y=-360, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.7, 
-                        spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
-  pvobj['data']['total_production'] = pi3d.TextBlock(x=x_left+200, y=-450, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.7, 
+  pvobj['data']['total_production'] = pi3d.TextBlock(x=x_left+200, y=-270, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.7, 
                         spacing="F", space=0.0, colour=(1.0, 1.0, 1.0, 1.0))
 
   pvobj['data']['day_usage'] = pi3d.TextBlock(x=450, y=440, text_format=" ", z=0.0, rot=0.0, char_count=12, size=0.99, 
@@ -101,10 +97,10 @@ def set_island_mode(pvdata, pvobj):
 #---------------------------------------------
 def set_flow_arrows(pvdata, pvobj):
   try:
-    if pvdata['current_grid']['direction'] == 1:
+    if pvdata['current_grid']['direction'] == 2:
       pvobj['icon']['grid_flow_icon'].rotateToZ(180) 
       pvobj['icon']['grid_flow_icon'].set_alpha(1)
-    elif pvdata['current_grid']['direction'] == 2:
+    elif pvdata['current_grid']['direction'] == 1:
       pvobj['icon']['grid_flow_icon'].rotateToZ(0) 
       pvobj['icon']['grid_flow_icon'].set_alpha(1)
     else:
@@ -125,7 +121,7 @@ def set_flow_arrows(pvdata, pvobj):
     else:
       pvobj['icon']['PV_flow_icon'].set_alpha(0)
     
-    if pvdata['current_load']['direction'] == 2:
+    if pvdata['current_load']['direction'] == 1:
       pvobj['icon']['load_flow_icon'].rotateToZ(90) 
       pvobj['icon']['load_flow_icon'].set_alpha(1)
     else:
@@ -152,9 +148,9 @@ def set_data_colours(pvdata, pvobj):
     logging.error("Couldn't set PV text colors. error: {}".format(str(e)))
 
 #---------------------------------------------
-def refresh(pvobj):
+def refresh(pvobj, pvmqtt):
   logging.info("Refreshing PV info")
-  pvdata = PVinverter.get_PV_device_data()
+  pvdata = pvmqtt.get_data()
   try:
     for param, data in pvdata.items():
       if param in pvobj['data']:

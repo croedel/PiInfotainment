@@ -2,15 +2,12 @@
 """
 Read PV data from MQTT broker
 """
-
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import time
 from config import cfg
 
 try:
   import paho.mqtt.client as mqttcl
-  import paho.mqtt.publish as publish
 except Exception as e:
   logging.error("MQTT not set up because of: {}".format(e))
 
@@ -25,7 +22,7 @@ def on_mqtt_message(mqttclient, userdata, message):
   try:
     msg = message.payload.decode("utf-8")
     topic = message.topic.split("/")
-    parameter = topic[2] + "_" + topic[3]
+    parameter = topic[2] + "/" + topic[3]
     userdata[parameter] = msg # store received data in userdata
     logging.debug("MQTT data received: {} = {}".format(parameter, msg))
 
@@ -39,7 +36,12 @@ def mqtt_start(server, port, login, password, topic, pvdata):
     client.user_data_set(pvdata) # allow to store received data
     client.username_pw_set(login, password) 
     client.connect(server, port, 60) 
-    client.subscribe(topic + "/#", qos=0)
+    topics = [ 
+      (topic + "/now-base/#", 0),
+      (topic + "/day/#", 0),
+      (topic + "/total/#", 0) 
+    ]
+    client.subscribe(topics)
     client.on_connect = on_mqtt_connect
     client.on_message = on_mqtt_message
     client.loop_start()
@@ -61,6 +63,28 @@ def mqtt_stop(client):
 #====================================================
 # Main class which enables to connect to mqtt broker and retrieve inverter data
 class PVmqtt:
+  #----------------------  
+  PV_map = [
+    # Name                    MQTT parameter                Unit
+    [ "dt",                   "now-base/api_date",          ""    ],  # Timestamp
+    [ "current_PV",           "now-base/pv",                "W"   ],  # Current power flow from PV
+    [ "current_grid",         "now-base/grid_power",        "W"   ],  # Current power flow from/to grid
+    [ "current_battery",      "now-base/battery",           "W"   ],  # Current power flow from/to battery
+    [ "current_battery_SOC",  "now-base/battery_soc",       "%"   ],  # Current battery SOC
+    [ "current_load",         "now-base/consumption",       "W"   ],  # Current consumed power
+    [ "current_backup",       "now-base/backup",            "W"   ],  # Current backup power
+    [ "grid_interrupt",       "now-base/inverter_status",   ""    ],  # Grid status
+    [ "day_grid_load",        "day/grid_purchase_day",      "kWh" ],  # Today's energy loaded from grid
+    [ "day_grid_feed",        "day/grid_feed_day",          "kWh" ],  # Today's energy fed into grid
+    [ "day_usage",            "day/consumption_day",        "kWh" ],  # Today's total energy consumption
+#    [ "day_usage_self",       "day/day_usage_self",           "kWh" ],  # Today's energy consumption originating from own PV or battery (i.e. not grid)
+#    [ "day_total",            "day/day_total",                "kWh" ],  # Today's total energy production (PV + battery discharge)
+    [ "day_autarky_rate",     "day/autarky_rate_day",       "%"   ],  # Today's independance rate from grid power
+    [ "day_self_usage_rate",  "day/own_consumption_day",    "%"   ],  # Ratio of self used energy (vs. fed into grid)
+    [ "day_production",       "day/pv_day",                 "kWh" ],  # Energy produced by the PV today
+    [ "total_production",     "total/pv_total",             "kWh" ],  # Energy produced by the PV in total
+  ]
+
   #----------------------  
   def __init__(self):
     self.mqttclient = None
@@ -91,11 +115,11 @@ class PVmqtt:
       value = int(round(value, 0))
     if unit in ("W", "kWh"):
       if value == 0:
-        direction = 3
+        direction = 3   # =0
       elif value > 0:
-        direction = 1
+        direction = 1   # positive
       else:    
-        direction = 2
+        direction = 2   # negative
         value = -value  
 
     if direction:
@@ -108,31 +132,14 @@ class PVmqtt:
   def get_data(self):
     data = {}
     try:
-        data["dt"] = self._format_data("current_api_date", "")                        # Timestamp
-        data["current_PV"] = self._format_data("current_PV", "W")                     # Current power flow from PV
-        data["current_grid"] = self._format_data("current_grid", "W")                 # Current power flow from/to grid
-        data["current_battery"] = self._format_data("current_battery", "W" )          # Current power flow from/to battery
-        data["current_battery_SOC"] = self._format_data("current_battery_SOC", "%" )  # Current battery SOC
-        data["current_load"] = self._format_data("current_consumption", "W" )         # Current consumed power
-        data["grid_interrupt"] = self._format_data("current_inverter_status", "" )    # Grid status
+        for item in self.PV_map:
+          data[item[0]] = self._format_data(item[1], item[2])
         if data["grid_interrupt"]["value"] == "5":
           data["grid_interrupt"]["value"] = True  # Grid interrupted
         else:
           data["grid_interrupt"]["value"] = False  
-        data["day_grid_load"] = self._format_data("day_grid_load", "kWh")             # Today's energy loaded from grid
-        data["day_grid_feed"] = self._format_data("day_grid_feed", "kWh")             # Today's energy fed into grid
-        data["day_usage"] = self._format_data("day_usage", "kWh")                     # Today's total energy consumption
-        data["day_usage_self"] = self._format_data("day_usage_self", "kWh")           # Today's energy consumption originating from own PV or battery (i.e. not grid)
-        data["day_total"] = self._format_data("day_total", "kWh")                     # Today's total energy production (PV + battery discharge)
-        data["day_autarky_rate"] = self._format_data("day_autarky_rate", "%")             # Today's independance rate from grid power
-        data["day_self_usage_rate"] = self._format_data("day_own_consumption_rate", "%")  # Ratio of self used energy (vs. fed into grid)
-        data["day_production"] = self._format_data("day_PV", "kWh")                   # Energy produced by the PV today
-        data["month_production"] = self._format_data(0, "kWh")                        # Energy produced by the PV this month
-        data["year_production"] = self._format_data(0, "kWh")                         # Energy produced by the PV this year
-        data["total_production"] = self._format_data("total_PV", "kWh")               # Energy produced by the PV in total
     except Exception as e:
         logging.error( "Error while retrieving PV data: {}".format(e) )
-
     return data
 
 #==================================
@@ -157,4 +164,3 @@ def main():
 #----------------------
 if __name__ == '__main__':
   main()
-  
