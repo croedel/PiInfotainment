@@ -77,8 +77,6 @@ class PVmqtt:
     [ "day_grid_load",        "day/grid_purchase_day",      "kWh" ],  # Today's energy loaded from grid
     [ "day_grid_feed",        "day/grid_feed_day",          "kWh" ],  # Today's energy fed into grid
     [ "day_usage",            "day/consumption_day",        "kWh" ],  # Today's total energy consumption
-#    [ "day_usage_self",       "day/day_usage_self",           "kWh" ],  # Today's energy consumption originating from own PV or battery (i.e. not grid)
-#    [ "day_total",            "day/day_total",                "kWh" ],  # Today's total energy production (PV + battery discharge)
     [ "day_autarky_rate",     "day/autarky_rate_day",       "%"   ],  # Today's independance rate from grid power
     [ "day_self_usage_rate",  "day/own_consumption_day",    "%"   ],  # Ratio of self used energy (vs. fed into grid)
     [ "day_production",       "day/pv_day",                 "kWh" ],  # Energy produced by the PV today
