@@ -16,7 +16,7 @@ except Exception as e:
 def on_mqtt_connect(mqttclient, userdata, flags, rc):
   logging.info("Connected to MQTT broker")
 
-def on_disconnect(client, userdata, rc):
+def on_mqtt_disconnect(client, userdata, rc):
   logging.warning("MQTT broker disconnected: {}".format(rc))
 
 #----------------------  
@@ -45,6 +45,7 @@ def mqtt_start(server, port, login, password, topic, pvdata):
     ]
     client.subscribe(topics)
     client.on_connect = on_mqtt_connect
+    client.on_disconnect = on_mqtt_disconnect
     client.on_message = on_mqtt_message
     client.loop_start()
     logging.info('MQTT client started')
