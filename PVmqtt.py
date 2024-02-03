@@ -16,9 +16,11 @@ except Exception as e:
 def on_mqtt_connect(mqttclient, userdata, flags, rc):
   logging.info("Connected to MQTT broker")
 
+def on_disconnect(client, userdata, rc):
+  logging.warning("MQTT broker disconnected: {}".format(rc))
+
 #----------------------  
 def on_mqtt_message(mqttclient, userdata, message):
-  global srvstat, pic_history
   try:
     msg = message.payload.decode("utf-8")
     topic = message.topic.split("/")
@@ -84,7 +86,12 @@ class PVmqtt:
   ]
 
   #----------------------  
-  def __init__(self):
+  def __init__(self, server, port, login, password, topic):
+    self.server = server
+    self.port = port
+    self.login = login
+    self.password = password 
+    self.topic = topic
     self.mqttclient = None
     self.pvdata = {}
 
@@ -94,12 +101,20 @@ class PVmqtt:
       mqtt_stop(self.mqttclient)
 
   #----------------------  
-  def connect(self, server, port, login, password, topic):  
-    self.mqttclient = mqtt_start(server=server, port=port, login=login, password=password, 
-                                 topic=topic, pvdata=self.pvdata)
+  def connect(self):  
+    retry = 0
+    while not self.mqttclient and retry < 5:
+      self.mqttclient = mqtt_start(server=self.server, port=self.port, login=self.login, password=self.password, 
+                                   topic=self.topic, pvdata=self.pvdata)
+      if not self.mqttclient:
+        retry += 1
+        logging.warning( "Couldn't connect to MQTT server. retry={}/5".format(retry) )
+        time.sleep(10)
+
     if self.mqttclient:
       return True
     else:
+      logging.error( "Couldn't connect to MQTT server.".format(retry) )
       return False
 
   #----------------------  
@@ -146,10 +161,10 @@ def main():
   if cfg['VERBOSE'] == True:
     logging.getLogger().setLevel(logging.DEBUG)
   
-  pvmqtt = PVmqtt()
-  pvmqtt.connect( server=cfg['MQTT_PV_SERVER'], port=cfg['MQTT_PV_PORT'], 
-                  login=cfg['MQTT_PV_LOGIN'], password=cfg['MQTT_PV_PASSWORD'], 
-                  topic=cfg['MQTT_PV_TOPIC'] )
+  pvmqtt = PVmqtt( server=cfg['MQTT_PV_SERVER'], port=cfg['MQTT_PV_PORT'], 
+                   login=cfg['MQTT_PV_LOGIN'], password=cfg['MQTT_PV_PASSWORD'], 
+                   topic=cfg['MQTT_PV_TOPIC'] )
+  pvmqtt.connect()
 
   time.sleep(20)
   data = pvmqtt.get_data()

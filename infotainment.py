@@ -636,10 +636,10 @@ def main():
   mqtt_publish_status( status="initializing" )
 
   # PV inverter data via MQTT
-  pvmqtt = PVmqtt.PVmqtt()
-  pvmqtt.connect( server=cfg['MQTT_PV_SERVER'], port=cfg['MQTT_PV_PORT'], 
-                  login=cfg['MQTT_PV_LOGIN'], password=cfg['MQTT_PV_PASSWORD'], 
-                  topic=cfg['MQTT_PV_TOPIC'] )
+  pvmqtt = PVmqtt.PVmqtt( server=cfg['MQTT_PV_SERVER'], port=cfg['MQTT_PV_PORT'], 
+                          login=cfg['MQTT_PV_LOGIN'], password=cfg['MQTT_PV_PASSWORD'], 
+                          topic=cfg['MQTT_PV_TOPIC'] )
+  pvmqtt.connect()
 
   date_from = None
   date_to = None  
