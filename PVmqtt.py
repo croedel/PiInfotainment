@@ -13,40 +13,46 @@ except Exception as e:
 
 # =====================================
 # MQTT client functionality
-def on_mqtt_connect(mqttclient, userdata, flags, rc):
-  logging.info("Connected to MQTT broker")
+def on_pv_mqtt_connect(mqttclient, userdata, flags, rc):
+  logging.info("Connected to MQTT broker; rc={}".format(rc))
 
-def on_mqtt_disconnect(client, userdata, rc):
+def on_pv_mqtt_disconnect(client, userdata, rc):
   logging.warning("MQTT broker disconnected: {}".format(rc))
 
+def on_pv_mqtt_subscribe(client, userdata, mid, granted_qos):
+  logging.info("MQTT broker subscribed to mid {}".format(mid))
+
 #----------------------  
-def on_mqtt_message(mqttclient, userdata, message):
+def on_pv_mqtt_message(mqttclient, userdata, message):
   try:
     msg = message.payload.decode("utf-8")
     topic = message.topic.split("/")
     parameter = topic[2] + "/" + topic[3]
     userdata[parameter] = msg # store received data in userdata
+    if parameter == "now-base/api_date":
+      logging.info("MQTT data received: {} = {}".format(parameter, msg))
     logging.debug("MQTT data received: {} = {}".format(parameter, msg))
 
   except Exception as e:
     logging.warning("Error while handling MQTT message: {}".format(str(e)))
 
 #----------------------  
-def mqtt_start(server, port, login, password, topic, pvdata): 
+def pv_mqtt_start(server, port, login, password, topic, pvdata): 
   try:  
-    client = mqttcl.Client()
+    client = mqttcl.Client( clean_session=True )
     client.user_data_set(pvdata) # allow to store received data
     client.username_pw_set(login, password) 
-    client.connect(server, port, 60) 
+    client.on_connect = on_pv_mqtt_connect
+    client.on_disconnect = on_pv_mqtt_disconnect
+    client.on_message = on_pv_mqtt_message
+    client.on_subscribe = on_pv_mqtt_subscribe
+    client.connect(server, port, 60)
     topics = [ 
       (topic + "/now-base/#", 0),
       (topic + "/day/#", 0),
       (topic + "/total/#", 0) 
     ]
     client.subscribe(topics)
-    client.on_connect = on_mqtt_connect
-    client.on_disconnect = on_mqtt_disconnect
-    client.on_message = on_mqtt_message
     client.loop_start()
     logging.info('MQTT client started')
     return client
@@ -55,7 +61,7 @@ def mqtt_start(server, port, login, password, topic, pvdata):
     return None
 
 #----------------------  
-def mqtt_stop(client):
+def pv_mqtt_stop(client):
   try: 
     client.loop_stop()
     logging.info('MQTT client stopped')
@@ -99,13 +105,13 @@ class PVmqtt:
   #----------------------  
   def __del__(self):
     if self.mqttclient:
-      mqtt_stop(self.mqttclient)
+      pv_mqtt_stop(self.mqttclient)
 
   #----------------------  
   def connect(self):  
     retry = 0
     while not self.mqttclient and retry < 5:
-      self.mqttclient = mqtt_start(server=self.server, port=self.port, login=self.login, password=self.password, 
+      self.mqttclient = pv_mqtt_start(server=self.server, port=self.port, login=self.login, password=self.password, 
                                    topic=self.topic, pvdata=self.pvdata)
       if not self.mqttclient:
         retry += 1
